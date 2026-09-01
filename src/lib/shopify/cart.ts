@@ -2,7 +2,7 @@ import { cookies } from "next/headers";
 import type { Cart, CartLine, Money } from "../types";
 import { hasStorefrontToken } from "./config";
 import { storefrontFetch } from "./fetch";
-import { CART_CREATE, CART_LINES_ADD, CART_QUERY } from "./queries";
+import { CART_CREATE, CART_LINES_ADD, CART_LINES_UPDATE, CART_QUERY } from "./queries";
 import { getCatalog } from "./catalog";
 
 const CART_COOKIE = "scentoria_cart_id";
@@ -133,5 +133,12 @@ export async function setLineQuantity(lineId: string, quantity: number): Promise
     await writeLocal(next);
     return localCart();
   }
+  const jar = await cookies();
+  const cartId = jar.get(CART_COOKIE)?.value;
+  if (!cartId) return getCart();
+  await storefrontFetch(CART_LINES_UPDATE, {
+    cartId,
+    lines: [{ id: lineId, quantity }],
+  });
   return getCart();
 }

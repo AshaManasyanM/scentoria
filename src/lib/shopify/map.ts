@@ -1,5 +1,11 @@
 import type { Money, Product } from "../types";
-import { noteKeys } from "./mock";
+import {
+  defaultLongevity,
+  defaultSeason,
+  defaultSillage,
+  defaultTimeOfDay,
+  noteKeys,
+} from "./mock";
 
 type ShopifyProduct = {
   id: string;
@@ -57,6 +63,7 @@ export function mapProduct(p: ShopifyProduct): Product {
     tags,
     gender: genderFromTags(tags),
     notes: notesFromTags(tags),
+    accords: notesFromTags(tags),
     images,
     variants: p.variants.nodes.map((v) => ({
       id: v.id,
@@ -71,5 +78,10 @@ export function mapProduct(p: ShopifyProduct): Product {
     featured: lower.includes("bestseller") || lower.includes("best-seller"),
     isNew: lower.includes("new"),
     onSale: lower.includes("sale"),
+    discountLabel: lower.includes("sale") ? "10%+" : undefined,
+    longevity: defaultLongevity,
+    season: defaultSeason,
+    sillage: defaultSillage,
+    timeOfDay: defaultTimeOfDay,
   };
 }

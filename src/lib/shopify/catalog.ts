@@ -78,6 +78,7 @@ export async function getArticles(): Promise<Article[]> {
           handle: string;
           title: string;
           excerpt?: string;
+          content?: string;
           publishedAt: string;
           image?: { url: string } | null;
         }[];
@@ -90,6 +91,7 @@ export async function getArticles(): Promise<Article[]> {
         excerpt: a.excerpt || "",
         date: a.publishedAt.slice(0, 10),
         image: a.image?.url,
+        body: a.content || a.excerpt || "",
       }));
     }
   }

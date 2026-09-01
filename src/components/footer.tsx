@@ -32,7 +32,10 @@ export function Footer({ locale }: { locale: Locale }) {
           <div className="mt-6 flex flex-col gap-2 uppercase tracking-[0.16em] text-xs">
             <Link href={path(locale, "/about")}>{t.nav.about}</Link>
             <Link href={path(locale, "/products")}>{t.nav.perfumes}</Link>
+            <Link href={path(locale, "/notes")}>{t.shopByNote}</Link>
             <Link href={path(locale, "/sales")}>{t.nav.sales}</Link>
+            <Link href={path(locale, "/contact")}>{t.contact}</Link>
+            <Link href={path(locale, "/account")}>{t.account}</Link>
           </div>
         </div>
       </div>

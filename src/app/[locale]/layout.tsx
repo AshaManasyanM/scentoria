@@ -2,8 +2,12 @@ import { CartProvider } from "@/components/cart-provider";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
 import { MiniCart } from "@/components/mini-cart";
-import { isLocale } from "src/lib/i18n";
+import { isLocale, locales } from "@/lib/i18n";
 import { notFound } from "next/navigation";
+
+export function generateStaticParams() {
+  return locales.map((locale) => ({ locale }));
+}
 
 export default async function LocaleLayout({
   children,

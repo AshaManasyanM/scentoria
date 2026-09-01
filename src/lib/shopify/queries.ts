@@ -54,6 +54,7 @@ export const ARTICLES_QUERY = `
         handle
         title
         excerpt
+        content
         publishedAt
         image { url }
       }
@@ -73,6 +74,15 @@ export const CART_CREATE = `
 export const CART_LINES_ADD = `
   mutation CartLinesAdd($cartId: ID!, $lines: [CartLineInput!]!) {
     cartLinesAdd(cartId: $cartId, lines: $lines) {
+      cart { id checkoutUrl }
+      userErrors { message }
+    }
+  }
+`;
+
+export const CART_LINES_UPDATE = `
+  mutation CartLinesUpdate($cartId: ID!, $lines: [CartLineUpdateInput!]!) {
+    cartLinesUpdate(cartId: $cartId, lines: $lines) {
       cart { id checkoutUrl }
       userErrors { message }
     }

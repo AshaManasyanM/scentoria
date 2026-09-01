@@ -12,6 +12,11 @@ export type ProductVariant = {
   price: Money;
 };
 
+export type StatBar = {
+  label: string;
+  value: number;
+};
+
 export type Product = {
   id: string;
   handle: string;
@@ -21,6 +26,7 @@ export type Product = {
   tags: string[];
   gender: "men" | "women" | "unisex" | "all";
   notes: string[];
+  accords: string[];
   images: { url: string; alt: string }[];
   variants: ProductVariant[];
   minPrice: Money;
@@ -30,6 +36,11 @@ export type Product = {
   featured: boolean;
   isNew: boolean;
   onSale: boolean;
+  discountLabel?: string;
+  longevity: StatBar[];
+  season: StatBar[];
+  sillage: StatBar[];
+  timeOfDay: StatBar[];
 };
 
 export type Article = {
@@ -38,6 +49,7 @@ export type Article = {
   excerpt: string;
   date: string;
   image?: string;
+  body: string;
 };
 
 export type Testimonial = {

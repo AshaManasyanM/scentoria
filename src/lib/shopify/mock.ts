@@ -1,4 +1,30 @@
-import type { Article, Product, Testimonial } from "../types";
+import type { Article, Product, StatBar, Testimonial } from "../types";
+
+export const defaultLongevity: StatBar[] = [
+  { label: "Weak", value: 5 },
+  { label: "Moderate", value: 45 },
+  { label: "Long lasting", value: 40 },
+  { label: "Eternal", value: 10 },
+];
+
+export const defaultSeason: StatBar[] = [
+  { label: "Winter", value: 20 },
+  { label: "Spring", value: 25 },
+  { label: "Summer", value: 25 },
+  { label: "Autumn", value: 30 },
+];
+
+export const defaultSillage: StatBar[] = [
+  { label: "Intimate", value: 10 },
+  { label: "Moderate", value: 45 },
+  { label: "Strong", value: 40 },
+  { label: "Enormous", value: 5 },
+];
+
+export const defaultTimeOfDay: StatBar[] = [
+  { label: "Day", value: 55 },
+  { label: "Night", value: 45 },
+];
 
 const img = (id: string) =>
   `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
@@ -20,6 +46,17 @@ function variant(
   };
 }
 
+function profile(notes: string[], accords?: string[]) {
+  return {
+    notes,
+    accords: accords ?? notes,
+    longevity: defaultLongevity,
+    season: defaultSeason,
+    sillage: defaultSillage,
+    timeOfDay: defaultTimeOfDay,
+  };
+}
+
 export const mockProducts: Product[] = [
   {
     id: "1",
@@ -30,8 +67,11 @@ export const mockProducts: Product[] = [
       "A warm oriental with smoked woods, saffron, and a soft amber dry-down. Built for evening wear and cold air.",
     tags: ["women", "oriental", "vanilla", "bestseller"],
     gender: "women",
-    notes: ["oriental", "vanilla", "woody"],
-    images: [{ url: img("photo-1541643600914-78b084683601"), alt: "Velvet Ember" }],
+    ...profile(["oriental", "vanilla", "woody"], ["amber", "woody", "saffron", "vanilla"]),
+    images: [
+      { url: img("photo-1541643600914-78b084683601"), alt: "Velvet Ember" },
+      { url: img("photo-1594035910387-fea47794261f"), alt: "Velvet Ember bottle" },
+    ],
     variants: [
       variant("gid://shopify/ProductVariant/sample-1a", "10 ml decant", "11400"),
       variant("gid://shopify/ProductVariant/sample-1b", "100 ml", "130500"),
@@ -53,7 +93,7 @@ export const mockProducts: Product[] = [
       "Leather, incense, and dark woods. A unisex signature with serious projection.",
     tags: ["unisex", "leather", "woody", "bestseller"],
     gender: "unisex",
-    notes: ["leather", "woody"],
+    ...profile(["leather", "woody"], ["leather", "incense", "wood", "oud"]),
     images: [{ url: img("photo-1594035910387-fea47794261f"), alt: "Ombre Grove" }],
     variants: [
       variant("gid://shopify/ProductVariant/sample-2a", "5 ml decant", "18000"),
@@ -75,7 +115,7 @@ export const mockProducts: Product[] = [
     description: "Bright bergamot, neroli, and white musk. A clean daily scent for warm weather.",
     tags: ["women", "citrus", "floral", "new"],
     gender: "women",
-    notes: ["citrus", "floral"],
+    ...profile(["citrus", "floral"], ["citrus", "neroli", "musk", "floral"]),
     images: [{ url: img("photo-1615634260167-c8cdede054de"), alt: "Citrus Veil" }],
     variants: [
       variant("gid://shopify/ProductVariant/sample-3a", "10 ml decant", "11400"),
@@ -97,7 +137,7 @@ export const mockProducts: Product[] = [
     description: "Sweet tobacco, spices, and a hint of vanilla. Bold and long-lasting.",
     tags: ["men", "tobacco", "spicy", "bestseller", "sale"],
     gender: "men",
-    notes: ["tobacco", "spicy", "vanilla"],
+    ...profile(["tobacco", "spicy", "vanilla"], ["tobacco", "spicy", "vanilla", "amber"]),
     images: [{ url: img("photo-1592945403244-b3fbafd7f539"), alt: "Red Tobacco Night" }],
     variants: [
       variant("gid://shopify/ProductVariant/sample-4a", "10 ml decant", "5400"),
@@ -110,6 +150,7 @@ export const mockProducts: Product[] = [
     featured: true,
     isNew: false,
     onSale: true,
+    discountLabel: "10–15%",
   },
   {
     id: "5",
@@ -119,7 +160,7 @@ export const mockProducts: Product[] = [
     description: "Crisp pine, sea air, and vetiver. Fresh, green, and quietly expensive.",
     tags: ["men", "woody", "aquatic", "bestseller"],
     gender: "men",
-    notes: ["woody", "aquatic"],
+    ...profile(["woody", "aquatic"], ["aquatic", "woody", "ozonic", "green"]),
     images: [{ url: img("photo-1585386959984-a4155224a1ad"), alt: "Atlantic Pine" }],
     variants: [
       variant("gid://shopify/ProductVariant/sample-5a", "10 ml decant", "12000"),
@@ -141,7 +182,7 @@ export const mockProducts: Product[] = [
     description: "Tropical hibiscus, peony, and a creamy sandalwood base.",
     tags: ["women", "floral", "fruity", "sweet", "new"],
     gender: "women",
-    notes: ["floral", "fruity", "sweet"],
+    ...profile(["floral", "fruity", "sweet"], ["floral", "fruity", "sweet", "powdery"]),
     images: [{ url: img("photo-1563170351-be82bc888aa4"), alt: "Love Hibiscus" }],
     variants: [variant("gid://shopify/ProductVariant/sample-6a", "100 ml", "216000")],
     minPrice: money("216000"),
@@ -160,7 +201,7 @@ export const mockProducts: Product[] = [
     description: "Sparkling aldehydes, iris, and warm amber. A celestial floral.",
     tags: ["unisex", "floral", "oriental", "new"],
     gender: "unisex",
-    notes: ["floral", "oriental"],
+    ...profile(["floral", "oriental"], ["floral", "iris", "amber", "aldehydic"]),
     images: [{ url: img("photo-1523293182086-7651a12378bb"), alt: "Stellar Times" }],
     variants: [variant("gid://shopify/ProductVariant/sample-7a", "75 ml", "332500")],
     minPrice: money("332500"),
@@ -179,7 +220,7 @@ export const mockProducts: Product[] = [
     description: "A richer take on a fresh floral, now with extra depth in the base.",
     tags: ["women", "floral", "sale"],
     gender: "women",
-    notes: ["floral"],
+    ...profile(["floral"], ["floral", "fresh", "musk"]),
     images: [{ url: img("photo-1590735213920-68192a487bc2"), alt: "Alive Absolu" }],
     variants: [
       variant("gid://shopify/ProductVariant/sample-8a", "50 ml", "60300"),
@@ -192,6 +233,7 @@ export const mockProducts: Product[] = [
     featured: false,
     isNew: false,
     onSale: true,
+    discountLabel: "10%+",
   },
 ];
 
@@ -203,6 +245,7 @@ export const mockArticles: Article[] = [
       "Fresh, clean, and luminous compositions for heat, travel, and long evenings. Our edit of the scents people keep reaching for.",
     date: "2026-07-24",
     image: img("photo-1490481651871-ab68de25d43d"),
+    body: "Summer is the season of lightness, travel, and unforgettable moments. During the warmer months, fragrances reveal their character in a unique way, making the choice of perfume more important than ever.\n\nFresh citrus, clean musks, and airy florals take center stage. We recommend starting with a 5 or 10 ml decant so you can live with a scent in heat before you commit to a full bottle.",
   },
   {
     handle: "long-lasting-womens",
@@ -210,12 +253,14 @@ export const mockArticles: Article[] = [
     excerpt:
       "High concentration, rich bases, and projection that lasts from morning coffee to midnight.",
     date: "2026-04-20",
+    body: "If you want a fragrance that lasts, look at concentration (EDP and extrait), a rich base of woods, amber, or musk, and how it behaves on your skin. Decants are the honest way to test longevity before buying a full bottle at Scentoria.",
   },
   {
     handle: "mens-compliments",
     title: "Men's fragrances that actually get compliments",
     excerpt: "Everyday wear, dates, and formal nights — what works in 2026.",
     date: "2026-03-26",
+    body: "Compliment-getting scents are rarely the loudest. Fresh woods, polished tobacco, and clean citrus with a warm dry-down tend to work for daily wear, dates, and evenings. Try a decant, then choose the size that fits how often you wear it.",
   },
 ];
 

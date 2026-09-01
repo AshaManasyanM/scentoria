@@ -1,5 +1,7 @@
 export const shopDomain =
-  process.env.SHOPIFY_STORE_DOMAIN ?? "gfc5xh-m1.myshopify.com";
+  process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ??
+  process.env.SHOPIFY_STORE_DOMAIN ??
+  "gfc5xh-m1.myshopify.com";
 
 export const storefrontToken = process.env.SHOPIFY_STOREFRONT_ACCESS_TOKEN ?? "";
 
