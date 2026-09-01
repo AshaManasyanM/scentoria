@@ -1,0 +1,174 @@
+import type { Locale } from "./types";
+
+export const locales: Locale[] = ["en", "hy"];
+
+export function isLocale(value: string): value is Locale {
+  return value === "en" || value === "hy";
+}
+
+const en = {
+  brand: "Scentoria",
+  tagline: "№1 Online Perfume Store",
+  nav: {
+    home: "Home",
+    about: "About",
+    brands: "Brands",
+    perfumes: "Perfumes",
+    blog: "Blog",
+    sales: "Sales",
+  },
+  search: "Search",
+  account: "Account",
+  cart: "Cart",
+  signIn: "Sign in",
+  signUp: "Sign up",
+  community: "Join Our Community",
+  shopByType: "Shop by Fragrance Type",
+  shopByTypeSub:
+    "Explore our collections for men, women, unisex, and more to find your perfect scent",
+  allFragrances: "All Fragrances",
+  men: "Men",
+  women: "Women",
+  unisex: "Unisex",
+  bestSellers: "Our Best Sellers",
+  bestSellersSub:
+    "Discover the top fragrances our customers love, handpicked for their irresistible scents",
+  popularBrands: "Popular Brands",
+  popularBrandsSub:
+    "Explore the most sought-after fragrance brands trusted for their quality",
+  newArrivals: "New Arrivals",
+  newArrivalsSub: "Be the first to experience our latest fragrances",
+  viewAllNew: "View All New Products",
+  shopByNote: "Shop By Note",
+  shopByNoteSub:
+    "Search by your favorite fragrance notes and discover scents that match your style",
+  viewAllNotes: "View All Notes",
+  onSale: "On Sale!",
+  onSaleSub: "Don't miss out on our special deals",
+  testimonials: "Testimonials",
+  testimonialsSub: "Customer voices: real opinions on our service and product excellence.",
+  blogTitle: "Perfume Blog",
+  blogSub: "Stay up to date with the latest in the world of fragrances",
+  readMore: "Read More",
+  youtube: "YouTube",
+  youtubeSub: "Dive into the essence of our perfumes with immersive videos",
+  cantFind: "Can't Find What You Are Looking For?",
+  cantFindSub:
+    "Let us know, and our team will assist you in finding the perfect fragrance.",
+  contactUs: "Contact us",
+  faq: "Frequently Asked Questions",
+  faqSub: "Find quick answers to some of the most common questions",
+  sortBy: "Sort By",
+  filter: "Filter",
+  addToCart: "Add to cart",
+  selectSize: "Select size",
+  from: "From",
+  emptyCatalog: "No perfumes yet. Add your first product in Shopify Admin.",
+  sampleBanner:
+    "Sample catalog is showing until Shopify products are loaded. Add items in Admin — see ADMIN.md.",
+  liveBanner: "Connected to Shopify. New products appear here after you publish them.",
+  emptyCart: "Your cart is empty.",
+  checkout: "Checkout",
+  continueShopping: "Continue shopping",
+  subtotal: "Subtotal",
+  quantity: "Quantity",
+  remove: "Remove",
+  workingHours: "Working Hours",
+  hoursValue: "Mon–Sun 10:00 AM – 11:00 PM",
+  feedback: "Feedback",
+  followUs: "Follow us for exclusive news and updates",
+  copyright: "Copyright © 2026 Scentoria",
+  aboutHero: "About Scentoria",
+  aboutIntro:
+    "Welcome to Scentoria, where passion meets fragrance. We help you discover scents that tell your unique story.",
+  ourStory: "Our story",
+  storyBody:
+    "We created this store to help everyone find a signature scent — the one that speaks for you. We don’t just sell bottles; we curate, compare, and tell stories through fragrance.",
+  perfumesHero: "Perfumes",
+  perfumesSub:
+    "Explore our collection of fragrances, selected to suit every taste and occasion.",
+  brandsHero: "Perfume Brands",
+  brandsSub: "Shop a curated selection of fragrance houses, each chosen for artistry and quality.",
+  salesHero: "On sale",
+  salesSub: "Limited-time deals on designer and niche fragrances.",
+  blogHero: "The Scentoria Blog",
+  blogIndexSub: "Trends, tips, and inspiration from the world of perfume.",
+  notes: {
+    floral: "Floral",
+    woody: "Woody",
+    tobacco: "Tobacco",
+    vanilla: "Vanilla",
+    spicy: "Spicy",
+    citrus: "Citrus",
+    leather: "Leather",
+    oriental: "Oriental",
+    aquatic: "Aquatic",
+    sweet: "Sweet",
+    fruity: "Fruity",
+  },
+  faqs: [
+    {
+      q: "How do I choose a fragrance when shopping online?",
+      a: "Read the notes pyramid, reviews, and description. If you are unsure, order a 5 ml or 10 ml decant before a full bottle.",
+    },
+    {
+      q: "Why are prices more accessible?",
+      a: "We operate online, keep overhead low, and work with trusted suppliers so we can offer fair prices without a physical boutique markup.",
+    },
+    {
+      q: "Why choose Scentoria?",
+      a: "Authentic products, personal recommendations, fast delivery, and a wide mix of designer and niche houses.",
+    },
+    {
+      q: "How is delivery carried out?",
+      a: "Delivery is available in Yerevan and throughout Armenia by courier or mail. Packaging is done with care so bottles arrive intact.",
+    },
+    {
+      q: "Do you have samples or mini versions?",
+      a: "Yes. We offer decants — small portions of the original fragrance in atomizers — so you can try a scent before committing to a full bottle.",
+    },
+  ],
+  values: [
+    { title: "Integrity", body: "Honest recommendations, fair pricing, and long-term trust." },
+    { title: "Quality", body: "100% authentic products from official and verified suppliers." },
+    { title: "Passion", body: "We hunt new and rare compositions so the catalog stays exciting." },
+    { title: "Customer first", body: "Personal help to match a scent to your mood and style." },
+  ],
+};
+
+const hy: typeof en = {
+  ...en,
+  tagline: "№1 օնլայն օծանելիքի խանութ",
+  nav: {
+    home: "Գլխավոր",
+    about: "Մեր մասին",
+    brands: "Բրենդներ",
+    perfumes: "Օծանելիք",
+    blog: "Բլոգ",
+    sales: "Զեղչեր",
+  },
+  search: "Որոնել",
+  account: "Հաշիվ",
+  cart: "Զամբյուղ",
+  signIn: "Մուտք",
+  signUp: "Գրանցում",
+  shopByType: "Ըստ տեսակի",
+  allFragrances: "Բոլորը",
+  men: "Տղամարդ",
+  women: "Կին",
+  unisex: "Յունիսեքս",
+  bestSellers: "Լավագույն վաճառք",
+  newArrivals: "Նորույթներ",
+  onSale: "Զեղչեր",
+  addToCart: "Ավելացնել զամբյուղ",
+  checkout: "Պատվիրել",
+  emptyCart: "Զամբյուղը դատարկ է։",
+  aboutHero: "Scentoria-ի մասին",
+  faqs: en.faqs,
+};
+
+export type Dictionary = typeof en;
+
+export function getDict(locale: Locale): Dictionary {
+  return locale === "hy" ? hy : en;
+}

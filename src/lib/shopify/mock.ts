@@ -1,0 +1,255 @@
+import type { Article, Product, Testimonial } from "../types";
+
+const img = (id: string) =>
+  `https://images.unsplash.com/${id}?auto=format&fit=crop&w=900&q=80`;
+
+function money(amount: string): Product["minPrice"] {
+  return { amount, currencyCode: "AMD" };
+}
+
+function variant(
+  id: string,
+  title: string,
+  amount: string,
+): Product["variants"][number] {
+  return {
+    id,
+    title,
+    available: true,
+    price: money(amount),
+  };
+}
+
+export const mockProducts: Product[] = [
+  {
+    id: "1",
+    handle: "velvet-ember",
+    title: "Velvet Ember",
+    brand: "Maison Sillage",
+    description:
+      "A warm oriental with smoked woods, saffron, and a soft amber dry-down. Built for evening wear and cold air.",
+    tags: ["women", "oriental", "vanilla", "bestseller"],
+    gender: "women",
+    notes: ["oriental", "vanilla", "woody"],
+    images: [{ url: img("photo-1541643600914-78b084683601"), alt: "Velvet Ember" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-1a", "10 ml decant", "11400"),
+      variant("gid://shopify/ProductVariant/sample-1b", "100 ml", "130500"),
+    ],
+    minPrice: money("11400"),
+    maxPrice: money("130500"),
+    rating: 4.8,
+    reviewCount: 8,
+    featured: true,
+    isNew: false,
+    onSale: false,
+  },
+  {
+    id: "2",
+    handle: "ombre-grove",
+    title: "Ombre Grove",
+    brand: "Atelier Nocturne",
+    description:
+      "Leather, incense, and dark woods. A unisex signature with serious projection.",
+    tags: ["unisex", "leather", "woody", "bestseller"],
+    gender: "unisex",
+    notes: ["leather", "woody"],
+    images: [{ url: img("photo-1594035910387-fea47794261f"), alt: "Ombre Grove" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-2a", "5 ml decant", "18000"),
+      variant("gid://shopify/ProductVariant/sample-2b", "75 ml", "209000"),
+    ],
+    minPrice: money("18000"),
+    maxPrice: money("209000"),
+    rating: 4.7,
+    reviewCount: 7,
+    featured: true,
+    isNew: false,
+    onSale: false,
+  },
+  {
+    id: "3",
+    handle: "citrus-veil",
+    title: "Citrus Veil",
+    brand: "Lumière",
+    description: "Bright bergamot, neroli, and white musk. A clean daily scent for warm weather.",
+    tags: ["women", "citrus", "floral", "new"],
+    gender: "women",
+    notes: ["citrus", "floral"],
+    images: [{ url: img("photo-1615634260167-c8cdede054de"), alt: "Citrus Veil" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-3a", "10 ml decant", "11400"),
+      variant("gid://shopify/ProductVariant/sample-3b", "50 ml", "153000"),
+    ],
+    minPrice: money("11400"),
+    maxPrice: money("153000"),
+    rating: 4.6,
+    reviewCount: 6,
+    featured: true,
+    isNew: true,
+    onSale: false,
+  },
+  {
+    id: "4",
+    handle: "red-tobacco-night",
+    title: "Red Tobacco Night",
+    brand: "Casa Fumo",
+    description: "Sweet tobacco, spices, and a hint of vanilla. Bold and long-lasting.",
+    tags: ["men", "tobacco", "spicy", "bestseller", "sale"],
+    gender: "men",
+    notes: ["tobacco", "spicy", "vanilla"],
+    images: [{ url: img("photo-1592945403244-b3fbafd7f539"), alt: "Red Tobacco Night" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-4a", "10 ml decant", "5400"),
+      variant("gid://shopify/ProductVariant/sample-4b", "100 ml", "55250"),
+    ],
+    minPrice: money("5400"),
+    maxPrice: money("55250"),
+    rating: 4.5,
+    reviewCount: 6,
+    featured: true,
+    isNew: false,
+    onSale: true,
+  },
+  {
+    id: "5",
+    handle: "atlantic-pine",
+    title: "Atlantic Pine",
+    brand: "North Cape",
+    description: "Crisp pine, sea air, and vetiver. Fresh, green, and quietly expensive.",
+    tags: ["men", "woody", "aquatic", "bestseller"],
+    gender: "men",
+    notes: ["woody", "aquatic"],
+    images: [{ url: img("photo-1585386959984-a4155224a1ad"), alt: "Atlantic Pine" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-5a", "10 ml decant", "12000"),
+      variant("gid://shopify/ProductVariant/sample-5b", "100 ml", "152000"),
+    ],
+    minPrice: money("12000"),
+    maxPrice: money("152000"),
+    rating: 4.4,
+    reviewCount: 5,
+    featured: true,
+    isNew: false,
+    onSale: false,
+  },
+  {
+    id: "6",
+    handle: "love-hibiscus",
+    title: "Love Hibiscus",
+    brand: "Jardin Rose",
+    description: "Tropical hibiscus, peony, and a creamy sandalwood base.",
+    tags: ["women", "floral", "fruity", "sweet", "new"],
+    gender: "women",
+    notes: ["floral", "fruity", "sweet"],
+    images: [{ url: img("photo-1563170351-be82bc888aa4"), alt: "Love Hibiscus" }],
+    variants: [variant("gid://shopify/ProductVariant/sample-6a", "100 ml", "216000")],
+    minPrice: money("216000"),
+    maxPrice: money("216000"),
+    rating: 4.9,
+    reviewCount: 7,
+    featured: false,
+    isNew: true,
+    onSale: false,
+  },
+  {
+    id: "7",
+    handle: "stellar-times",
+    title: "Stellar Times",
+    brand: "Atelier Nocturne",
+    description: "Sparkling aldehydes, iris, and warm amber. A celestial floral.",
+    tags: ["unisex", "floral", "oriental", "new"],
+    gender: "unisex",
+    notes: ["floral", "oriental"],
+    images: [{ url: img("photo-1523293182086-7651a12378bb"), alt: "Stellar Times" }],
+    variants: [variant("gid://shopify/ProductVariant/sample-7a", "75 ml", "332500")],
+    minPrice: money("332500"),
+    maxPrice: money("332500"),
+    rating: 4.5,
+    reviewCount: 5,
+    featured: false,
+    isNew: true,
+    onSale: false,
+  },
+  {
+    id: "8",
+    handle: "alive-absolu",
+    title: "Alive Absolu",
+    brand: "Lumière",
+    description: "A richer take on a fresh floral, now with extra depth in the base.",
+    tags: ["women", "floral", "sale"],
+    gender: "women",
+    notes: ["floral"],
+    images: [{ url: img("photo-1590735213920-68192a487bc2"), alt: "Alive Absolu" }],
+    variants: [
+      variant("gid://shopify/ProductVariant/sample-8a", "50 ml", "60300"),
+      variant("gid://shopify/ProductVariant/sample-8b", "100 ml", "72250"),
+    ],
+    minPrice: money("60300"),
+    maxPrice: money("72250"),
+    rating: 4.2,
+    reviewCount: 2,
+    featured: false,
+    isNew: false,
+    onSale: true,
+  },
+];
+
+export const mockArticles: Article[] = [
+  {
+    handle: "summer-hits-2026",
+    title: "Summer perfume hits: fragrances defining the season",
+    excerpt:
+      "Fresh, clean, and luminous compositions for heat, travel, and long evenings. Our edit of the scents people keep reaching for.",
+    date: "2026-07-24",
+    image: img("photo-1490481651871-ab68de25d43d"),
+  },
+  {
+    handle: "long-lasting-womens",
+    title: "Long-lasting women's perfumes with real sillage",
+    excerpt:
+      "High concentration, rich bases, and projection that lasts from morning coffee to midnight.",
+    date: "2026-04-20",
+  },
+  {
+    handle: "mens-compliments",
+    title: "Men's fragrances that actually get compliments",
+    excerpt: "Everyday wear, dates, and formal nights — what works in 2026.",
+    date: "2026-03-26",
+  },
+];
+
+export const mockTestimonials: Testimonial[] = [
+  {
+    name: "Anna K.",
+    product: "Velvet Ember",
+    text: "Arrived quickly, beautifully packed, and the scent is exactly as described. Already ordering a full bottle.",
+    date: "2026-07-26",
+  },
+  {
+    name: "David M.",
+    product: "Atlantic Pine",
+    text: "Finally a shop that explains notes clearly. The 10 ml decant was the perfect way to test before committing.",
+    date: "2026-07-16",
+  },
+  {
+    name: "Mariam S.",
+    product: "Love Hibiscus",
+    text: "Soft, floral, and so elegant. Scentoria’s recommendations were spot on.",
+    date: "2026-07-16",
+  },
+];
+
+export const noteKeys = [
+  "floral",
+  "woody",
+  "tobacco",
+  "vanilla",
+  "spicy",
+  "citrus",
+  "leather",
+  "oriental",
+  "aquatic",
+  "sweet",
+  "fruity",
+] as const;
