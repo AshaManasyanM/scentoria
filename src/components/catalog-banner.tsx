@@ -12,15 +12,15 @@ export function CatalogBanner({
   const t = getDict(locale);
   if (source === "shopify") {
     return (
-      <p className="bg-bg-2 px-4 py-2 text-center text-xs text-gold">{t.liveBanner}</p>
+      <p className="bg-bg-2 px-4 py-3 text-center text-sm leading-snug text-gold">{t.liveBanner}</p>
     );
   }
   if (source === "empty") {
     return (
-      <p className="bg-bg-2 px-4 py-2 text-center text-xs text-gold">{t.emptyCatalog}</p>
+      <p className="bg-bg-2 px-4 py-3 text-center text-sm leading-snug text-gold">{t.emptyCatalog}</p>
     );
   }
   return (
-    <p className="bg-bg-2 px-4 py-2 text-center text-xs text-gold">{t.sampleBanner}</p>
+    <p className="bg-bg-2 px-4 py-3 text-center text-sm leading-snug text-gold">{t.sampleBanner}</p>
   );
 }

@@ -1,18 +1,10 @@
 "use client";
 
 import { getDict } from "@/lib/i18n";
-import { path } from "@/lib/path";
+import { NAV, hrefFor } from "@/lib/nav";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-
-export const NAV = ["home", "about", "brands", "perfumes", "blog", "sales"] as const;
-
-export function hrefFor(locale: Locale, key: (typeof NAV)[number]) {
-  if (key === "home") return path(locale);
-  if (key === "perfumes") return path(locale, "/products");
-  return path(locale, `/${key}`);
-}
 
 export function SiteNav({
   locale,
@@ -36,7 +28,7 @@ export function SiteNav({
       }
     >
       <div
-        className={`mx-auto flex max-w-7xl items-center justify-center gap-5 overflow-x-auto px-8 py-7 text-[18px] font-serif font-bold uppercase tracking-wide md:gap-[70px] ${
+        className={`mx-auto flex max-w-[1350px] items-center justify-center gap-3 overflow-x-auto px-3 py-4 text-[15px] font-serif font-bold uppercase tracking-wide md:gap-[70px] md:px-8 md:py-7 md:text-[18px] ${
           overlay ? "text-white" : "text-black"
         }`}
       >
@@ -55,7 +47,7 @@ export function SiteNav({
           }
 
           return (
-            <Link key={key} href={href} onClick={onNavigate} className={className}>
+            <Link key={key} href={href} onClick={onNavigate} className={`shrink-0 ${className}`}>
               {t.nav[key]}
             </Link>
           );

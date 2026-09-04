@@ -20,7 +20,7 @@ export default async function BrandsPage({
   return (
     <>
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-7xl px-4 py-16">
+      <div className="mx-auto max-w-[1350px] px-4 py-16">
         <SectionHeading title={t.brandsHero} subtitle={t.brandsSub} />
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {brands.map((brand) => (

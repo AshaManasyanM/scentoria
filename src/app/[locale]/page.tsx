@@ -1,29 +1,25 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { HeroSlider } from "@/components/hero-slider";
 import { PageEnd } from "@/components/page-end";
-import { ProductGrid } from "@/components/product-grid";
 import { ProductSlider } from "@/components/product-slider";
 import { SectionHeading } from "@/components/section-heading";
+import { NoteTile } from "@/components/note-tile";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
+import { noteTiles } from "@/lib/note-tiles";
 import { path } from "@/lib/path";
-import {
-  brandHandle,
-  filterProducts,
-  getArticles,
-  getCatalog,
-  uniqueBrands,
-} from "@/lib/shopify/catalog";
-import { mockTestimonials, noteKeys } from "@/lib/shopify/mock";
+import { popularBrands } from "@/lib/popular-brands";
+import { filterProducts, getCatalog } from "@/lib/shopify/catalog";
+import { mockTestimonials } from "@/lib/shopify/mock";
 import Link from "next/link";
 
 const typeScene = "/fregrance.webp";
 
 const typeTiles = [
-  { key: "all", query: "", className: "max-md:col-span-3 max-md:h-[150px] md:col-span-2 md:row-span-2" },
-  { key: "men", query: "?gender=men", className: "max-md:h-[88px]" },
-  { key: "women", query: "?gender=women", className: "max-md:h-[88px]" },
-  { key: "unisex", query: "?gender=unisex", className: "max-md:h-[88px] md:col-span-2" },
+  { key: "all", query: "", className: "max-md:col-span-3 max-md:h-[160px] md:col-span-2 md:row-span-2" },
+  { key: "men", query: "?gender=men", className: "max-md:h-[100px]" },
+  { key: "women", query: "?gender=women", className: "max-md:h-[100px]" },
+  { key: "unisex", query: "?gender=unisex", className: "max-md:h-[100px] md:col-span-2" },
 ];
 
 const heroSlides = [
@@ -44,8 +40,6 @@ export default async function HomePage({
   const locale = await localeFrom(params);
   const t = getDict(locale);
   const { products, source } = await getCatalog();
-  const articles = await getArticles();
-  const brands = uniqueBrands(products);
   const featured = filterProducts(products, { featured: true }).slice(0, 8);
   const newest = filterProducts(products, { isNew: true }).slice(0, 8);
   const sale = filterProducts(products, { sale: true }).slice(0, 8);
@@ -62,9 +56,9 @@ export default async function HomePage({
       <HeroSlider images={heroSlides} locale={locale} />
       <CatalogBanner locale={locale} source={source} />
 
-      <section className="mx-auto max-w-7xl px-4 py-5">
+      <section className="mx-auto max-w-[1350px] px-4 py-5">
         <SectionHeading title={t.shopByType} subtitle={t.shopByTypeSub} />
-        <div className="mb-6 grid h-[600px] grid-cols-4 grid-rows-2 gap-2 max-md:mb-[18px] max-md:h-auto max-md:grid-cols-3 max-md:grid-rows-[150px_88px]">
+        <div className="mb-6 grid h-[600px] grid-cols-4 grid-rows-2 gap-2 max-md:mb-[18px] max-md:h-auto max-md:grid-cols-3 max-md:grid-rows-[160px_100px]">
           {typeTiles.map((tile) => (
             <Link
               key={tile.key}
@@ -74,7 +68,7 @@ export default async function HomePage({
                 backgroundImage: `linear-gradient(rgba(0,0,0,0.5), rgba(0,0,0,0.5)), url("${typeScene}")`,
               }}
             >
-              <h2 className="relative z-10 px-4 text-center font-serif text-[2.7vw] font-medium uppercase tracking-wide text-white">
+              <h2 className="relative z-10 px-2 text-center font-serif text-[clamp(15px,4.2vw,40px)] font-medium uppercase leading-tight tracking-wide text-white">
                 {typeLabels[tile.key]}
               </h2>
             </Link>
@@ -87,102 +81,98 @@ export default async function HomePage({
         </p>
       </section>
 
-      <section className="relative flex flex-col items-center gap-[5px] bg-gold-2 px-[5px] py-5 text-center">
+      <section className="product-band">
         <SectionHeading title={t.bestSellers} subtitle={t.bestSellersSub} light />
         <ProductSlider products={featured} locale={locale} />
+        <p className="mt-4 md:mt-[42px]">
+          <Link href={path(locale, "/products")} className="btn-white">
+            {t.viewAllProducts}
+          </Link>
+        </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-5">
+      <section className="mx-auto max-w-[1350px] px-4 py-5">
         <SectionHeading title={t.popularBrands} subtitle={t.popularBrandsSub} />
-        <div className="flex flex-wrap justify-center gap-4">
-          {brands.map((brand) => (
+        <div className="grid grid-cols-3 gap-2 md:grid-cols-4 md:gap-4">
+          {popularBrands.map((brand) => (
             <Link
-              key={brand}
-              href={path(locale, `/brands/${brandHandle(brand)}`)}
-              className="rounded-full border border-line px-5 py-3 text-xs uppercase tracking-[0.16em] hover:border-gold hover:text-gold"
+              key={brand.handle}
+              href={path(locale, `/brands/${brand.handle}`)}
+              className={`flex min-h-[104px] items-center justify-center rounded-[5px] border border-[#b79e9e] bg-white p-4 shadow-md transition duration-300 hover:scale-105 hover:shadow-2xl md:min-h-[120px] md:rounded-[20px] ${
+                "desktopOnly" in brand && brand.desktopOnly ? "max-md:hidden" : ""
+              }`}
             >
-              {brand}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={brand.logo}
+                alt={`${brand.name} perfume brand logo`}
+                title={`${brand.name} perfume brand`}
+                className="h-auto w-full object-contain"
+              />
             </Link>
           ))}
         </div>
+        <p className="mt-10 text-center">
+          <Link href={path(locale, "/brands")} className="btn-green">
+            {t.viewAllBrands}
+          </Link>
+        </p>
       </section>
 
-      <section className="bg-gold-2 py-5">
-        <div className="mx-auto max-w-7xl px-4">
-          <SectionHeading title={t.newArrivals} subtitle={t.newArrivalsSub} light />
-          <ProductGrid products={newest} locale={locale} />
-          <p className="mt-10 text-center">
-            <Link href={path(locale, "/products?new=1")} className="btn-green">
-              {t.viewAllNew}
-            </Link>
-          </p>
-        </div>
+      <section className="product-band">
+        <SectionHeading title={t.newArrivals} subtitle={t.newArrivalsSub} light />
+        <ProductSlider products={newest} locale={locale} />
+        <p className="mt-4 md:mt-[42px]">
+          <Link href={path(locale, "/products?new=1")} className="btn-white">
+            {t.viewAllNew}
+          </Link>
+        </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-5">
+      <section className="mx-auto max-w-[1350px] px-4 py-5">
         <SectionHeading title={t.shopByNote} subtitle={t.shopByNoteSub} />
-        <div className="grid grid-cols-2 gap-3 md:grid-cols-4 lg:grid-cols-6">
-          {noteKeys.map((note) => (
-            <Link
-              key={note}
-              href={path(locale, `/notes/${note}`)}
-              className="rounded-2xl bg-bg-2 px-3 py-10 text-center font-serif text-sm uppercase tracking-wide hover:bg-gold hover:text-white"
-            >
-              {t.notes[note]}
-            </Link>
-          ))}
+        <div className="grid grid-cols-3 gap-1 md:grid-cols-4 md:gap-4">
+          {noteTiles
+            .filter((note) => !note.hiddenOnHome)
+            .map((note) => (
+              <NoteTile
+                key={note.key}
+                href={path(locale, `/notes/${note.key}`)}
+                image={note.image}
+                label={t.notes[note.key]}
+                className={note.mdOnly ? "max-md:hidden" : ""}
+              />
+            ))}
         </div>
-        <p className="mt-8 text-center">
+        <p className="mt-10 text-center">
           <Link href={path(locale, "/notes")} className="btn-green">
             {t.viewAllNotes}
           </Link>
         </p>
       </section>
 
-      <section className="bg-gold-2 py-5">
-        <div className="mx-auto max-w-7xl px-4">
-          <SectionHeading title={t.onSale} subtitle={t.onSaleSub} light />
-          <ProductGrid products={sale} locale={locale} />
-        </div>
+      <section className="product-band">
+        <SectionHeading title={t.onSale} subtitle={t.onSaleSub} light />
+        <ProductSlider products={sale} locale={locale} />
+        <p className="mt-4 md:mt-[42px]">
+          <Link href={path(locale, "/sales")} className="btn-white">
+            {t.viewAllSale}
+          </Link>
+        </p>
       </section>
 
-      <section className="mx-auto max-w-7xl px-4 py-5">
+      <section className="mx-auto max-w-[1350px] px-4 py-5">
         <SectionHeading title={t.testimonials} subtitle={t.testimonialsSub} />
         <div className="grid gap-6 md:grid-cols-3">
           {mockTestimonials.map((item) => (
-            <blockquote key={item.name + item.product} className="rounded-2xl bg-bg-2 p-6">
-              <p className="font-serif text-xl">{item.product}</p>
-              <p className="mt-3 text-sm leading-relaxed text-muted">{item.text}</p>
-              <p className="mt-4 text-xs uppercase tracking-[0.16em] text-gold">{item.name}</p>
-              <p className="mt-1 text-xs text-muted">{item.date}</p>
+            <blockquote key={item.name + item.product} className="rounded-2xl bg-bg-2 p-5 md:p-6">
+              <p className="font-serif text-xl leading-snug">{item.product}</p>
+              <p className="mt-3 text-[15px] leading-relaxed text-muted md:text-sm">{item.text}</p>
+              <p className="mt-4 text-sm uppercase tracking-[0.16em] text-gold">{item.name}</p>
+              <p className="mt-1 text-sm text-muted">{item.date}</p>
             </blockquote>
           ))}
         </div>
-      </section>
-
-      <section className="mx-auto max-w-7xl px-4 py-5">
-        <SectionHeading title={t.blogTitle} subtitle={t.blogSub} />
-        <div className="grid gap-8 md:grid-cols-3">
-          {articles.slice(0, 3).map((article) => (
-            <Link key={article.handle} href={path(locale, `/blog/${article.handle}`)} className="block">
-              {article.image ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={article.image} alt="" className="aspect-[16/10] w-full rounded-2xl object-cover" />
-              ) : null}
-              <h3 className="mt-4 font-serif text-2xl">{article.title}</h3>
-              <p className="mt-2 text-sm text-muted line-clamp-3">{article.excerpt}</p>
-              <p className="mt-3 text-xs uppercase tracking-[0.18em] text-gold">{t.readMore}</p>
-            </Link>
-          ))}
-        </div>
-      </section>
-
-      <section className="bg-gold-2 py-5 text-center text-white">
-        <h2 className="font-serif text-4xl">{t.youtube}</h2>
-        <p className="mt-3 text-white/80">{t.youtubeSub}</p>
-        <a href="https://www.youtube.com" target="_blank" rel="noreferrer" className="btn-green mt-8">
-          YouTube
-        </a>
       </section>
 
       <PageEnd locale={locale} />

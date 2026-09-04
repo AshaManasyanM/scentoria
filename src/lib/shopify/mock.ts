@@ -202,7 +202,7 @@ export const mockProducts: Product[] = [
     tags: ["unisex", "floral", "oriental", "new"],
     gender: "unisex",
     ...profile(["floral", "oriental"], ["floral", "iris", "amber", "aldehydic"]),
-    images: [{ url: img("photo-1523293182086-7651a12378bb"), alt: "Stellar Times" }],
+    images: [{ url: img("photo-1594035910387-fea47794261f"), alt: "Stellar Times" }],
     variants: [variant("gid://shopify/ProductVariant/sample-7a", "75 ml", "332500")],
     minPrice: money("332500"),
     maxPrice: money("332500"),

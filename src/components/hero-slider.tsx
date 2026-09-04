@@ -24,7 +24,7 @@ export function HeroSlider({
   }, [slider, slides.length]);
 
   return (
-    <section className="relative h-[606px] overflow-hidden bg-transparent">
+    <section className="relative h-[clamp(222px,45vw,606px)] overflow-hidden bg-transparent">
       {slides.map((image, i) => (
         <picture
           key={image.url + i}
@@ -49,14 +49,14 @@ export function HeroSlider({
               type="button"
               aria-label={`Slide ${i + 1}`}
               onClick={() => setIndex(i)}
-              className={`h-[4px] w-[30px] rounded-full transition-all ${
+              className={`h-[3px] w-4 rounded-full transition-all ${
                 i === index ? "bg-gold-2" : "bg-gray-200"
               }`}
             />
           ))}
         </div>
       ) : null}
-      <div className="absolute inset-x-0 top-0 z-20">
+      <div className="absolute inset-x-0 top-0 z-20 hidden md:block">
         <SiteNav locale={locale} variant="overlay" />
       </div>
     </section>

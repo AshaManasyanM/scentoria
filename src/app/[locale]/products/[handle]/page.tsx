@@ -30,7 +30,7 @@ export default async function ProductPage({
 
   return (
     <>
-      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 md:grid-cols-2">
+      <div className="mx-auto grid max-w-[1350px] gap-12 px-4 py-16 md:grid-cols-2">
         <ProductGallery product={product} />
         <div>
           <Link
@@ -86,7 +86,7 @@ export default async function ProductPage({
       </div>
 
       {related.length ? (
-        <div className="mx-auto max-w-7xl px-4 pb-10">
+        <div className="mx-auto max-w-[1350px] px-4 pb-10">
           <SectionHeading title={t.related} />
           <ProductGrid products={related} locale={locale} />
         </div>

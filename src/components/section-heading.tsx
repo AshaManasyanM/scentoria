@@ -8,12 +8,12 @@ export function SectionHeading({
   light?: boolean;
 }) {
   return (
-    <div className="mb-10 text-center">
-      <h2 className={`font-serif text-[2.8vw] font-medium ${light ? "text-white" : "text-fg"}`}>
+    <div className="mb-8 px-2 text-center md:mb-10">
+      <h2 className={`font-serif text-[clamp(28px,6vw,48px)] font-medium leading-snug ${light ? "text-white" : "text-fg"}`}>
         {title}
       </h2>
       {subtitle ? (
-        <p className={`mt-3 max-w-2xl mx-auto text-[1.56vw] ${light ? "text-white/80" : "text-muted"}`}>
+        <p className={`mt-3 mx-auto max-w-2xl text-[clamp(14px,3.4vw,22px)] leading-relaxed ${light ? "text-white/85" : "text-muted"}`}>
           {subtitle}
         </p>
       ) : null}

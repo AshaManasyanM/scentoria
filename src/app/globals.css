@@ -71,7 +71,7 @@ a {
   color: #fff;
   padding: 10px 24px;
   font-family: var(--font-tommy), "MADE Tommy Soft", sans-serif;
-  font-size: 1.36vw;
+  font-size: clamp(14px, 1.36vw, 22px);
   font-weight: 500;
   text-transform: capitalize;
 }
@@ -80,23 +80,104 @@ a {
   background: var(--gold-2);
 }
 
-.bestsellers-swiper {
+.btn-white {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--gold);
+  padding: 10px 24px;
+  font-family: var(--font-tommy), "MADE Tommy Soft", sans-serif;
+  font-size: clamp(14px, 1.36vw, 22px);
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.btn-white:hover {
+  background: #f4f4f5;
+}
+
+.footer-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  width: auto;
+  min-height: 38px;
+  align-self: auto;
+  border-radius: 12px;
+  border: 2px solid #fff;
+  background: #fff;
+  color: var(--gold);
+  padding: 8px 18px;
+  font-family: var(--font-tommy), "MADE Tommy Soft", sans-serif;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  text-transform: capitalize;
+}
+
+.footer-btn-pair {
+  flex: 0 0 auto;
+}
+
+.footer-btn:hover {
+  background: #f4f4f5;
+}
+
+.footer-btn-outline {
+  background: transparent;
+  color: #fff;
+  border: 2px solid #fff;
+}
+
+.footer-btn-outline:hover {
+  background: #fff;
+  color: var(--gold);
+}
+
+.product-band {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  background: var(--gold-2);
+  padding: 32px 12px;
+  text-align: center;
+}
+
+@media (min-width: 768px) {
+  .product-band {
+    padding: 40px 5px;
+  }
+}
+
+.product-slider {
   position: static;
 }
 
-.bestsellers-swiper .swiper-slide {
-  width: 300px;
+.product-slider .swiper-slide {
+  width: auto;
   height: auto;
   display: flex;
   justify-content: center;
 }
 
-.bestsellers-swiper .swiper-wrapper {
+@media (min-width: 768px) {
+  .product-slider .swiper-slide {
+    width: 300px;
+  }
+}
+
+.product-slider .swiper-wrapper {
   align-items: stretch;
 }
 
-.bestsellers-prev,
-.bestsellers-next {
+.product-slider-prev,
+.product-slider-next {
   position: absolute;
   top: 50%;
   z-index: 10;
@@ -115,26 +196,66 @@ a {
   transition: 0.3s;
 }
 
-.bestsellers-prev {
+.product-slider-prev {
   left: 20px;
 }
 
-.bestsellers-next {
+.product-slider-next {
   right: 20px;
 }
 
-.bestsellers-prev svg,
-.bestsellers-next svg {
+.product-slider-prev svg,
+.product-slider-next svg {
   width: 60px;
   height: 60px;
   fill: currentColor;
 }
 
-.bestsellers-prev.swiper-button-disabled,
-.bestsellers-next.swiper-button-disabled {
+.product-slider-prev.swiper-button-disabled,
+.product-slider-next.swiper-button-disabled {
   opacity: 0.35;
   cursor: auto;
   pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  .product-slider-prev,
+  .product-slider-next {
+    display: none;
+  }
+}
+
+.product-slider-pag {
+  display: flex;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 16px;
+  --swiper-pagination-bullet-width: 16px;
+  --swiper-pagination-bullet-height: 3px;
+  --swiper-pagination-bullet-border-radius: 9999px;
+  --swiper-pagination-color: #fff;
+  --swiper-pagination-bullet-inactive-color: #fff;
+  --swiper-pagination-bullet-inactive-opacity: 0.4;
+}
+
+@media (min-width: 768px) {
+  .product-slider-pag {
+    display: none;
+  }
+}
+
+.product-slider-pag .swiper-pagination-bullet {
+  width: 16px;
+  height: 3px;
+  margin: 0;
+  border-radius: 9999px;
+  background: rgb(255 255 255 / 0.4) !important;
+  opacity: 1;
+}
+
+.product-slider-pag .swiper-pagination-bullet-active {
+  background: #fff !important;
+  opacity: 1;
 }
 
 @keyframes scentoria-marquee {

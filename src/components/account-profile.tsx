@@ -1,26 +1,11 @@
 "use client";
 
+import { clearProfile, loadProfile, saveProfile, type Profile } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const STORAGE_KEY = "scentoria_profile";
-
-type Profile = { name: string; email: string };
-
-function loadProfile(): Profile {
-  if (typeof window === "undefined") return { name: "", email: "" };
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { name: "", email: "" };
-    const parsed = JSON.parse(raw) as Profile;
-    return { name: parsed.name ?? "", email: parsed.email ?? "" };
-  } catch {
-    return { name: "", email: "" };
-  }
-}
 
 export function AccountProfile({ locale }: { locale: Locale }) {
   const t = getDict(locale);
@@ -54,7 +39,7 @@ export function AccountProfile({ locale }: { locale: Locale }) {
         className="mt-6 max-w-xl space-y-5"
         onSubmit={(event) => {
           event.preventDefault();
-          window.localStorage.setItem(STORAGE_KEY, JSON.stringify(profile));
+          saveProfile(profile);
           setSaved(true);
           window.setTimeout(() => setSaved(false), 2000);
         }}
@@ -87,7 +72,7 @@ export function AccountProfile({ locale }: { locale: Locale }) {
       <button
         type="button"
         onClick={() => {
-          window.localStorage.removeItem(STORAGE_KEY);
+          clearProfile();
           router.push(path(locale));
         }}
         className="mt-6 inline-flex items-center gap-2 text-sm text-sale"

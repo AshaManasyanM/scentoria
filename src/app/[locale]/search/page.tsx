@@ -22,7 +22,7 @@ export default async function SearchPage({
   return (
     <>
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-7xl px-4 py-16">
+      <div className="mx-auto max-w-[1350px] px-4 py-16">
         <SectionHeading title={t.search} subtitle={q || undefined} />
         <ProductGrid products={products} locale={locale} />
       </div>
