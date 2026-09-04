@@ -13,7 +13,7 @@ export function PageEnd({ locale }: { locale: Locale }) {
         <p className="mt-4 text-muted">{t.cantFindSub}</p>
         <Link
           href={path(locale, "/contact")}
-          className="mt-8 inline-block border border-gold px-8 py-3 text-xs tracking-[0.22em] uppercase text-gold"
+          className="btn-green mt-8"
         >
           {t.contactUs}
         </Link>

@@ -1,7 +1,7 @@
 import { CartProvider } from "@/components/cart-provider";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
-import { MiniCart } from "@/components/mini-cart";
+import { WishlistProvider } from "@/components/wishlist-provider";
 import { isLocale, locales } from "@/lib/i18n";
 import { notFound } from "next/navigation";
 
@@ -21,10 +21,11 @@ export default async function LocaleLayout({
 
   return (
     <CartProvider>
-      <Header locale={locale} />
-      <MiniCart locale={locale} />
-      <main className="flex-1">{children}</main>
-      <Footer locale={locale} />
+      <WishlistProvider>
+        <Header locale={locale} />
+        <main className="flex-1">{children}</main>
+        <Footer locale={locale} />
+      </WishlistProvider>
     </CartProvider>
   );
 }

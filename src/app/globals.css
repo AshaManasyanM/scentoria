@@ -1,13 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --bg: #0b0a09;
-  --bg-2: #141210;
-  --fg: #f4efe6;
-  --muted: #9a9288;
-  --gold: #c4a574;
-  --gold-2: #e8d5b5;
-  --line: rgba(196, 165, 116, 0.22);
+  --bg: #ffffff;
+  --bg-2: #f3ece4;
+  --fg: #09090b;
+  --muted: #71717a;
+  --gold: #0e623e;
+  --gold-2: #093623;
+  --line: #e4e4e7;
+  --sale: #ec0808;
+  --star: #f59e0b;
+  --nav: #f4f4f5;
 }
 
 @theme inline {
@@ -18,8 +21,17 @@
   --color-gold: var(--gold);
   --color-gold-2: var(--gold-2);
   --color-line: var(--line);
-  --font-sans: var(--font-outfit);
-  --font-serif: var(--font-cormorant);
+  --color-sale: var(--sale);
+  --color-star: var(--star);
+  --color-nav: var(--nav);
+  --font-sans: ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+    "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji",
+    "Segoe UI Symbol", "Noto Color Emoji";
+  --font-serif: var(--font-playfair);
+}
+
+html {
+  font-family: var(--font-sans);
 }
 
 html,
@@ -29,7 +41,7 @@ body {
 }
 
 body {
-  font-family: var(--font-outfit), system-ui, sans-serif;
+  font-family: inherit;
   min-height: 100%;
 }
 
@@ -37,15 +49,99 @@ h1,
 h2,
 h3,
 .font-serif {
-  font-family: var(--font-cormorant), Georgia, serif;
+  font-family: var(--font-playfair), Georgia, serif;
 }
 
 ::selection {
   background: var(--gold);
-  color: var(--bg);
+  color: #fff;
 }
 
 a {
-  text-decoration-thickness: 1px;
   text-underline-offset: 4px;
+}
+
+.btn-green {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: auto;
+  border-radius: 14px;
+  background: var(--gold);
+  color: #fff;
+  padding: 10px 24px;
+  font-family: var(--font-tommy), "MADE Tommy Soft", sans-serif;
+  font-size: 1.36vw;
+  font-weight: 500;
+  text-transform: capitalize;
+}
+
+.btn-green:hover {
+  background: var(--gold-2);
+}
+
+.bestsellers-swiper {
+  position: static;
+}
+
+.bestsellers-swiper .swiper-slide {
+  width: 300px;
+  height: auto;
+  display: flex;
+  justify-content: center;
+}
+
+.bestsellers-swiper .swiper-wrapper {
+  align-items: stretch;
+}
+
+.bestsellers-prev,
+.bestsellers-next {
+  position: absolute;
+  top: 50%;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 60px;
+  height: 60px;
+  padding: 0;
+  color: #afafaf;
+  background: transparent;
+  border: none;
+  border-radius: 50%;
+  cursor: pointer;
+  transform: translateY(-50%);
+  transition: 0.3s;
+}
+
+.bestsellers-prev {
+  left: 20px;
+}
+
+.bestsellers-next {
+  right: 20px;
+}
+
+.bestsellers-prev svg,
+.bestsellers-next svg {
+  width: 60px;
+  height: 60px;
+  fill: currentColor;
+}
+
+.bestsellers-prev.swiper-button-disabled,
+.bestsellers-next.swiper-button-disabled {
+  opacity: 0.35;
+  cursor: auto;
+  pointer-events: none;
+}
+
+@keyframes scentoria-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
 }

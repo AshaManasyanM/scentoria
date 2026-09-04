@@ -27,7 +27,7 @@ export function AddToCart({ product, locale }: { product: Product; locale: Local
               key={v.id}
               type="button"
               onClick={() => setVariantId(v.id)}
-              className={`border px-3 py-2 text-sm ${
+        className={`rounded-full border px-4 py-2 text-sm ${
                 v.id === selected.id ? "border-gold text-gold" : "border-line text-muted"
               }`}
             >
@@ -39,7 +39,7 @@ export function AddToCart({ product, locale }: { product: Product; locale: Local
       <button
         type="button"
         onClick={() => addItem(selected.id)}
-        className="w-full bg-gold text-bg py-3 tracking-[0.22em] uppercase text-sm"
+        className="btn-green w-full rounded-full"
       >
         {t.addToCart}
       </button>

@@ -21,7 +21,7 @@ export default async function BrandPage({
   return (
     <>
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-6xl px-4 py-16">
+      <div className="mx-auto max-w-7xl px-4 py-16">
         <SectionHeading title={name} />
         <ProductGrid products={list} locale={locale} />
       </div>

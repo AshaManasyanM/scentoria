@@ -6,21 +6,33 @@ import Link from "next/link";
 export function Footer({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   return (
-    <footer className="mt-auto border-t border-line bg-bg-2">
-      <div className="mx-auto grid max-w-6xl gap-10 px-4 py-16 md:grid-cols-3">
+    <footer className="mt-auto bg-gold-2 text-white">
+      <div className="mx-auto grid max-w-7xl gap-10 px-4 py-16 md:grid-cols-3">
         <div>
-          <p className="font-serif text-2xl tracking-[0.28em] uppercase">{t.brand}</p>
-          <p className="mt-3 text-sm text-muted">{t.tagline}</p>
+          <p className="font-serif text-xl">{t.joinCommunity}</p>
+          <p className="mt-3 text-sm text-white/80">{t.communityHint}</p>
+          <Link href={path(locale, "/account")} className="mt-6 block rounded-md bg-white py-3 text-center font-serif text-fg">
+            {t.signUp}
+          </Link>
+          <Link href={path(locale, "/account")} className="mt-3 block rounded-md bg-white py-3 text-center font-serif text-fg">
+            {t.signIn}
+          </Link>
         </div>
-        <div className="text-sm text-muted space-y-2">
-          <p className="text-gold tracking-[0.2em] uppercase text-xs">{t.workingHours}</p>
-          <p>{t.hoursValue}</p>
-          <p className="pt-4 text-gold tracking-[0.2em] uppercase text-xs">{t.feedback}</p>
-          <p>+374 00 000 000</p>
-          <p>hello@scentoria.am</p>
+        <div>
+          <p className="text-sm">{t.tagline}</p>
+          <div className="mt-6 flex flex-col gap-2 font-serif text-lg uppercase">
+            <Link href={path(locale)}>{t.nav.home}</Link>
+            <Link href={path(locale, "/about")}>{t.nav.about}</Link>
+            <Link href={path(locale, "/brands")}>{t.nav.brands}</Link>
+            <Link href={path(locale, "/products")}>{t.nav.perfumes}</Link>
+            <Link href={path(locale, "/blog")}>{t.nav.blog}</Link>
+            <Link href={path(locale, "/sales")} className="text-sale">
+              {t.nav.sales}
+            </Link>
+          </div>
         </div>
-        <div className="text-sm text-muted">
-          <p className="text-gold tracking-[0.2em] uppercase text-xs">{t.followUs}</p>
+        <div className="text-sm">
+          <p className="font-serif text-lg">{t.followUs}</p>
           <div className="mt-3 flex gap-4">
             <a href="https://instagram.com" target="_blank" rel="noreferrer">
               Instagram
@@ -29,17 +41,19 @@ export function Footer({ locale }: { locale: Locale }) {
               YouTube
             </a>
           </div>
-          <div className="mt-6 flex flex-col gap-2 uppercase tracking-[0.16em] text-xs">
-            <Link href={path(locale, "/about")}>{t.nav.about}</Link>
-            <Link href={path(locale, "/products")}>{t.nav.perfumes}</Link>
-            <Link href={path(locale, "/notes")}>{t.shopByNote}</Link>
-            <Link href={path(locale, "/sales")}>{t.nav.sales}</Link>
-            <Link href={path(locale, "/contact")}>{t.contact}</Link>
-            <Link href={path(locale, "/account")}>{t.account}</Link>
-          </div>
+          <p className="mt-6">{t.workingHours}</p>
+          <p>{t.hoursValue}</p>
+          <p className="mt-4">{t.feedback}</p>
+          <a
+            href="tel:+37400000000"
+            className="mt-3 inline-block rounded-md bg-white px-4 py-2 text-fg"
+          >
+            +374 00 000 000
+          </a>
+          <p className="mt-3">hello@scentoria.am</p>
         </div>
       </div>
-      <p className="border-t border-line py-6 text-center text-xs text-muted">{t.copyright}</p>
+      <p className="border-t border-white/20 py-6 text-center text-xs text-white/70">{t.copyright}</p>
     </footer>
   );
 }

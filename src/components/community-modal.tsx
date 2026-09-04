@@ -29,7 +29,7 @@ export function CommunityModal({
         <p className="mt-4 text-sm text-muted">{t.communityHint}</p>
         <a
           href={shopAccountUrl}
-          className="mt-8 block bg-gold py-3 text-sm uppercase tracking-[0.2em] text-bg"
+          className="btn-green mt-8 block"
         >
           {t.signUp}
         </a>

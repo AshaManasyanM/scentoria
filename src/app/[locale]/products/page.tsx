@@ -48,9 +48,9 @@ export default async function ProductsPage({
   return (
     <>
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-6xl px-4 py-16">
+      <div className="mx-auto max-w-7xl px-4 py-16">
         <SectionHeading title={t.perfumesHero} subtitle={t.perfumesSub} />
-        <div className="mb-10 grid gap-6 border border-line p-4 text-xs uppercase tracking-[0.16em] text-muted md:grid-cols-4">
+        <div className="mb-10 grid gap-6 rounded-2xl bg-bg-2 p-4 text-xs uppercase tracking-[0.16em] text-muted md:grid-cols-4">
           <div>
             <p className="mb-2 text-gold">{t.filter}</p>
             <div className="flex flex-col gap-2">

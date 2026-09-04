@@ -13,8 +13,6 @@ import {
 type CartContextValue = {
   cart: Cart;
   count: number;
-  open: boolean;
-  setOpen: (open: boolean) => void;
   refresh: () => Promise<void>;
   addItem: (merchandiseId: string, quantity?: number) => Promise<void>;
   updateQty: (lineId: string, quantity: number) => Promise<void>;
@@ -26,7 +24,6 @@ const empty: Cart = { id: null, checkoutUrl: null, lines: [] };
 
 export function CartProvider({ children }: { children: React.ReactNode }) {
   const [cart, setCart] = useState<Cart>(empty);
-  const [open, setOpen] = useState(false);
 
   const refresh = useCallback(async () => {
     const res = await fetch("/api/cart");
@@ -46,7 +43,6 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       if (res.ok) {
         setCart(await res.json());
-        setOpen(true);
       }
     },
     [],
@@ -64,8 +60,8 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
 
   const value = useMemo(
-    () => ({ cart, count, open, setOpen, refresh, addItem, updateQty }),
-    [cart, count, open, refresh, addItem, updateQty],
+    () => ({ cart, count, refresh, addItem, updateQty }),
+    [cart, count, refresh, addItem, updateQty],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

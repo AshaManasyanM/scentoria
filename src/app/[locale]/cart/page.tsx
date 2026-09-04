@@ -1,5 +1,7 @@
 "use client";
 
+import { AccountEmptyState, CartBagIcon } from "@/components/account-empty-state";
+import { AccountShell } from "@/components/account-shell";
 import { useCart } from "@/components/cart-provider";
 import { formatMoney } from "@/lib/format";
 import { getDict, isLocale } from "@/lib/i18n";
@@ -20,19 +22,20 @@ export default function CartPage() {
   const currency = cart.lines[0]?.price.currencyCode ?? "AMD";
 
   return (
-    <div className="mx-auto max-w-4xl px-4 py-16">
-      <h1 className="font-serif text-5xl text-center">{t.cart}</h1>
+    <AccountShell locale={locale}>
       {cart.lines.length === 0 ? (
-        <p className="mt-12 text-center text-muted">
-          {t.emptyCart}{" "}
-          <Link href={path(locale, "/products")} className="text-gold">
-            {t.continueShopping}
-          </Link>
-        </p>
+        <AccountEmptyState
+          icon={<CartBagIcon className="h-14 w-14" />}
+          title={t.emptyCart}
+          hint={t.emptyCartHint}
+          href={path(locale, "/products")}
+        />
       ) : (
-        <div className="mt-12 space-y-6">
+    <div>
+      <h1 className="font-serif text-3xl">{t.shoppingCart}</h1>
+        <div className="mt-8 space-y-6">
           {cart.lines.map((line) => (
-            <div key={line.id} className="flex gap-4 border-b border-line pb-6">
+            <div key={line.id} className="flex gap-4 rounded-xl bg-white p-4 shadow-sm">
               {line.image ? (
                 <Image src={line.image} alt="" width={96} height={128} className="object-cover" />
               ) : null}
@@ -41,7 +44,7 @@ export default function CartPage() {
                   {line.title}
                 </Link>
                 <p className="text-sm text-muted">{line.variantTitle}</p>
-                <p className="mt-2 text-gold">{formatMoney(line.price, locale)}</p>
+                <p className="mt-2">{formatMoney(line.price, locale)}</p>
                 <div className="mt-3 flex items-center gap-3">
                   <button type="button" onClick={() => updateQty(line.id, line.quantity - 1)}>
                     −
@@ -56,14 +59,14 @@ export default function CartPage() {
           ))}
           <p className="flex justify-between text-lg">
             <span>{t.subtotal}</span>
-            <span className="text-gold">
+            <span>
               {formatMoney({ amount: String(subtotal), currencyCode: currency }, locale)}
             </span>
           </p>
           {cart.checkoutUrl ? (
             <a
               href={cart.checkoutUrl}
-              className="block bg-gold py-3 text-center text-sm uppercase tracking-[0.2em] text-bg"
+              className="btn-green mt-4 w-full"
             >
               {t.checkout}
             </a>
@@ -73,7 +76,8 @@ export default function CartPage() {
             </p>
           )}
         </div>
-      )}
     </div>
+      )}
+    </AccountShell>
   );
 }

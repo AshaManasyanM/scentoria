@@ -44,7 +44,7 @@ export default async function ContactPage({
           </label>
           <button
             type="submit"
-            className="w-full bg-gold py-3 text-sm uppercase tracking-[0.2em] text-bg"
+            className="w-full rounded-full bg-gold py-3 text-sm uppercase tracking-[0.12em] text-white"
           >
             {t.send}
           </button>

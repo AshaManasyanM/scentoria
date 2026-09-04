@@ -1,16 +1,23 @@
 import type { Metadata } from "next";
-import { Cormorant_Garamond, Outfit } from "next/font/google";
+import localFont from "next/font/local";
+import { DM_Sans, Playfair_Display } from "next/font/google";
 import "./globals.css";
 
-const outfit = Outfit({
-  variable: "--font-outfit",
+const sans = DM_Sans({
+  variable: "--font-sans-body",
   subsets: ["latin"],
 });
 
-const cormorant = Cormorant_Garamond({
-  variable: "--font-cormorant",
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
+});
+
+const tommy = localFont({
+  src: "../fonts/MADETommySoft.otf",
+  variable: "--font-tommy",
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -26,9 +33,12 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html
       lang="en"
-      className={`${outfit.variable} ${cormorant.variable} h-full antialiased`}
+      className={`${sans.variable} ${playfair.variable} ${tommy.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-bg text-fg">{children}</body>
+      <body className="min-h-full flex flex-col bg-bg text-fg" suppressHydrationWarning>
+        {children}
+      </body>
     </html>
   );
 }

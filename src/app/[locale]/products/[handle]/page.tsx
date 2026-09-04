@@ -30,7 +30,7 @@ export default async function ProductPage({
 
   return (
     <>
-      <div className="mx-auto grid max-w-6xl gap-12 px-4 py-16 md:grid-cols-2">
+      <div className="mx-auto grid max-w-7xl gap-12 px-4 py-16 md:grid-cols-2">
         <ProductGallery product={product} />
         <div>
           <Link
@@ -44,7 +44,7 @@ export default async function ProductPage({
           <p className="mt-3 text-sm text-muted">
             ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
           </p>
-          <p className="mt-4 text-xl text-gold">
+          <p className="mt-4 text-xl">
             {formatPriceRange(product.minPrice, product.maxPrice, locale)}
           </p>
           <p className="mt-3 text-xs text-muted">{t.availability}</p>
@@ -60,7 +60,7 @@ export default async function ProductPage({
               {product.accords.map((accord) => (
                 <span
                   key={accord}
-                  className="border border-line px-3 py-1 text-[11px] uppercase tracking-[0.16em]"
+              className="mt-3 rounded-xl bg-white px-3 py-1 text-[11px] uppercase tracking-[0.16em]"
                 >
                   {accord}
                 </span>
@@ -86,7 +86,7 @@ export default async function ProductPage({
       </div>
 
       {related.length ? (
-        <div className="mx-auto max-w-6xl px-4 pb-10">
+        <div className="mx-auto max-w-7xl px-4 pb-10">
           <SectionHeading title={t.related} />
           <ProductGrid products={related} locale={locale} />
         </div>

@@ -5,7 +5,7 @@ export function TrustRow({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const items = [t.freeDelivery, t.original, t.payOnDelivery];
   return (
-    <div className="grid grid-cols-3 gap-2 border border-line text-center">
+    <div className="grid grid-cols-3 gap-2 rounded-xl border border-line text-center">
       {items.map((item) => (
         <p
           key={item}
