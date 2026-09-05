@@ -22,7 +22,7 @@ export function ProductGallery({ product }: { product: Product }) {
           />
         ) : null}
         {product.onSale && product.discountLabel ? (
-          <span className="absolute left-3 top-3 bg-gold px-2 py-1 text-[10px] uppercase tracking-[0.16em] text-bg">
+          <span className="absolute left-3 top-3 rounded-l-md bg-[#c53030] px-2 py-1 text-[10px] font-medium text-white md:text-sm">
             {product.discountLabel}
           </span>
         ) : null}

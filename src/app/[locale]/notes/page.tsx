@@ -1,6 +1,6 @@
 import { NoteTile } from "@/components/note-tile";
 import { PageEnd } from "@/components/page-end";
-import { SectionHeading } from "@/components/section-heading";
+import { PageHero } from "@/components/page-hero";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { noteTiles } from "@/lib/note-tiles";
@@ -16,8 +16,8 @@ export default async function NotesPage({
 
   return (
     <>
-      <div className="mx-auto max-w-[1350px] px-4 py-16">
-        <SectionHeading title={t.notesHero} subtitle={t.notesSub} />
+      <PageHero title={t.notesHero} subtitle={t.notesSub} />
+      <div className="mx-auto max-w-[1350px] px-4 py-10 md:py-14">
         <div className="grid grid-cols-3 gap-1 md:grid-cols-4 md:gap-4">
           {noteTiles.map((note) => (
             <NoteTile

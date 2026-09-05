@@ -105,8 +105,10 @@ const en = {
   close: "Close",
   viewCart: "View cart",
   filter: "Filter",
-  sortPriceAsc: "Price ↑",
-  sortPriceDesc: "Price ↓",
+  sortPriceAsc: "Price Low to High",
+  sortPriceDesc: "Price High to Low",
+  sortSelect: "Select...",
+  sortNew: "New Arrivals",
   sortName: "Name",
   onSale: "On Sale!",
   onSaleSub: "Don't miss out on our special deals",
@@ -162,6 +164,9 @@ const en = {
   aboutIntro:
     "Welcome to Scentoria, where passion meets fragrance. We help you discover scents that tell your unique story.",
   ourStory: "Our story",
+  coreValuesTitle: "Core Values That Drive Our Success",
+  coreValuesSub:
+    "Our core values guide everything we do. They shape our commitment to exceptional fragrances and outstanding customer experiences.",
   storyBody:
     "We created this store to help everyone find a signature scent — the one that speaks for you. We don’t just sell bottles; we curate, compare, and tell stories through fragrance.",
   perfumesHero: "Perfumes",

@@ -1,6 +1,6 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { PageEnd } from "@/components/page-end";
-import { SectionHeading } from "@/components/section-heading";
+import { PageHero } from "@/components/page-hero";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
@@ -19,9 +19,9 @@ export default async function BrandsPage({
 
   return (
     <>
+      <PageHero title={t.brandsHero} subtitle={t.brandsSub} />
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-[1350px] px-4 py-16">
-        <SectionHeading title={t.brandsHero} subtitle={t.brandsSub} />
+      <div className="mx-auto max-w-[1350px] px-4 py-10 md:py-14">
         <div className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4">
           {brands.map((brand) => (
             <Link

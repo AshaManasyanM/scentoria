@@ -1,7 +1,7 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { PageEnd } from "@/components/page-end";
+import { PageHero } from "@/components/page-hero";
 import { ProductGrid } from "@/components/product-grid";
-import { SectionHeading } from "@/components/section-heading";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { getCatalog, searchProducts } from "@/lib/shopify/catalog";
@@ -21,9 +21,9 @@ export default async function SearchPage({
 
   return (
     <>
+      <PageHero title={t.search} subtitle={q || undefined} />
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-[1350px] px-4 py-16">
-        <SectionHeading title={t.search} subtitle={q || undefined} />
+      <div className="mx-auto max-w-[1350px] px-4 py-10 md:py-14">
         <ProductGrid products={products} locale={locale} />
       </div>
       <PageEnd locale={locale} />

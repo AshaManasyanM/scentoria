@@ -102,24 +102,43 @@ export function uniqueBrands(products: Product[]) {
   return [...new Set(products.map((p) => p.brand))].sort();
 }
 
+function asList(value?: string | string[]) {
+  if (!value) return [];
+  return (Array.isArray(value) ? value : [value]).flatMap((item) => item.split(",")).filter(Boolean);
+}
+
 export function filterProducts(
   products: Product[],
   opts: {
-    gender?: string;
-    brand?: string;
-    note?: string;
+    gender?: string | string[];
+    brand?: string | string[];
+    note?: string | string[];
     sale?: boolean;
     isNew?: boolean;
     featured?: boolean;
     sort?: string;
   },
 ) {
+  const genders = asList(opts.gender).filter((g) => g !== "all");
+  const brands = asList(opts.brand);
+  const notes = asList(opts.note);
+
   let list = products.filter((p) => {
-    if (opts.gender && opts.gender !== "all" && p.gender !== opts.gender && p.gender !== "all") {
+    if (
+      genders.length &&
+      !genders.some((g) => p.gender === g || p.gender === "all")
+    ) {
       return false;
     }
-    if (opts.brand && p.brand.toLowerCase() !== opts.brand.toLowerCase()) return false;
-    if (opts.note && !p.notes.includes(opts.note) && !p.tags.map((t) => t.toLowerCase()).includes(opts.note)) {
+    if (brands.length && !brands.some((b) => p.brand.toLowerCase() === b.toLowerCase())) {
+      return false;
+    }
+    if (
+      notes.length &&
+      !notes.some(
+        (note) => p.notes.includes(note) || p.tags.map((tag) => tag.toLowerCase()).includes(note),
+      )
+    ) {
       return false;
     }
     if (opts.sale && !p.onSale) return false;

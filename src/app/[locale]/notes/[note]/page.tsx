@@ -1,7 +1,7 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { PageEnd } from "@/components/page-end";
+import { PageHero } from "@/components/page-hero";
 import { ProductGrid } from "@/components/product-grid";
-import { SectionHeading } from "@/components/section-heading";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { filterProducts, getCatalog } from "@/lib/shopify/catalog";
@@ -23,9 +23,9 @@ export default async function NotePage({
 
   return (
     <>
+      <PageHero title={label} />
       <CatalogBanner locale={locale} source={source} />
-      <div className="mx-auto max-w-[1350px] px-4 py-16">
-        <SectionHeading title={label} />
+      <div className="mx-auto max-w-[1350px] px-4 py-10 md:py-14">
         <ProductGrid products={list} locale={locale} />
       </div>
       <PageEnd locale={locale} />

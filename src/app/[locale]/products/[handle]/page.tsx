@@ -39,8 +39,10 @@ export default async function ProductPage({
           >
             {t.allBrand.replace("{brand}", product.brand)}
           </Link>
-          <p className="mt-4 text-xs uppercase tracking-[0.22em] text-muted">{product.brand}</p>
-          <h1 className="mt-2 font-serif text-5xl">{product.title}</h1>
+          <p className="mt-4 font-[family-name:var(--font-tommy)] text-xs uppercase tracking-[0.22em] text-muted">
+            {product.brand}
+          </p>
+          <h1 className="mt-2 font-serif text-4xl md:text-5xl">{product.title}</h1>
           <p className="mt-3 text-sm text-muted">
             ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
           </p>
