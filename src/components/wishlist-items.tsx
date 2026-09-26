@@ -42,7 +42,7 @@ export function WishlistItems({
             const handle = entry.handle;
             const brand = entry.brand;
             const title = entry.title;
-            const image = product ? product.images[0]?.url : entry.image;
+            const image = "minPrice" in entry ? entry.images[0]?.url : entry.image;
             return (
               <article
                 key={handle}

@@ -23,7 +23,7 @@ export default async function AboutPage({
         <div className="absolute inset-0 bg-[#083534]/60" />
         <div className="absolute inset-0 flex items-end px-4 pb-8 md:px-8 md:pb-14">
           <div className="mx-auto w-full max-w-[1320px]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.about}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.about}</p>
             <h1 className="mt-3 max-w-3xl font-serif text-[32px] font-medium leading-[1.15] text-[#f7f2ea] md:text-[clamp(40px,4.5vw,56px)]">
               {t.aboutHero}
             </h1>
@@ -35,7 +35,7 @@ export default async function AboutPage({
       <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-20">
         <div className="mx-auto grid max-w-[1320px] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-16">
           <div>
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.about}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.about}</p>
             <h2 className="mt-4 font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
               {t.ourStory}
             </h2>

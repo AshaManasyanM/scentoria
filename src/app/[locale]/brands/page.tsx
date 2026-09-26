@@ -15,7 +15,7 @@ export default async function BrandsPage({
   const locale = await localeFrom(params);
   const t = getDict(locale);
   const { products, source } = await getCatalog();
-  const logos = new Map(popularBrands.map((brand) => [brand.handle, brand.logo]));
+  const logos = new Map<string, string>(popularBrands.map((brand) => [brand.handle, brand.logo]));
   const listed = new Set<string>(popularBrands.map((brand) => brand.handle));
   const brands = [
     ...popularBrands.map((brand) => ({
