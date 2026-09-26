@@ -1,6 +1,6 @@
 "use client";
 
-import { AUTH_EVENT, isLoggedIn } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import { useRouter } from "next/navigation";
@@ -25,13 +25,9 @@ export function RequireAuth({
       setAllowed(false);
       router.replace(path(locale, "/login"));
     };
-    sync();
+    void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(AUTH_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
+    return () => window.removeEventListener(AUTH_EVENT, sync);
   }, [locale, router]);
 
   if (!allowed) return null;

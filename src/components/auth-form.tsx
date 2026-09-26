@@ -1,6 +1,6 @@
 "use client";
 
-import { AUTH_EVENT, isLoggedIn, signInWithEmail, signInWithGoogle } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, refreshSession, signInWithEmail, signInWithGoogle, signUp } from "@/lib/auth";
 import { requestGoogleProfile } from "@/lib/google-sign-in";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
@@ -52,24 +52,20 @@ export function AuthForm({
       }
       setReady(true);
     };
-    sync();
+    void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(AUTH_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
+    return () => window.removeEventListener(AUTH_EVENT, sync);
   }, [locale, router]);
 
   if (!ready) return null;
 
   const isSignup = mode === "signup";
 
-  function submit() {
-    if (!email.trim()) return;
-    const result = signInWithEmail({ name, email, password });
+  async function submit() {
+    if (!email.trim() || !password) return;
+    const result = isSignup ? await signUp({ name, email, password }) : await signInWithEmail({ email, password });
     if (!result.ok) {
-      setError(t.wrongPassword);
+      setError(result.reason === "exists" ? t.accountExists : t.wrongPassword);
       return;
     }
     router.push(path(locale, "/account"));
@@ -79,7 +75,11 @@ export function AuthForm({
     setError("");
     try {
       const profile = await requestGoogleProfile();
-      signInWithGoogle(profile);
+      const result = await signInWithGoogle(profile);
+      if (!result.ok) {
+        setError(t.googleSignInFailed);
+        return;
+      }
       router.push(path(locale, "/account"));
     } catch {
       setError(t.googleSignInFailed);

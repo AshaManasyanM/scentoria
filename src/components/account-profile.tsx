@@ -1,6 +1,6 @@
 "use client";
 
-import { AUTH_EVENT, clearProfile, isLoggedIn, loadProfile, saveProfile, type Profile } from "@/lib/auth";
+import { AUTH_EVENT, clearProfile, isLoggedIn, loadProfile, refreshSession, saveProfile, type Profile } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -26,13 +26,9 @@ export function AccountProfile({ locale }: { locale: Locale }) {
       setSignedIn(isLoggedIn());
       setReady(true);
     };
-    sync();
+    void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(AUTH_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
+    return () => window.removeEventListener(AUTH_EVENT, sync);
   }, []);
 
   if (!ready) return null;
@@ -89,16 +85,16 @@ export function AccountProfile({ locale }: { locale: Locale }) {
         className="mt-6 max-w-xl"
         onSubmit={(event) => {
           event.preventDefault();
-          const next: Profile = {
-            ...profile,
+          void saveProfile({
             name: profile.name.trim(),
-            password: googleAccount ? undefined : password.trim() || profile.password,
-          };
-          saveProfile(next);
-          setProfile(next);
-          setPassword("");
-          setSaved(true);
-          window.setTimeout(() => setSaved(false), 2000);
+            password: googleAccount ? undefined : password.trim() || undefined,
+          }).then((ok) => {
+            if (!ok) return;
+            setProfile(loadProfile());
+            setPassword("");
+            setSaved(true);
+            window.setTimeout(() => setSaved(false), 2000);
+          });
         }}
       >
         <label className="block text-sm font-semibold text-[#111]">
@@ -139,8 +135,7 @@ export function AccountProfile({ locale }: { locale: Locale }) {
       <button
         type="button"
         onClick={() => {
-          clearProfile();
-          router.push(path(locale));
+          void clearProfile().then(() => router.push(path(locale)));
         }}
         className="mt-6 inline-flex items-center gap-2 text-sm text-[#ef4444]"
       >

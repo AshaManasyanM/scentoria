@@ -1,6 +1,6 @@
 "use client";
 
-import { AUTH_EVENT, isLoggedIn, loadProfile } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, loadProfile, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -22,13 +22,9 @@ export function AccountMenu({ locale }: { locale: Locale }) {
 
   useEffect(() => {
     const sync = () => setImage(isLoggedIn() ? loadProfile().image : undefined);
-    sync();
+    void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
-    window.addEventListener("storage", sync);
-    return () => {
-      window.removeEventListener(AUTH_EVENT, sync);
-      window.removeEventListener("storage", sync);
-    };
+    return () => window.removeEventListener(AUTH_EVENT, sync);
   }, []);
 
   return (

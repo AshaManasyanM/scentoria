@@ -1,6 +1,6 @@
 "use client";
 
-import { AUTH_EVENT, isLoggedIn } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -16,11 +16,13 @@ export function ForgotForm({ locale }: { locale: Locale }) {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    if (isLoggedIn()) {
-      router.replace(path(locale, "/account"));
-      return;
-    }
-    setReady(true);
+    void refreshSession().then(() => {
+      if (isLoggedIn()) {
+        router.replace(path(locale, "/account"));
+        return;
+      }
+      setReady(true);
+    });
     const sync = () => {
       if (isLoggedIn()) router.replace(path(locale, "/account"));
     };
