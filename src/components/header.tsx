@@ -6,6 +6,7 @@ import { QuoteBar } from "@/components/quote-bar";
 import { NAV, hrefFor } from "@/lib/nav";
 import { SiteNav } from "@/components/site-nav";
 import { useCart } from "./cart-provider";
+import { useWishlist } from "./wishlist-provider";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -18,6 +19,7 @@ export function Header({ locale }: { locale: Locale }) {
   const pathname = usePathname();
   const router = useRouter();
   const { count } = useCart();
+  const { items: wishlist } = useWishlist();
   const [menu, setMenu] = useState(false);
   const [q, setQ] = useState("");
 
@@ -44,20 +46,30 @@ export function Header({ locale }: { locale: Locale }) {
   return (
     <div>
       <QuoteBar />
-      <header className="sticky top-0 z-40 bg-white">
-        <div className="mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 text-black md:gap-4 md:px-4 md:py-4">
-          <form
-            className="hidden md:block"
-            onSubmit={goSearch}
-          >
-            <input
-              value={q}
-              onChange={(e) => setQ(e.target.value)}
-              placeholder={`${t.search}...`}
-              className="w-full max-w-xs rounded-full border border-line px-4 py-2 text-sm outline-none placeholder:text-muted focus:border-gold"
-            />
+      <header className="sticky top-0 z-40 bg-bg">
+        <div className="mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
+          <form className="hidden md:block" onSubmit={goSearch}>
+            <label className="relative block w-full max-w-[240px]">
+              <svg
+                viewBox="0 0 24 24"
+                aria-hidden
+                className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8a8178]"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.8"
+              >
+                <circle cx="11" cy="11" r="6.5" />
+                <path d="M16 16.5 20 20.5" strokeLinecap="round" />
+              </svg>
+              <input
+                value={q}
+                onChange={(e) => setQ(e.target.value)}
+                placeholder={`${t.search}...`}
+                className="h-10 w-full rounded-full border border-white bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#d9d0c6]"
+              />
+            </label>
           </form>
-          <div className="flex items-center md:hidden">
+          <div className="hidden items-center max-md:flex">
             <button
               type="button"
               aria-label={menu ? t.close : "Menu"}
@@ -78,64 +90,49 @@ export function Header({ locale }: { locale: Locale }) {
           </div>
           <Link
             href={path(locale)}
-            className="font-serif text-[22px] font-bold uppercase tracking-[0.08em] md:text-3xl"
+            className="font-serif text-[28px] font-semibold tracking-tight text-[#143028] md:text-[34px]"
             onClick={() => setMenu(false)}
           >
             {t.brand}
           </Link>
-          <div className="flex items-center justify-end gap-2.5 md:gap-6">
+          <div className="flex items-center justify-end gap-3 text-[#143028] md:gap-5">
             <Link
               href={path(locale, "/wishlist")}
               aria-label={t.wishlist}
-              className="hidden text-ink transition-opacity hover:opacity-55 md:inline-flex"
+              data-wishlist-target
+              className="relative inline-flex"
             >
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 512 512"
-                height="24"
-                width="24"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden
-              >
-                <path d="M458.4 64.3C400.6 15.7 311.3 23 256 79.3 200.7 23 111.4 15.6 53.6 64.3-21.6 127.6-10.6 230.8 43 285.5l175.4 178.7c10 10.2 23.4 15.9 37.6 15.9 14.3 0 27.6-5.6 37.6-15.8L469 285.6c53.5-54.7 64.7-157.9-10.6-221.3zm-23.6 187.5L259.4 430.5c-2.4 2.4-4.4 2.4-6.8 0L77.2 251.8c-36.5-37.2-43.9-107.6 7.3-150.7 38.9-32.7 98.9-27.8 136.5 10.5l35 35.7 35-35.7c37.8-38.5 97.8-43.2 136.5-10.6 51.1 43.1 43.5 113.9 7.3 150.8z" />
-              </svg>
-            </Link>
-            <Link
-              href={path(locale, "/cart")}
-              aria-label={t.cart}
-              className="relative text-ink transition-opacity hover:opacity-55"
-            >
-              <svg
-                stroke="currentColor"
-                fill="currentColor"
-                strokeWidth="0"
-                viewBox="0 0 512 512"
-                height="18"
-                width="18"
-                className="md:h-6 md:w-6"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden
-              >
+              <svg viewBox="0 0 25 22" className="h-[18px] w-5 md:h-5 md:w-[22px]" aria-hidden>
                 <path
-                  fill="none"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="32"
-                  d="M80 176a16 16 0 0 0-16 16v216c0 30.24 25.76 56 56 56h272c30.24 0 56-24.51 56-54.75V192a16 16 0 0 0-16-16zm80 0v-32a96 96 0 0 1 96-96h0a96 96 0 0 1 96 96v32"
+                  d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
+                  fill="#ffffff"
+                  stroke="#000000"
+                  strokeWidth="1.2"
                 />
               </svg>
-              {count > 0 ? (
-                <span className="absolute -right-2.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-sale px-1 text-[10px] font-medium text-white">
-                  {count}
+              {wishlist.length > 0 ? (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                  {wishlist.length}
                 </span>
               ) : null}
             </Link>
             <AccountMenu locale={locale} />
-            <span className="origin-center scale-90 md:scale-100">
-              <LanguageSwitcher locale={locale} />
-            </span>
+            <Link
+              href={path(locale, "/cart")}
+              aria-label={t.cart}
+              className="relative inline-flex transition-colors hover:text-[#c5a059]"
+            >
+              <svg viewBox="0 0 24 24" className="h-5 w-5 md:h-[22px] md:w-[22px]" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M6.2 8h11.6l-.9 10.2a1.2 1.2 0 0 1-1.2 1.1H8.3a1.2 1.2 0 0 1-1.2-1.1L6.2 8Z" />
+                <path strokeLinecap="round" d="M9 8V6.8A3 3 0 0 1 12 3.8 3 3 0 0 1 15 6.8V8" />
+              </svg>
+              {count > 0 ? (
+                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                  {count}
+                </span>
+              ) : null}
+            </Link>
+            <LanguageSwitcher locale={locale} />
           </div>
         </div>
         {isHome ? null : (
@@ -145,7 +142,7 @@ export function Header({ locale }: { locale: Locale }) {
         )}
         <div
           data-open={menu ? "true" : undefined}
-          className="absolute inset-x-0 top-full z-50 h-[calc(100dvh-90px)] overflow-y-auto border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] pointer-events-none -translate-y-3 opacity-0 transition-[opacity,transform] duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] data-[open]:pointer-events-auto data-[open]:translate-y-0 data-[open]:opacity-100 md:hidden"
+          className="absolute inset-x-0 top-full z-50 hidden h-[calc(100dvh-90px)] overflow-y-auto border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] max-md:block max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0 max-md:transition-[opacity,transform] max-md:duration-300 max-md:ease-[cubic-bezier(0.22,1,0.36,1)] max-md:data-[open]:pointer-events-auto max-md:data-[open]:translate-y-0 max-md:data-[open]:opacity-100"
           aria-hidden={!menu}
         >
             <div className="mx-auto flex min-h-full max-w-[1350px] flex-col px-8 pb-10 pt-6">

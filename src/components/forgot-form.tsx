@@ -64,7 +64,7 @@ export function ForgotForm({ locale }: { locale: Locale }) {
             </label>
             <button
               type="submit"
-              className="h-11 w-full rounded-[10px] bg-gold-2 font-[family-name:var(--font-tommy)] text-sm font-medium text-white hover:bg-gold"
+              className="btn-green w-full"
             >
               {t.send}
             </button>

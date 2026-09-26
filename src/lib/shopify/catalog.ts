@@ -1,10 +1,9 @@
-import type { Article, Product } from "../types";
+import type { Product } from "../types";
 import { hasStorefrontToken } from "./config";
 import { storefrontFetch } from "./fetch";
 import { mapProduct } from "./map";
-import { mockArticles, mockProducts } from "./mock";
+import { mockProducts } from "./mock";
 import {
-  ARTICLES_QUERY,
   PRODUCT_BY_HANDLE_QUERY,
   PRODUCTS_QUERY,
   SEARCH_QUERY,
@@ -70,34 +69,6 @@ export async function searchProducts(query: string): Promise<Product[]> {
   );
 }
 
-export async function getArticles(): Promise<Article[]> {
-  if (hasStorefrontToken()) {
-    const data = await storefrontFetch<{
-      articles: {
-        nodes: {
-          handle: string;
-          title: string;
-          excerpt?: string;
-          content?: string;
-          publishedAt: string;
-          image?: { url: string } | null;
-        }[];
-      };
-    }>(ARTICLES_QUERY);
-    if (data?.articles?.nodes?.length) {
-      return data.articles.nodes.map((a) => ({
-        handle: a.handle,
-        title: a.title,
-        excerpt: a.excerpt || "",
-        date: a.publishedAt.slice(0, 10),
-        image: a.image?.url,
-        body: a.content || a.excerpt || "",
-      }));
-    }
-  }
-  return mockArticles;
-}
-
 export function uniqueBrands(products: Product[]) {
   return [...new Set(products.map((p) => p.brand))].sort();
 }
@@ -107,12 +78,39 @@ function asList(value?: string | string[]) {
   return (Array.isArray(value) ? value : [value]).flatMap((item) => item.split(",")).filter(Boolean);
 }
 
+function variantMl(title: string) {
+  const match = title.match(/(\d+(?:\.\d+)?)\s*ml/i);
+  return match ? Number(match[1]) : null;
+}
+
+export function productSizeKeys(product: Product) {
+  const sizes = new Set<string>();
+  for (const variant of product.variants) {
+    const ml = variantMl(variant.title);
+    if (ml == null) continue;
+    if (ml >= 5 && ml <= 10) sizes.add("travel");
+    if (ml > 10 && ml < 100) sizes.add("medium");
+    if (ml >= 100) sizes.add("large");
+  }
+  return sizes;
+}
+
+export function productDiscountBucket(product: Product) {
+  const match = product.discountLabel?.match(/(\d+)/);
+  const percent = match ? Number(match[1]) : product.onSale ? 10 : null;
+  if (percent == null) return null;
+  const buckets = [10, 20, 30, 40, 50, 60, 70];
+  return buckets.find((bucket) => percent >= bucket && percent < bucket + 10) ?? (percent >= 70 ? 70 : null);
+}
+
 export function filterProducts(
   products: Product[],
   opts: {
     gender?: string | string[];
     brand?: string | string[];
     note?: string | string[];
+    size?: string | string[];
+    discount?: string | string[];
     sale?: boolean;
     isNew?: boolean;
     featured?: boolean;
@@ -122,6 +120,8 @@ export function filterProducts(
   const genders = asList(opts.gender).filter((g) => g !== "all");
   const brands = asList(opts.brand);
   const notes = asList(opts.note);
+  const sizes = asList(opts.size);
+  const discounts = asList(opts.discount);
 
   let list = products.filter((p) => {
     if (
@@ -140,6 +140,11 @@ export function filterProducts(
       )
     ) {
       return false;
+    }
+    if (sizes.length && !sizes.some((size) => productSizeKeys(p).has(size))) return false;
+    if (discounts.length) {
+      const bucket = productDiscountBucket(p);
+      if (bucket == null || !discounts.includes(String(bucket))) return false;
     }
     if (opts.sale && !p.onSale) return false;
     if (opts.isNew && !p.isNew) return false;

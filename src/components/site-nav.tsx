@@ -28,8 +28,8 @@ export function SiteNav({
       }
     >
       <div
-        className={`mx-auto flex max-w-[1350px] items-center justify-center gap-3 overflow-x-auto px-3 py-4 text-[15px] font-serif font-bold uppercase tracking-wide md:gap-[70px] md:px-8 md:py-7 md:text-[18px] ${
-          overlay ? "text-white" : "text-black"
+        className={`mx-auto flex max-w-[1350px] items-center justify-center gap-3 overflow-x-auto px-3 text-[15px] font-serif font-bold uppercase tracking-wide md:gap-[70px] md:px-8 md:text-[18px] ${
+          overlay ? "bg-transparent py-6 text-white" : "bg-white py-4 text-black md:py-7"
         }`}
       >
         {NAV.map((key) => {

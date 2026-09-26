@@ -1,5 +1,6 @@
-import { PageEnd } from "@/components/page-end";
 import { localeFrom } from "@/lib/locale-params";
+import { redirect } from "next/navigation";
+import { path } from "@/lib/path";
 
 export default async function ContactPage({
   params,
@@ -7,6 +8,5 @@ export default async function ContactPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = await localeFrom(params);
-
-  return <PageEnd locale={locale} />;
+  redirect(path(locale));
 }

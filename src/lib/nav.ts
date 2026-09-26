@@ -1,7 +1,7 @@
 import { path } from "./path";
 import type { Locale } from "./types";
 
-export const NAV = ["home", "about", "brands", "perfumes", "blog", "sales"] as const;
+export const NAV = ["home", "about", "brands", "perfumes", "sales"] as const;
 export type NavKey = (typeof NAV)[number];
 
 export function hrefFor(locale: Locale, key: NavKey) {

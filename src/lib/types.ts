@@ -43,15 +43,6 @@ export type Product = {
   timeOfDay: StatBar[];
 };
 
-export type Article = {
-  handle: string;
-  title: string;
-  excerpt: string;
-  date: string;
-  image?: string;
-  body: string;
-};
-
 export type Testimonial = {
   name: string;
   product: string;

@@ -12,21 +12,24 @@ const LOCALES: { code: Locale; label: string }[] = [
 function Flag({ locale }: { locale: Locale }) {
   if (locale === "hy") {
     return (
-      <svg width="20" height="14" viewBox="0 0 21 14" aria-hidden className="overflow-hidden">
-        <rect width="21" height="14" fill="#D90012" />
-        <rect y="4.67" width="21" height="4.66" fill="#0033A0" />
-        <rect y="9.33" width="21" height="4.67" fill="#F2A800" />
+      <svg viewBox="0 0 22 16" aria-hidden className="h-4 w-[22px]">
+        <rect width="22" height="16" fill="#D90012" />
+        <rect y="5.34" width="22" height="5.32" fill="#0033A0" />
+        <rect y="10.66" width="22" height="5.34" fill="#F2A800" />
       </svg>
     );
   }
 
   return (
-    <svg width="20" height="14" viewBox="0 0 60 30" aria-hidden className="overflow-hidden">
-      <rect width="60" height="30" fill="#b22234" />
-      {Array.from({ length: 6 }, (_, i) => (
-        <rect key={i} y={(i * 2 + 1) * (30 / 13)} width="60" height={30 / 13} fill="#fff" />
-      ))}
-      <rect width="24" height={(7 * 30) / 13} fill="#3c3b6e" />
+    <svg viewBox="0 0 22 16" aria-hidden className="h-4 w-[22px]">
+      <rect width="22" height="16" fill="#b22234" />
+      <rect y="1.85" width="22" height="1.23" fill="#fff" />
+      <rect y="4.3" width="22" height="1.23" fill="#fff" />
+      <rect y="6.77" width="22" height="1.23" fill="#fff" />
+      <rect y="9.23" width="22" height="1.23" fill="#fff" />
+      <rect y="11.7" width="22" height="1.23" fill="#fff" />
+      <rect y="14.15" width="22" height="1.23" fill="#fff" />
+      <rect width="9.2" height="8.6" fill="#3c3b6e" />
     </svg>
   );
 }
@@ -54,9 +57,11 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         aria-haspopup="listbox"
         aria-label={current.label}
         onClick={() => setOpen((value) => !value)}
-        className="flex items-center transition-opacity hover:opacity-70"
+        className="inline-flex h-5 items-center md:h-[22px]"
       >
-        <Flag locale={locale} />
+        <span className="inline-flex overflow-hidden rounded-[2px] ring-1 ring-[#d8d0c4]">
+          <Flag locale={locale} />
+        </span>
       </button>
       {open ? (
         <>
@@ -79,9 +84,11 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
                     setOpen(false);
                     router.push(hrefFor(item.code));
                   }}
-                  className="p-0"
+                  className="inline-flex overflow-hidden rounded-[2px] ring-1 ring-[#d8d0c4]"
                 >
-                  <Flag locale={item.code} />
+                  <span className="inline-flex overflow-hidden rounded-[2px]">
+                    <Flag locale={item.code} />
+                  </span>
                 </button>
               </li>
             ))}

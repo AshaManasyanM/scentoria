@@ -1,6 +1,7 @@
 "use client";
 
-import { AUTH_EVENT, isLoggedIn, saveProfile } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, signInWithEmail, signInWithGoogle } from "@/lib/auth";
+import { requestGoogleProfile } from "@/lib/google-sign-in";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -41,6 +42,7 @@ export function AuthForm({
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
 
   useEffect(() => {
     const sync = () => {
@@ -65,8 +67,23 @@ export function AuthForm({
 
   function submit() {
     if (!email.trim()) return;
-    saveProfile({ name: name.trim(), email: email.trim() });
+    const result = signInWithEmail({ name, email, password });
+    if (!result.ok) {
+      setError(t.wrongPassword);
+      return;
+    }
     router.push(path(locale, "/account"));
+  }
+
+  async function continueWithGoogle() {
+    setError("");
+    try {
+      const profile = await requestGoogleProfile();
+      signInWithGoogle(profile);
+      router.push(path(locale, "/account"));
+    } catch {
+      setError(t.googleSignInFailed);
+    }
   }
 
   return (
@@ -91,12 +108,12 @@ export function AuthForm({
           >
             {isSignup ? (
               <label className={labelClass}>
-                {t.username}
+                {t.fullName}
                 <input
                   required
                   value={name}
                   onChange={(event) => setName(event.target.value)}
-                  placeholder={t.username}
+                  placeholder={t.enterFullName}
                   className={fieldClass}
                 />
               </label>
@@ -131,9 +148,10 @@ export function AuthForm({
                 {t.forgotPassword}
               </Link>
             ) : null}
+            {error ? <p className="text-sm text-sale">{error}</p> : null}
             <button
               type="submit"
-              className="h-11 w-full rounded-[10px] bg-gold-2 font-[family-name:var(--font-tommy)] text-sm font-medium text-white hover:bg-gold"
+              className="btn-green w-full"
             >
               {isSignup ? t.signUp : t.signIn}
             </button>
@@ -152,6 +170,7 @@ export function AuthForm({
               <button
                 type="button"
                 aria-label="Sign in with Google"
+                onClick={() => void continueWithGoogle()}
                 className="inline-flex h-10 items-center gap-2 rounded-[4px] bg-[#DB4437] px-2 font-[family-name:var(--font-tommy)] text-sm text-white"
               >
                 {t.google}

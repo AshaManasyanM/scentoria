@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useWishlist } from "@/components/wishlist-provider";
 import { formatPriceRange } from "@/lib/format";
+import { showWishlistNotice } from "@/lib/wishlist-notice";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale, Product } from "@/lib/types";
@@ -16,7 +17,7 @@ export function ProductCard({
 }: {
   product: Product;
   locale: Locale;
-  variant?: "grid" | "slider";
+  variant?: "grid" | "slider" | "feature" | "catalog";
 }) {
   const t = getDict(locale);
   const img = product.images[0];
@@ -25,6 +26,25 @@ export function ProductCard({
   useEffect(() => setReady(true), []);
   const saved = ready && has(product.handle);
   const slider = variant === "slider";
+  const feature = variant === "feature";
+  const catalog = variant === "catalog";
+
+  function onHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
+    const adding = !saved;
+    toggle({
+      handle: product.handle,
+      title: product.title,
+      brand: product.brand,
+      image: img?.url,
+    });
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      event.currentTarget.animate(
+        [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
+        { duration: 320, easing: "ease" },
+      );
+    }
+    if (adding) showWishlistNotice(t.addedToWishlist);
+  }
 
   const badges = (
     <div className="absolute left-2 top-2 z-[1] flex flex-col items-start gap-1.5">
@@ -50,17 +70,10 @@ export function ProductCard({
     <button
       type="button"
       aria-label={t.wishlist}
-      onClick={() =>
-        toggle({
-          handle: product.handle,
-          title: product.title,
-          brand: product.brand,
-          image: img?.url,
-        })
-      }
-      className={
+      onClick={onHeartClick}
+          className={
         slider
-          ? "flex h-6 w-6 shrink-0 items-center justify-center text-fg md:h-9 md:w-9"
+          ? "flex h-8 w-8 items-center justify-center text-[#f7f2ea]"
           : "absolute right-5 top-5 z-10 rounded-full bg-white/90 p-1.5"
       }
     >
@@ -80,12 +93,122 @@ export function ProductCard({
     </button>
   );
 
-  if (slider) {
+  if (catalog) {
     return (
-      <div className="relative flex h-full w-full flex-col gap-[5px] rounded-[14px] bg-[#eee2d8] p-1.5 text-left md:rounded-[18px] md:p-2">
+      <div className="flex h-full flex-col overflow-hidden rounded-md border border-[#D8D0C4] bg-[#F7F2EA] text-[#083534]">
+        <Link href={path(locale, `/products/${product.handle}`)} className="relative block aspect-square overflow-hidden bg-white">
+          {img ? (
+            <Image src={img.url} alt={img.alt} fill sizes="220px" className="object-cover" />
+          ) : (
+            <div className="flex h-full items-center justify-center text-sm text-[#083534]/50">Scentoria</div>
+          )}
+        </Link>
+        <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
+          <h3 className="line-clamp-2 font-serif text-base font-medium leading-5">
+            {product.brand} {product.title}
+          </h3>
+          <div className="mt-auto pt-3">
+            <p className="text-xs tracking-[0.08em] text-[#c5a059]">
+              ★★★★★ <span className="tracking-normal text-[#083534]/70">({product.reviewCount})</span>
+            </p>
+            <div className="mt-1 flex items-center justify-between gap-2">
+              <p className="text-sm">{formatPriceRange(product.minPrice, product.maxPrice, locale)}</p>
+              <button
+                type="button"
+                aria-label={t.wishlist}
+                onClick={onHeartClick}
+                className="shrink-0"
+              >
+                <svg width="18" height="16" viewBox="0 0 25 22" fill="none" aria-hidden>
+                  <path
+                    d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
+                    fill={saved ? "#c5a059" : "#083534"}
+                  />
+                </svg>
+              </button>
+            </div>
+            <div className="mt-3 flex justify-center">
+              <Link
+                href={path(locale, `/products/${product.handle}`)}
+                className="inline-flex rounded-[2px] bg-[#c5a059] px-3 py-1.5 text-xs font-semibold text-[#083534]"
+              >
+                {t.viewProduct}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (feature) {
+    return (
+      <div className="flex h-full w-full flex-col text-left text-[#f7f2ea]">
         <Link
           href={path(locale, `/products/${product.handle}`)}
-          className="relative block h-[118px] overflow-hidden rounded-[8px] bg-white md:h-[270px] md:rounded-[10px]"
+          className="relative block aspect-square overflow-hidden"
+        >
+          {img ? (
+            <Image
+              src={img.url}
+              alt={img.alt}
+              fill
+              sizes="260px"
+              className="object-cover"
+            />
+          ) : (
+            <div className="flex h-full items-center justify-center bg-[#0e4544] text-[#f7f2ea]/70">
+              Scentoria
+            </div>
+          )}
+        </Link>
+        <div className="flex flex-1 flex-col bg-[#284747] px-3 pb-4 pt-3 md:px-4 md:pb-5 md:pt-4">
+          <h3 className="font-serif text-lg font-medium leading-6 md:min-h-14 md:text-[22px] md:leading-7">
+            {product.brand} {product.title}
+          </h3>
+          <div className="mt-3 flex items-center justify-between gap-3">
+            <div>
+              <p className="text-xs tracking-[0.08em] text-[#c5a059] md:text-sm md:tracking-[0.12em]">
+                ★★★★★{" "}
+                <span className="tracking-normal text-[#f7f2ea]/80">({product.reviewCount})</span>
+              </p>
+              <p className="mt-1 text-sm text-[#f7f2ea] md:text-[15px]">
+                {formatPriceRange(product.minPrice, product.maxPrice, locale)}
+              </p>
+            </div>
+            <button
+              type="button"
+              aria-label={t.wishlist}
+              onClick={onHeartClick}
+              className="shrink-0"
+            >
+              <svg width="25" height="22" viewBox="0 0 25 22" fill="none" aria-hidden>
+                <path
+                  d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
+                  fill={saved ? "#c5a059" : "#F5F5F5"}
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-auto flex justify-center pt-4">
+            <Link
+              href={path(locale, `/products/${product.handle}`)}
+              className="inline-flex rounded-[2px] bg-[#c5a059] px-5 py-[6.5px] text-sm font-semibold text-[#083534]"
+            >
+              {t.viewProduct}
+            </Link>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (slider) {
+    return (
+      <div className="relative flex h-full w-full flex-col overflow-hidden rounded-xl border border-white/20 bg-white/5 text-left text-[#f7f2ea]">
+        <Link
+          href={path(locale, `/products/${product.handle}`)}
+          className="relative block aspect-square overflow-hidden bg-[#083534]"
         >
           {img ? (
             <Image
@@ -93,34 +216,29 @@ export function ProductCard({
               alt={img.alt}
               fill
               sizes="(max-width: 768px) 50vw, 300px"
-              className="object-contain p-2 md:p-5"
+              className="object-cover"
             />
           ) : (
             <div className="flex h-full items-center justify-center text-muted">Scentoria</div>
           )}
           {badges}
         </Link>
-        <div className="mt-0.5 flex min-w-0 flex-col gap-0 md:mt-2 md:gap-0.5">
-          <p className="truncate font-[family-name:var(--font-tommy)] text-[12px] font-normal leading-4 md:text-[18px] md:leading-[26px]">
-            {product.brand}
+        <span className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#083534]/55">
+          {heart}
+        </span>
+        <div className="flex flex-1 flex-col p-4">
+          <h3 className="font-serif text-xl font-medium leading-7">
+            {product.brand} {product.title}
+          </h3>
+          <p className="mt-1.5 text-sm tracking-[0.12em] text-[#c5a059]">
+            ★★★★★ <span className="tracking-normal text-[#f7f2ea]/70">({product.reviewCount})</span>
           </p>
-          <p className="line-clamp-2 font-[family-name:var(--font-tommy)] text-[12px] font-normal leading-4 md:text-[17px] md:leading-6">
-            {product.title}
-          </p>
-        </div>
-        <p className="font-[family-name:var(--font-tommy)] text-[11px] leading-4 text-fg md:mt-1 md:text-[14px] md:leading-[21px]">
-          ★★★★★ <span>({product.reviewCount})</span>
-        </p>
-        <div className="flex items-start justify-between gap-1 md:mt-1">
-          <p className="min-w-0 break-words font-[family-name:var(--font-tommy)] text-[11px] font-medium leading-4 md:text-base md:leading-[26px]">
+          <p className="mt-2 text-lg font-semibold text-[#c5a059]">
             {formatPriceRange(product.minPrice, product.maxPrice, locale)}
           </p>
-          {heart}
-        </div>
-        <div className="flex justify-center md:pt-2">
           <Link
             href={path(locale, `/products/${product.handle}`)}
-            className="flex h-8 w-full items-center justify-center rounded-[8px] bg-gold px-1.5 text-center font-[family-name:var(--font-tommy)] text-[10px] font-medium uppercase leading-tight text-white hover:bg-gold-2 md:h-[50px] md:rounded-[14px] md:px-4 md:text-[17px]"
+            className="btn-green mt-3.5 w-full"
           >
             {t.viewPerfume}
           </Link>

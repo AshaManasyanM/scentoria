@@ -1,4 +1,4 @@
-import type { Article, Product, StatBar, Testimonial } from "../types";
+import type { Product, StatBar, Testimonial } from "../types";
 
 export const defaultLongevity: StatBar[] = [
   { label: "Weak", value: 5 },
@@ -234,33 +234,6 @@ export const mockProducts: Product[] = [
     isNew: false,
     onSale: true,
     discountLabel: "10%+",
-  },
-];
-
-export const mockArticles: Article[] = [
-  {
-    handle: "summer-hits-2026",
-    title: "Summer perfume hits: fragrances defining the season",
-    excerpt:
-      "Fresh, clean, and luminous compositions for heat, travel, and long evenings. Our edit of the scents people keep reaching for.",
-    date: "2026-07-24",
-    image: img("photo-1490481651871-ab68de25d43d"),
-    body: "Summer is the season of lightness, travel, and unforgettable moments. During the warmer months, fragrances reveal their character in a unique way, making the choice of perfume more important than ever.\n\nFresh citrus, clean musks, and airy florals take center stage. We recommend starting with a 5 or 10 ml decant so you can live with a scent in heat before you commit to a full bottle.",
-  },
-  {
-    handle: "long-lasting-womens",
-    title: "Long-lasting women's perfumes with real sillage",
-    excerpt:
-      "High concentration, rich bases, and projection that lasts from morning coffee to midnight.",
-    date: "2026-04-20",
-    body: "If you want a fragrance that lasts, look at concentration (EDP and extrait), a rich base of woods, amber, or musk, and how it behaves on your skin. Decants are the honest way to test longevity before buying a full bottle at Scentoria.",
-  },
-  {
-    handle: "mens-compliments",
-    title: "Men's fragrances that actually get compliments",
-    excerpt: "Everyday wear, dates, and formal nights — what works in 2026.",
-    date: "2026-03-26",
-    body: "Compliment-getting scents are rarely the loudest. Fresh woods, polished tobacco, and clean citrus with a warm dry-down tend to work for daily wear, dates, and evenings. Try a decant, then choose the size that fits how often you wear it.",
   },
 ];
 

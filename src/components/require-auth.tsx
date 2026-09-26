@@ -23,7 +23,7 @@ export function RequireAuth({
         return;
       }
       setAllowed(false);
-      router.replace(path(locale));
+      router.replace(path(locale, "/login"));
     };
     sync();
     window.addEventListener(AUTH_EVENT, sync);

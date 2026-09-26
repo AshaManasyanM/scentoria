@@ -39,7 +39,7 @@ export function AddToCart({ product, locale }: { product: Product; locale: Local
       <button
         type="button"
         onClick={() => addItem(selected.id)}
-        className="btn-green w-full rounded-full"
+        className="btn-green w-full"
       >
         {t.addToCart}
       </button>

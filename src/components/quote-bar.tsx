@@ -8,7 +8,7 @@ const quotes = [
 export function QuoteBar() {
   const line = quotes.join("     •     ") + "     •     ";
   return (
-    <div className="flex h-[28px] items-center overflow-hidden bg-black text-white">
+    <div className="flex h-8 items-center overflow-hidden bg-[#083534] text-[#f7f2ea]">
       <div className="flex w-max animate-[scentoria-marquee_40s_linear_infinite]">
         <p className="whitespace-nowrap px-8 font-serif text-[16px] leading-none">{line}</p>
         <p className="whitespace-nowrap px-8 font-serif text-[16px] leading-none">{line}</p>

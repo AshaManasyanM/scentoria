@@ -19,9 +19,11 @@ const chevronNext = (
 export function ProductSlider({
   products,
   locale,
+  variant = "slider",
 }: {
   products: Product[];
   locale: Locale;
+  variant?: "slider" | "feature";
 }) {
   const t = getDict(locale);
   const uid = useId().replace(/:/g, "");
@@ -31,8 +33,8 @@ export function ProductSlider({
   }
 
   return (
-    <div className="product-slider-nav relative w-full">
-      <div className="product-slider mx-auto w-full max-w-[1350px]">
+    <div className={`product-slider-nav relative w-full ${variant === "feature" ? "product-slider-nav--feature" : ""}`}>
+      <div className={`product-slider mx-auto w-full max-w-[1350px] ${variant === "feature" ? "product-slider--feature" : ""}`}>
         <Swiper
           modules={[Navigation, Pagination]}
           navigation={{
@@ -44,42 +46,54 @@ export function ProductSlider({
             clickable: true,
           }}
           watchOverflow
-          slidesPerView={2}
-          spaceBetween={10}
+          slidesPerView={variant === "feature" ? "auto" : 2}
+          spaceBetween={variant === "feature" ? 14 : 10}
           breakpoints={{
             768: {
               slidesPerView: "auto",
-              spaceBetween: 48,
+              spaceBetween: variant === "feature" ? 14 : 48,
             },
           }}
         >
           {products.map((product) => (
             <SwiperSlide key={product.id}>
-              <ProductCard product={product} locale={locale} variant="slider" />
+              <ProductCard product={product} locale={locale} variant={variant} />
             </SwiperSlide>
           ))}
         </Swiper>
         <div
-          className={`product-slider-pag product-slider-pag-${uid} md:hidden`}
+          className={`product-slider-pag product-slider-pag-${uid} min-[1280px]:hidden`}
         />
       </div>
       <button
         type="button"
         aria-label="Previous"
-        className={`product-slider-prev product-slider-prev-${uid} max-md:hidden`}
+        className={`product-slider-prev product-slider-prev-${uid} max-[1279px]:hidden`}
       >
-        <svg viewBox="0 0 512 512" aria-hidden>
-          {chevronPrev}
-        </svg>
+        {variant === "feature" ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+            <path d="M15 5 8 12l7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 512 512" aria-hidden>
+            {chevronPrev}
+          </svg>
+        )}
       </button>
       <button
         type="button"
         aria-label="Next"
-        className={`product-slider-next product-slider-next-${uid} max-md:hidden`}
+        className={`product-slider-next product-slider-next-${uid} max-[1279px]:hidden`}
       >
-        <svg viewBox="0 0 512 512" aria-hidden>
-          {chevronNext}
-        </svg>
+        {variant === "feature" ? (
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+            <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        ) : (
+          <svg viewBox="0 0 512 512" aria-hidden>
+            {chevronNext}
+          </svg>
+        )}
       </button>
     </div>
   );

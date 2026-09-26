@@ -47,21 +47,6 @@ export const SEARCH_QUERY = `
   }
 `;
 
-export const ARTICLES_QUERY = `
-  query Articles {
-    articles(first: 12, sortKey: PUBLISHED_AT, reverse: true) {
-      nodes {
-        handle
-        title
-        excerpt
-        content
-        publishedAt
-        image { url }
-      }
-    }
-  }
-`;
-
 export const CART_CREATE = `
   mutation CartCreate($lines: [CartLineInput!]) {
     cartCreate(input: { lines: $lines }) {

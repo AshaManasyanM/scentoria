@@ -5,12 +5,31 @@ export function NoteTile({
   image,
   label,
   className = "",
+  variant = "default",
 }: {
   href: string;
   image: string;
   label: string;
   className?: string;
+  variant?: "default" | "home";
 }) {
+  if (variant === "home") {
+    return (
+      <Link
+        href={href}
+        className={`relative flex h-[148px] flex-col justify-end overflow-hidden rounded-md p-3 text-[#f7f2ea] md:h-[180px] md:p-5 ${className}`}
+        style={{
+          backgroundColor: "#083534",
+          backgroundImage: `linear-gradient(180deg, rgba(8,53,52,0.55), rgba(8,53,52,0.62)), url("${image}")`,
+          backgroundSize: "cover",
+          backgroundPosition: "center",
+        }}
+      >
+        <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{label}</p>
+        <p className="mt-1 font-serif text-xl font-medium leading-none md:mt-2 md:text-[clamp(26px,2vw,32px)]">{label}</p>
+      </Link>
+    );
+  }
   return (
     <Link
       href={href}

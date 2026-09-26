@@ -1,5 +1,4 @@
 import { AddToCart } from "@/components/add-to-cart";
-import { PageEnd } from "@/components/page-end";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductGrid } from "@/components/product-grid";
 import { SectionHeading } from "@/components/section-heading";
@@ -9,7 +8,7 @@ import { formatPriceRange } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
-import { brandHandle, getCatalog, getProduct } from "@/lib/shopify/catalog";
+import { getCatalog, getProduct } from "@/lib/shopify/catalog";
 import { notFound } from "next/navigation";
 import Link from "next/link";
 
@@ -34,7 +33,7 @@ export default async function ProductPage({
         <ProductGallery product={product} />
         <div>
           <Link
-            href={path(locale, `/brands/${brandHandle(product.brand)}`)}
+            href={path(locale, `/products?brand=${encodeURIComponent(product.brand)}`)}
             className="text-xs uppercase tracking-[0.2em] text-gold"
           >
             {t.allBrand.replace("{brand}", product.brand)}
@@ -94,7 +93,6 @@ export default async function ProductPage({
         </div>
       ) : null}
 
-      <PageEnd locale={locale} />
     </>
   );
 }

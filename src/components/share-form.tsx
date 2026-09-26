@@ -2,101 +2,77 @@ import { getDict } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
 
 const fieldClass =
-  "mt-1 block h-10 w-full rounded-[4px] border border-line bg-white px-3 text-sm text-fg outline-none";
+  "mt-2 block h-11 w-full rounded-sm border border-[#f7f2ea] bg-[#f7f2ea] px-3 text-sm text-[#083534] outline-none placeholder:text-[#083534]/45";
 
 export function ShareForm({ locale }: { locale: Locale }) {
   const t = getDict(locale);
 
   return (
-    <section className="mx-auto bg-gold-2 px-4 py-10 text-white md:min-h-[850px] md:px-[5px]">
-      <div className="mt-2 mb-4 flex flex-col items-center gap-0.5 text-center md:mb-10">
-        <h2 className="font-serif text-[clamp(28px,5.56vw,48px)] font-medium leading-tight sm:leading-[1.2] md:leading-tight">
-          {t.shareTitle}
-        </h2>
-        <p className="mb-2 max-w-[900px] px-2.5 text-[clamp(14px,3.4vw,22px)] leading-relaxed tracking-[0.25px] md:mb-6 md:px-[30px]">
-          {t.shareDescription}
-        </p>
-      </div>
-
-      <form
-        action="mailto:hello@scentoria.am"
-        method="get"
-        className="mb-5 mt-[15px] flex min-h-[250px] flex-col gap-6 px-5 sm:px-[50px] md:mt-[67px] md:mb-0 md:min-h-[500px] md:gap-10 lg:flex-row xl:px-[115px]"
-      >
-        <div className="flex flex-1 items-stretch">
-          <div className="relative h-[300px] w-full overflow-hidden rounded-[20px] md:h-[85%]">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/hero/05.webp"
-              alt=""
-              className="absolute inset-0 h-full w-full object-cover"
-            />
-          </div>
+    <section className="bg-[#c5a059] px-4 py-10 text-[#083534] md:px-8 md:py-20">
+      <div className="mx-auto grid max-w-[1280px] items-start gap-12 md:grid-cols-[0.85fr_1.15fr] md:gap-16">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.18em]">• {t.contact}</p>
+          <h2 className="mt-6 font-serif text-[32px] font-medium leading-[1.1] sm:text-[clamp(40px,4.5vw,56px)]">
+            {t.shareTitle.split("\n").map((line, index) => (
+              <span key={line} className={index === 0 ? "block sm:whitespace-nowrap" : "block"}>
+                {line}
+              </span>
+            ))}
+          </h2>
+          <p className="mt-8 max-w-md text-[15px] leading-7">{t.shareDescription}</p>
+          <a href="mailto:hello@scentoria.am" className="mt-8 flex items-center gap-3 text-sm">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+              <rect x="3" y="5" width="18" height="14" rx="1.5" />
+              <path d="m4 7 8 6 8-6" />
+            </svg>
+            hello@scentoria.am
+          </a>
+          <a href="tel:+37400000000" className="mt-3 flex items-center gap-3 text-sm">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+              <path d="M7 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6L17 13l4 1.5V18a2 2 0 0 1-2 2A15 15 0 0 1 4 5a2 2 0 0 1 2-2Z" />
+            </svg>
+            +374 00 000 000
+          </a>
         </div>
 
-        <div className="flex w-auto flex-1 flex-col justify-between">
-          <div className="flex h-full flex-col gap-6">
-            <div className="flex flex-col gap-2.5 md:flex-row md:gap-[30px]">
-              <label className="block flex-1 text-[15px] font-normal md:text-lg">
-                {t.shareFullName}
-                <input
-                  name="fullName"
-                  type="text"
-                  required
-                  placeholder={t.shareFullNamePh}
-                  className={fieldClass}
-                />
-              </label>
-              <label className="block flex-1 text-[15px] font-normal md:text-lg">
-                {t.shareEmail}
-                <input
-                  name="email"
-                  type="email"
-                  required
-                  placeholder={t.shareEmailPh}
-                  className={fieldClass}
-                />
-              </label>
-            </div>
-            <div className="flex flex-col gap-2.5 md:flex-row md:gap-[30px]">
-              <label className="block flex-1 text-[15px] font-normal md:text-lg">
-                {t.shareSubject}
-                <input
-                  name="subject"
-                  type="text"
-                  required
-                  placeholder={t.shareSubjectPh}
-                  className={fieldClass}
-                />
-              </label>
-              <label className="block flex-1 text-[15px] font-normal md:text-lg">
-                {t.sharePhone}
-                <input
-                  name="phone"
-                  type="tel"
-                  placeholder={t.sharePhonePh}
-                  className={fieldClass}
-                />
-              </label>
-            </div>
-            <label className="block text-[15px] font-normal md:text-lg">
-              {t.shareDetails}
-              <textarea
-                name="details"
-                rows={3}
-                placeholder={t.shareDetailsPh}
-                className="mt-1 block min-h-[58px] w-full rounded-[4px] border border-line bg-white px-3 py-2 text-sm text-fg outline-none"
-              />
+        <form action="mailto:hello@scentoria.am" method="get" className="grid gap-5">
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
+              {t.shareFullName}
+              <input name="fullName" type="text" required placeholder={t.shareFullNamePh} className={fieldClass} />
             </label>
-            <button
-              type="submit"
-              className="h-[49px] w-full rounded-lg bg-white text-sm font-medium text-gold hover:bg-nav md:w-[255px]"
-            >
-              {t.shareSubmit}
-            </button>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
+              {t.shareEmail}
+              <input name="email" type="email" required placeholder={t.shareEmailPh} className={fieldClass} />
+            </label>
           </div>
-        </div>
-      </form>
+          <div className="grid gap-5 sm:grid-cols-2">
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
+              {t.shareSubject}
+              <input name="subject" type="text" required placeholder={t.shareSubjectPh} className={fieldClass} />
+            </label>
+            <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
+              {t.sharePhone}
+              <input name="phone" type="tel" placeholder={t.sharePhonePh} className={fieldClass} />
+            </label>
+          </div>
+          <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
+            {t.shareDetails}
+            <textarea
+              name="details"
+              rows={6}
+              placeholder={t.shareDetailsPh}
+              className={`${fieldClass} h-auto min-h-[140px] py-3`}
+            />
+          </label>
+          <button
+            type="submit"
+            className="mt-1 inline-flex w-fit rounded-[2px] bg-[#083534] px-8 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f2ea]"
+          >
+            {t.shareSubmit}
+          </button>
+        </form>
+      </div>
     </section>
   );
 }

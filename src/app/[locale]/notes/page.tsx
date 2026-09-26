@@ -1,5 +1,4 @@
 import { NoteTile } from "@/components/note-tile";
-import { PageEnd } from "@/components/page-end";
 import { PageHero } from "@/components/page-hero";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
@@ -29,7 +28,6 @@ export default async function NotesPage({
           ))}
         </div>
       </div>
-      <PageEnd locale={locale} />
     </>
   );
 }

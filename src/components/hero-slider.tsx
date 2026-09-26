@@ -56,7 +56,7 @@ export function HeroSlider({
           ))}
         </div>
       ) : null}
-      <div className="absolute inset-x-0 top-0 z-20 hidden md:block">
+      <div className="absolute inset-x-0 top-0 z-30 hidden md:block">
         <SiteNav locale={locale} variant="overlay" />
       </div>
     </section>
