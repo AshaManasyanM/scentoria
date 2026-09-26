@@ -16,13 +16,15 @@ export function ForgotForm({ locale }: { locale: Locale }) {
   const [sent, setSent] = useState(false);
 
   useEffect(() => {
-    void refreshSession().then(() => {
-      if (isLoggedIn()) {
-        router.replace(path(locale, "/account"));
-        return;
-      }
-      setReady(true);
-    });
+    void refreshSession()
+      .catch(() => null)
+      .then(() => {
+        if (isLoggedIn()) {
+          router.replace(path(locale, "/account"));
+          return;
+        }
+        setReady(true);
+      });
     const sync = () => {
       if (isLoggedIn()) router.replace(path(locale, "/account"));
     };
@@ -33,55 +35,53 @@ export function ForgotForm({ locale }: { locale: Locale }) {
   if (!ready) return null;
 
   return (
-    <div className="flex justify-center px-4 py-[75px]">
-      <div
-        className="w-full max-w-[448px] rounded-lg bg-white p-6"
-        style={{
-          boxShadow:
-            "rgba(24, 24, 27, 0.1) 0px 4px 8px 0px, rgba(24, 24, 27, 0.3) 0px 0px 1px 0px",
-        }}
-      >
-        <div className="px-6">
-          <h1 className="text-center font-serif text-[30px] font-semibold leading-none text-zinc-700">
+    <section className="bg-[#f7f2ea] px-4 py-12 md:px-8 md:py-20">
+      <div className="mx-auto grid max-w-[1080px] items-start gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
+        <div className="md:pt-8">
+          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.account}</p>
+          <h1 className="mt-4 font-serif text-[32px] font-medium leading-[1.15] text-[#083534] md:text-[clamp(40px,4vw,52px)]">
             {t.forgotPassword}
           </h1>
-          <form
-            className="mt-6 space-y-4"
-            onSubmit={(event) => {
-              event.preventDefault();
-              if (!email.trim()) return;
-              setSent(true);
-            }}
-          >
-            <label className="block font-[family-name:var(--font-tommy)] text-sm font-medium text-fg">
-              {t.yourEmail}
-              <input
-                required
-                type="email"
-                value={email}
-                onChange={(event) => setEmail(event.target.value)}
-                placeholder={t.enterEmail}
-                className="mt-1 h-10 w-full rounded-[4px] border-0 border-b border-line bg-white px-3 text-sm font-[family-name:var(--font-tommy)] text-fg outline-none placeholder:text-zinc-400 focus:border-gold"
-              />
-            </label>
-            <button
-              type="submit"
-              className="btn-green w-full"
-            >
-              {t.send}
-            </button>
-          </form>
-          {sent ? (
-            <p className="mt-4 font-[family-name:var(--font-tommy)] text-sm text-gold">{t.changesSaved}</p>
-          ) : null}
-          <Link
-            href={path(locale, "/login")}
-            className="mt-6 inline-block text-sm font-medium text-[#3b82f6]"
-          >
-            {t.loginTitle}
-          </Link>
+          <p className="mt-4 max-w-md text-[15px] leading-7 text-[#083534]/80">{t.accountDashboardHint}</p>
         </div>
+
+        <form
+          className="rounded-md border border-[#d8d0c4] bg-white p-6 md:p-8"
+          onSubmit={(event) => {
+            event.preventDefault();
+            if (!email.trim()) return;
+            setSent(true);
+          }}
+        >
+          <label className="block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#083534]">
+            {t.yourEmail}
+            <input
+              required
+              type="email"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
+              placeholder={t.enterEmail}
+              autoComplete="email"
+              className="mt-2 h-11 w-full rounded-sm border border-[#d8d0c4] bg-[#f7f2ea] px-3 text-sm text-[#083534] outline-none placeholder:text-[#083534]/45 focus:border-[#c5a059]"
+            />
+          </label>
+          <button
+            type="submit"
+            className="mt-6 inline-flex w-full items-center justify-center rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
+          >
+            {t.send}
+          </button>
+          {sent ? <p className="mt-4 text-sm text-[#083534]">{t.changesSaved}</p> : null}
+          <p className="mt-6 text-sm leading-6 text-[#083534]/80">
+            <Link
+              href={path(locale, "/login")}
+              className="font-semibold text-[#083534] underline decoration-[#c5a059] underline-offset-4"
+            >
+              {t.loginTitle}
+            </Link>
+          </p>
+        </form>
       </div>
-    </div>
+    </section>
   );
 }

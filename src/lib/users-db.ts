@@ -1,7 +1,7 @@
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
+import { createRequire } from "module";
 import fs from "fs";
 import path from "path";
-import Database from "better-sqlite3";
 
 export type StoredUser = {
   id: number;
@@ -21,15 +21,29 @@ type UserRow = {
   password_hash: string | null;
 };
 
-let db: Database.Database | null = null;
+type Statement = {
+  get(...params: unknown[]): unknown;
+  run(...params: unknown[]): { lastInsertRowid: number | bigint };
+};
+
+type SqliteDatabase = {
+  exec(sql: string): void;
+  prepare(sql: string): Statement;
+};
+
+const require = createRequire(path.join(process.cwd(), "package.json"));
+
+let db: SqliteDatabase | null = null;
 
 function database() {
   if (db) return db;
   const dir = path.join(process.cwd(), "data");
   fs.mkdirSync(dir, { recursive: true });
-  db = new Database(path.join(dir, "scentoria.sqlite"));
-  db.pragma("journal_mode = WAL");
-  db.exec(`
+  const { DatabaseSync } = require("node:sqlite") as {
+    DatabaseSync: new (filename: string) => SqliteDatabase;
+  };
+  const next = new DatabaseSync(path.join(dir, "scentoria.sqlite"));
+  next.exec(`
     CREATE TABLE IF NOT EXISTS users (
       id INTEGER PRIMARY KEY,
       email TEXT NOT NULL UNIQUE,
@@ -46,7 +60,8 @@ function database() {
       FOREIGN KEY (user_id) REFERENCES users(id)
     );
   `);
-  return db;
+  db = next;
+  return next;
 }
 
 function mapUser(row: UserRow): StoredUser {
@@ -101,12 +116,14 @@ export function createUser(input: {
   passwordHash?: string;
 }) {
   const email = input.email.trim().toLowerCase();
-  const result = database()
+  database()
     .prepare(
       "INSERT INTO users (email, name, image, provider, password_hash, created_at) VALUES (?, ?, ?, ?, ?, ?)",
     )
     .run(email, input.name.trim(), input.image ?? null, input.provider, input.passwordHash ?? null, new Date().toISOString());
-  return findUserByEmail(email) ?? { id: Number(result.lastInsertRowid), email, name: input.name.trim(), image: input.image ?? null, provider: input.provider, passwordHash: input.passwordHash ?? null };
+  const user = findUserByEmail(email);
+  if (!user) throw new Error("Could not save the account");
+  return user;
 }
 
 export function updateUser(
