@@ -39,7 +39,7 @@ export async function POST(request: Request) {
 
   const plan = googleLinkPlan({
     sub: identity.sub,
-    existingBySub: findUserByGoogleSub(identity.sub),
+    existingBySub: findUserByGoogleSub(identity.sub) ?? null,
     existingByEmail: findUserByEmail(identity.email) ?? null,
   });
   if (plan.action === "confirm") return NextResponse.json({ error: "link" }, { status: 409 });
