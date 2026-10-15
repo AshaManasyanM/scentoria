@@ -3,9 +3,9 @@ import { PageEnd } from "@/components/page-end";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
-import { popularBrands } from "@/lib/popular-brands";
-import { brandHandle, getCatalog, uniqueBrands } from "@/lib/shopify/catalog";
+import { getBrands, getCatalog, isSectionVisible } from "@/lib/shopify/catalog";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function BrandsPage({
   params,
@@ -13,20 +13,10 @@ export default async function BrandsPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = await localeFrom(params);
+  if (!(await isSectionVisible("brands"))) redirect(`/${locale}`);
   const t = getDict(locale);
-  const { products, source } = await getCatalog();
-  const logos = new Map<string, string>(popularBrands.map((brand) => [brand.handle, brand.logo]));
-  const listed = new Set<string>(popularBrands.map((brand) => brand.handle));
-  const brands = [
-    ...popularBrands.map((brand) => ({
-      name: brand.name,
-      handle: brand.handle,
-      logo: brand.logo,
-    })),
-    ...uniqueBrands(products)
-      .map((name) => ({ name, handle: brandHandle(name), logo: logos.get(brandHandle(name)) }))
-      .filter((brand) => !listed.has(brand.handle)),
-  ];
+  const { source } = await getCatalog();
+  const brands = await getBrands();
 
   return (
     <>
@@ -59,7 +49,7 @@ export default async function BrandsPage({
                   <img
                     src={brand.logo}
                     alt={`${brand.name} perfume brand logo`}
-                    className="max-h-16 w-auto max-w-[70%] object-contain"
+                    className="w-auto max-w-[70%] object-contain"
                   />
                 ) : (
                   <span className="text-center font-serif text-xl font-medium text-[#083534] md:text-2xl">

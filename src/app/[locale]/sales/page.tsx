@@ -1,10 +1,12 @@
 import { CatalogBanner } from "@/components/catalog-banner";
+import { CatalogPagination } from "@/components/catalog-pagination";
 import { ProductFilters } from "@/components/product-filters";
 import { ProductGrid } from "@/components/product-grid";
+import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { filterProducts, getCatalog, uniqueBrands } from "@/lib/shopify/catalog";
-import { noteKeys } from "@/lib/shopify/mock";
+import { catalogFilterGroups, filterProducts, getCatalog, getNotes, getShopFilters, isSectionVisible, standardFilterFallback, uniqueBrands } from "@/lib/shopify/catalog";
+import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
 export default async function SalesPage({
@@ -20,14 +22,41 @@ export default async function SalesPage({
     discount?: string | string[];
     sort?: string;
     new?: string;
+    page?: string;
   }>;
 }) {
   const locale = await localeFrom(params);
+  if (!(await isSectionVisible("sale"))) redirect(`/${locale}`);
   const query = await searchParams;
   const t = getDict(locale);
   const { products, source } = await getCatalog();
   const saleProducts = filterProducts(products, { sale: true });
   const brands = uniqueBrands(saleProducts);
+  const notes = (await getNotes()).map((note) => ({
+    key: note.key,
+    label: note.label || (note.key in t.notes ? t.notes[note.key as keyof typeof t.notes] : note.key),
+  }));
+  const shopFilters = await getShopFilters();
+  const groups = catalogFilterGroups(
+    shopFilters,
+    {
+      brand: t.filterBrand,
+      note: t.filterNote,
+      gender: t.filterGender,
+      size: t.size,
+      discount: t.filterDiscount,
+    },
+    standardFilterFallback({
+      brands,
+      notes,
+      men: t.men,
+      women: t.women,
+      unisex: t.unisex,
+      sizeTravel: t.sizeTravel,
+      sizeMedium: t.sizeMedium,
+      sizeLarge: t.sizeLarge,
+    }),
+  );
   const list = filterProducts(products, {
     gender: query.gender,
     note: query.note,
@@ -38,6 +67,8 @@ export default async function SalesPage({
     sort: query.sort,
     sale: true,
   });
+  const paging = catalogSlice(list, query.page);
+  if (paging.needsRedirect) redirect(catalogHref(locale, "/sales", query, paging.page));
 
   return (
     <>
@@ -56,13 +87,20 @@ export default async function SalesPage({
       </section>
       <CatalogBanner locale={locale} source={source} />
 
-      <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
+      <section id="catalog" className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
         <div className="mx-auto flex max-w-[1320px] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <Suspense fallback={null}>
-            <ProductFilters locale={locale} brands={brands} notes={[...noteKeys]} basePath="/sales" />
+            <ProductFilters locale={locale} groups={groups} basePath="/sales" />
           </Suspense>
           <div className="min-w-0 flex-1">
-            <ProductGrid products={list} locale={locale} variant="catalog" />
+            <ProductGrid products={paging.items} locale={locale} variant="catalog" />
+            <CatalogPagination
+              locale={locale}
+              page={paging.page}
+              totalPages={paging.totalPages}
+              basePath="/sales"
+              query={catalogQuery(query)}
+            />
           </div>
         </div>
       </section>

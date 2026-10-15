@@ -14,7 +14,7 @@ type CartContextValue = {
   cart: Cart;
   count: number;
   refresh: () => Promise<void>;
-  addItem: (merchandiseId: string, quantity?: number) => Promise<void>;
+  addItem: (merchandiseId: string, quantity?: number) => Promise<boolean>;
   updateQty: (lineId: string, quantity: number) => Promise<void>;
 };
 
@@ -43,7 +43,9 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
       });
       if (res.ok) {
         setCart(await res.json());
+        return true;
       }
+      return false;
     },
     [],
   );

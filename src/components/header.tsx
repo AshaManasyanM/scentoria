@@ -7,6 +7,7 @@ import { NAV, hrefFor } from "@/lib/nav";
 import { SiteNav } from "@/components/site-nav";
 import { useCart } from "./cart-provider";
 import { useWishlist } from "./wishlist-provider";
+import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
@@ -14,7 +15,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
-export function Header({ locale }: { locale: Locale }) {
+export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
   const pathname = usePathname();
   const router = useRouter();
@@ -22,6 +23,7 @@ export function Header({ locale }: { locale: Locale }) {
   const { items: wishlist } = useWishlist();
   const [menu, setMenu] = useState(false);
   const [q, setQ] = useState("");
+  const [loggedIn, setLoggedIn] = useState(false);
 
   const home = path(locale);
   const isHome = pathname === home || pathname === `${home}/`;
@@ -29,6 +31,13 @@ export function Header({ locale }: { locale: Locale }) {
   useEffect(() => {
     setMenu(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const sync = () => setLoggedIn(isLoggedIn());
+    void refreshSession().then(sync);
+    window.addEventListener(AUTH_EVENT, sync);
+    return () => window.removeEventListener(AUTH_EVENT, sync);
+  }, []);
 
   useEffect(() => {
     document.body.style.overflow = menu ? "hidden" : "";
@@ -97,7 +106,7 @@ export function Header({ locale }: { locale: Locale }) {
           </Link>
           <div className="flex items-center justify-end gap-3 text-[#143028] md:gap-5">
             <Link
-              href={path(locale, "/wishlist")}
+              href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}
               data-wishlist-target
               className="relative inline-flex"
@@ -118,7 +127,7 @@ export function Header({ locale }: { locale: Locale }) {
             </Link>
             <AccountMenu locale={locale} />
             <Link
-              href={path(locale, "/cart")}
+              href={path(locale, loggedIn ? "/cart" : "/login")}
               aria-label={t.cart}
               className="relative inline-flex transition-colors hover:text-[#c5a059]"
             >
@@ -137,7 +146,7 @@ export function Header({ locale }: { locale: Locale }) {
         </div>
         {isHome ? null : (
           <div className="hidden md:block">
-            <SiteNav locale={locale} />
+            <SiteNav locale={locale} hiddenNav={hiddenNav} />
           </div>
         )}
         <div
@@ -155,7 +164,7 @@ export function Header({ locale }: { locale: Locale }) {
                 />
               </form>
               <nav className="flex flex-col">
-                {NAV.map((key) => {
+                {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
                   const href = hrefFor(locale, key);
                   const active =
                     pathname === href || (key !== "home" && pathname.startsWith(href));

@@ -23,20 +23,18 @@ export function WishlistItems({
 
   return (
     <div>
-      <h1 className="font-serif text-[28px] font-medium text-[#083534] md:text-[32px]">{t.yourWishlist}</h1>
       {saved.length === 0 ? (
-        <div className="mt-8">
-          <p className="text-[15px] leading-7 text-[#083534]">{t.emptyWishlist}</p>
-          <p className="mt-2 max-w-md text-sm leading-6 text-[#083534]/70">{t.emptyWishlistHint}</p>
-          <Link
-            href={path(locale, "/products")}
-            className="mt-6 inline-flex rounded-[2px] bg-[#083534] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
-          >
-            {t.viewAllProducts}
+        <div className="flex min-h-[320px] flex-col items-center justify-center px-4 py-10 text-center">
+          <svg viewBox="0 0 24 24" className="h-14 w-14 text-[#9a9188]" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+            <path d="M12 20s-7-4.4-7-9.2C5 8 6.8 6.2 9.2 6.2c1.4 0 2.5.7 2.8 1.8.3-1.1 1.4-1.8 2.8-1.8C17.2 6.2 19 8 19 10.8 19 15.6 12 20 12 20z" />
+          </svg>
+          <h1 className="mt-5 text-lg font-medium text-[#111]">{t.emptyWishlist}</h1>
+          <Link href={path(locale, "/products")} className="mt-2 text-sm text-[#6b7280]">
+            {t.emptyWishlistHint}
           </Link>
         </div>
       ) : (
-        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-3">
+        <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2 xl:grid-cols-4">
           {saved.map((entry) => {
             const product = "minPrice" in entry ? entry : null;
             const handle = entry.handle;
@@ -46,7 +44,7 @@ export function WishlistItems({
             return (
               <article
                 key={handle}
-                className="flex w-full max-w-[280px] flex-col rounded-md border border-[#e6ddd2] bg-[#f6f1ea] p-3 text-[#083534]"
+                className="flex w-full flex-col rounded-md border border-[#e6ddd2] bg-[#f6f1ea] p-3 text-[#083534]"
               >
                 <Link href={path(locale, `/products/${handle}`)} className="relative block aspect-square overflow-hidden rounded-sm bg-white">
                   {product?.onSale ? (

@@ -42,6 +42,7 @@ function variant(
     id,
     title,
     available: true,
+    quantity: 8,
     price: money(amount),
   };
 }
@@ -49,7 +50,7 @@ function variant(
 function profile(notes: string[], accords?: string[]) {
   return {
     notes,
-    accords: accords ?? notes,
+    accords: (accords ?? notes).map((name) => ({ name, level: null })),
     longevity: defaultLongevity,
     season: defaultSeason,
     sillage: defaultSillage,

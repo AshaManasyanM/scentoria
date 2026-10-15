@@ -10,10 +10,12 @@ export function SiteNav({
   locale,
   variant = "default",
   onNavigate,
+  hiddenNav = [],
 }: {
   locale: Locale;
   variant?: "default" | "overlay";
   onNavigate?: () => void;
+  hiddenNav?: string[];
 }) {
   const t = getDict(locale);
   const pathname = usePathname();
@@ -32,7 +34,7 @@ export function SiteNav({
           overlay ? "bg-transparent py-6 text-white" : "bg-white py-4 text-black md:py-7"
         }`}
       >
-        {NAV.map((key) => {
+        {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
           const href = hrefFor(locale, key);
           const active = pathname === href || (key !== "home" && pathname.startsWith(href));
           const sales = key === "sales";

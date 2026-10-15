@@ -7,9 +7,11 @@ import { useEffect, useState } from "react";
 export function HeroSlider({
   images,
   locale,
+  hiddenNav = [],
 }: {
   images: { url: string; alt: string }[];
   locale: Locale;
+  hiddenNav?: string[];
 }) {
   const [index, setIndex] = useState(0);
   const slides = images.length ? images : [];
@@ -57,7 +59,7 @@ export function HeroSlider({
         </div>
       ) : null}
       <div className="absolute inset-x-0 top-0 z-30 hidden md:block">
-        <SiteNav locale={locale} variant="overlay" />
+        <SiteNav locale={locale} variant="overlay" hiddenNav={hiddenNav} />
       </div>
     </section>
   );

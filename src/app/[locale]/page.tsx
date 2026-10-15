@@ -3,14 +3,11 @@ import { HeroSlider } from "@/components/hero-slider";
 import { PageEnd } from "@/components/page-end";
 import { ProductSlider } from "@/components/product-slider";
 import { Testimonials } from "@/components/testimonials";
-import { NoteTile } from "@/components/note-tile";
+import { NoteGrid } from "@/components/note-grid";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { noteTiles } from "@/lib/note-tiles";
 import { path } from "@/lib/path";
-import { popularBrands } from "@/lib/popular-brands";
-import { filterProducts, getCatalog } from "@/lib/shopify/catalog";
-import { mockTestimonials } from "@/lib/shopify/mock";
+import { filterProducts, getBrands, getCatalog, getHeroSlides, getHomeReviews, getNotes, getSectionVisibility } from "@/lib/shopify/catalog";
 import Link from "next/link";
 
 const typeTiles = [
@@ -44,12 +41,6 @@ const typeTiles = [
   },
 ];
 
-const heroSlides = [
-  { url: "/hero/citrus.jpg", alt: "Solune Citrus Mist" },
-  { url: "/hero/amber.jpg", alt: "Noirvale Amber Wood" },
-  { url: "/hero/rose.jpg", alt: "Aurelia Rose Velour" },
-];
-
 export default async function HomePage({
   params,
 }: {
@@ -58,6 +49,18 @@ export default async function HomePage({
   const locale = await localeFrom(params);
   const t = getDict(locale);
   const { products, source } = await getCatalog();
+  const sections = await getSectionVisibility();
+  const heroSlides = await getHeroSlides();
+  const brands = sections.brands ? (await getBrands()).slice(0, 8) : [];
+  const testimonials = await getHomeReviews(products);
+  const notes = sections.notes
+    ? (await getNotes()).map((note) => ({
+        key: note.key,
+        href: path(locale, `/notes/${note.key}`),
+        image: note.image,
+        label: note.label || (note.key in t.notes ? t.notes[note.key as keyof typeof t.notes] : note.key),
+      }))
+    : [];
   const featured = filterProducts(products, { featured: true }).slice(0, 8);
   const newest = filterProducts(products, { isNew: true }).slice(0, 8);
   const sale = filterProducts(products, { sale: true }).slice(0, 8);
@@ -71,9 +74,18 @@ export default async function HomePage({
 
   return (
     <>
-      <HeroSlider images={heroSlides} locale={locale} />
+      <HeroSlider
+        images={heroSlides}
+        locale={locale}
+        hiddenNav={[
+          ...(!sections.about ? ["about"] : []),
+          ...(!sections.brands ? ["brands"] : []),
+          ...(!sections.sale ? ["sales"] : []),
+        ]}
+      />
       <CatalogBanner locale={locale} source={source} />
 
+      {sections.types ? (
       <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-20">
         <div className="mx-auto max-w-[1320px]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
@@ -114,7 +126,9 @@ export default async function HomePage({
           </div>
         </div>
       </section>
+      ) : null}
 
+      {sections.bestsellers ? (
       <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
         <div className="mx-auto max-w-[1180px]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
@@ -134,7 +148,9 @@ export default async function HomePage({
           </Link>
         </div>
       </section>
+      ) : null}
 
+      {sections.brands ? (
       <section className="mx-auto w-full max-w-[1320px] px-4 py-10 min-[1352px]:px-0 md:py-20">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
           {t.popularBrands}
@@ -143,19 +159,23 @@ export default async function HomePage({
           {t.popularBrandsSub}
         </h2>
         <div className="mt-8 grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 min-[1352px]:grid-cols-[repeat(4,312px)] min-[1352px]:justify-start min-[1352px]:gap-6">
-          {popularBrands.map((brand) => (
+          {brands.map((brand) => (
             <Link
               key={brand.handle}
               href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
               className="flex h-[140px] w-full items-center justify-center rounded-lg border border-[#D8D0C4] bg-[#F7F2EA] px-6 min-[1352px]:h-[180px] min-[1352px]:w-[312px]"
             >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={brand.logo}
-                alt={`${brand.name} perfume brand logo`}
-                title={`${brand.name} perfume brand`}
-                className="max-h-16 w-auto max-w-[70%] object-contain"
-              />
+              {brand.logo ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={brand.logo}
+                  alt={`${brand.name} perfume brand logo`}
+                  title={`${brand.name} perfume brand`}
+                  className="w-auto max-w-[70%] object-contain"
+                />
+              ) : (
+                <span className="text-center font-serif text-xl font-medium text-[#083534] md:text-2xl">{brand.name}</span>
+              )}
             </Link>
           ))}
         </div>
@@ -166,7 +186,9 @@ export default async function HomePage({
           {t.viewAllBrands}
         </Link>
       </section>
+      ) : null}
 
+      {sections.arrivals ? (
       <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
         <div className="mx-auto max-w-[1180px]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
@@ -186,60 +208,49 @@ export default async function HomePage({
           </Link>
         </div>
       </section>
+      ) : null}
 
-      <section className="mx-auto w-full max-w-[1320px] px-4 py-10 min-[1352px]:px-0 md:py-20">
+      {sections.notes ? (
+      <section id="shop-by-note" className="mx-auto w-full max-w-[1320px] px-4 py-10 min-[1352px]:px-0 md:py-20">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
           {t.shopByNote}
         </p>
         <h2 className="mt-4 font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
           {t.shopByNoteSub}
         </h2>
-        <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
-          {noteTiles
-            .filter((note) => !note.hiddenOnHome)
-            .map((note) => (
-              <NoteTile
-                key={note.key}
-                href={path(locale, `/notes/${note.key}`)}
-                image={note.image}
-                label={t.notes[note.key]}
-                variant="home"
-              />
-            ))}
-        </div>
-        <Link
-          href={path(locale, "/notes")}
-          className="mt-8 inline-flex rounded-[2px] bg-[#083534] px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f2ea]"
-        >
-          {t.viewAllNotes}
-        </Link>
+        <NoteGrid notes={notes} viewAllLabel={t.viewAllNotes} showLessLabel={t.showLess} />
       </section>
+      ) : null}
 
-      <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto max-w-[1180px]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-            {t.onSale}
-          </p>
-          <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
-            {t.onSaleSub}
-          </h2>
-          <div className="mt-10">
-            <ProductSlider products={sale} locale={locale} variant="feature" />
+      {sections.sale ? (
+        <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
+          <div className="mx-auto max-w-[1180px]">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
+              {t.onSale}
+            </p>
+            <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+              {t.onSaleSub}
+            </h2>
+            <div className="mt-10">
+              <ProductSlider products={sale} locale={locale} variant="feature" />
+            </div>
+            <Link
+              href={path(locale, "/sales")}
+              className="mt-10 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
+            >
+              {t.viewAllSale}
+            </Link>
           </div>
-          <Link
-            href={path(locale, "/sales")}
-            className="mt-10 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
-          >
-            {t.viewAllSale}
-          </Link>
-        </div>
-      </section>
+        </section>
+      ) : null}
 
-      <Testimonials
-        eyebrow={t.testimonials}
-        heading={t.testimonialsSub.replace(/\.$/, "")}
-        items={mockTestimonials}
-      />
+      {testimonials.length ? (
+        <Testimonials
+          eyebrow={t.testimonials}
+          heading={t.testimonialsSub.replace(/\.$/, "")}
+          items={testimonials}
+        />
+      ) : null}
 
       <PageEnd locale={locale} />
     </>

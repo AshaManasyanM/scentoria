@@ -3,8 +3,7 @@ import { PageHero } from "@/components/page-hero";
 import { ProductGrid } from "@/components/product-grid";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { filterProducts, getCatalog } from "@/lib/shopify/catalog";
-import { noteKeys } from "@/lib/shopify/mock";
+import { filterProducts, getCatalog, getNotes } from "@/lib/shopify/catalog";
 import { notFound } from "next/navigation";
 
 export default async function NotePage({
@@ -14,11 +13,12 @@ export default async function NotePage({
 }) {
   const locale = await localeFrom(params);
   const { note } = await params;
-  if (!noteKeys.includes(note as (typeof noteKeys)[number])) notFound();
   const t = getDict(locale);
+  const match = (await getNotes()).find((item) => item.key === note);
+  if (!match) notFound();
   const { products, source } = await getCatalog();
   const list = filterProducts(products, { note });
-  const label = t.notes[note as keyof typeof t.notes];
+  const label = match.label || (note in t.notes ? t.notes[note as keyof typeof t.notes] : note);
 
   return (
     <>

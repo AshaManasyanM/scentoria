@@ -2,7 +2,9 @@ import { PageEnd } from "@/components/page-end";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
+import { isSectionVisible } from "@/lib/shopify/catalog";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 export default async function AboutPage({
   params,
@@ -10,6 +12,7 @@ export default async function AboutPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = await localeFrom(params);
+  if (!(await isSectionVisible("about"))) redirect(`/${locale}`);
   const t = getDict(locale);
 
   return (

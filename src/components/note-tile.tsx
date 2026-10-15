@@ -20,7 +20,9 @@ export function NoteTile({
         className={`relative flex h-[148px] flex-col justify-end overflow-hidden rounded-md p-3 text-[#f7f2ea] md:h-[180px] md:p-5 ${className}`}
         style={{
           backgroundColor: "#083534",
-          backgroundImage: `linear-gradient(180deg, rgba(8,53,52,0.55), rgba(8,53,52,0.62)), url("${image}")`,
+          backgroundImage: image
+            ? `linear-gradient(180deg, rgba(8,53,52,0.55), rgba(8,53,52,0.62)), url("${image.replace(/["\\]/g, "")}")`
+            : undefined,
           backgroundSize: "cover",
           backgroundPosition: "center",
         }}

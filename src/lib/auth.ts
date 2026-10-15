@@ -7,6 +7,7 @@ export type Profile = {
   email: string;
   image?: string;
   provider: AuthProvider;
+  googleLinked?: boolean;
 };
 
 let current: Profile = { name: "", email: "", provider: "email" };
@@ -41,6 +42,13 @@ export async function refreshSession() {
   return applyUser(data.user);
 }
 
+function authReason(error?: string) {
+  if (error === "exists") return "exists" as const;
+  if (error === "rate") return "rate" as const;
+  if (error === "short") return "short" as const;
+  return "password" as const;
+}
+
 async function postAuth(body: Record<string, string | undefined>) {
   const response = await fetch("/api/auth", {
     method: "POST",
@@ -48,33 +56,67 @@ async function postAuth(body: Record<string, string | undefined>) {
     body: JSON.stringify(body),
   });
   const data = (await response.json()) as { user?: Profile; error?: string };
-  if (!response.ok || !data.user) return { ok: false as const, reason: data.error === "exists" ? "exists" as const : "password" as const };
+  if (!response.ok || !data.user) return { ok: false as const, reason: authReason(data.error) };
   applyUser(data.user);
   return { ok: true as const };
 }
 
-export function signUp(input: { name: string; email: string; password: string }) {
-  return postAuth({ action: "register", name: input.name, email: input.email, password: input.password });
-}
-
-export function signInWithEmail(input: { email: string; password: string }) {
-  return postAuth({ action: "login", email: input.email, password: input.password });
-}
-
-export function signInWithGoogle(input: { name: string; email: string; image?: string }) {
-  return postAuth({ action: "google", name: input.name, email: input.email, image: input.image });
-}
-
-export async function saveProfile(input: { name: string; password?: string }) {
+export async function signUp(input: { name: string; email: string; password: string }) {
   const response = await fetch("/api/auth", {
-    method: "PATCH",
+    method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(input),
+    body: JSON.stringify({ action: "register", name: input.name, email: input.email, password: input.password }),
+  });
+  const data = (await response.json()) as { error?: string };
+  if (!response.ok) return { ok: false as const, reason: authReason(data.error) };
+  return { ok: true as const };
+}
+
+export async function signInWithGoogleCredential(credential: string) {
+  const response = await fetch("/api/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
+  });
+  const data = (await response.json()) as { user?: Profile; error?: string };
+  if (data.error === "link") return { ok: false as const, reason: "link" as const };
+  if (data.error === "rate") return { ok: false as const, reason: "rate" as const };
+  if (!response.ok || !data.user) return { ok: false as const, reason: "google" as const };
+  applyUser(data.user);
+  return { ok: true as const };
+}
+
+export async function connectGoogle(credential: string) {
+  const response = await fetch("/api/auth/google/link", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential }),
   });
   const data = (await response.json()) as { user?: Profile };
   if (!response.ok || !data.user) return false;
   applyUser(data.user);
   return true;
+}
+
+export function signInWithEmail(input: { email: string; password: string; remember: boolean }) {
+  return postAuth({
+    action: "login",
+    email: input.email,
+    password: input.password,
+    remember: input.remember ? "1" : "0",
+  });
+}
+
+export async function saveProfile(input: { name: string; password?: string; currentPassword?: string }) {
+  const response = await fetch("/api/auth", {
+    method: "PATCH",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(input),
+  });
+  const data = (await response.json()) as { user?: Profile; error?: string };
+  if (!response.ok || !data.user) return authReason(data.error);
+  applyUser(data.user);
+  return "ok" as const;
 }
 
 export async function clearProfile() {

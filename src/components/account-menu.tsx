@@ -19,9 +19,14 @@ function ProfileIcon() {
 export function AccountMenu({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const [image, setImage] = useState<string | undefined>();
+  const [loggedIn, setLoggedIn] = useState(false);
 
   useEffect(() => {
-    const sync = () => setImage(isLoggedIn() ? loadProfile().image : undefined);
+    const sync = () => {
+      const signedIn = isLoggedIn();
+      setLoggedIn(signedIn);
+      setImage(signedIn ? loadProfile().image : undefined);
+    };
     void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
     return () => window.removeEventListener(AUTH_EVENT, sync);
@@ -29,7 +34,7 @@ export function AccountMenu({ locale }: { locale: Locale }) {
 
   return (
     <Link
-      href={path(locale, "/account")}
+      href={path(locale, loggedIn ? "/account" : "/login")}
       aria-label={t.profile}
       className="inline-flex text-[#143028] transition-colors hover:text-[#c5a059]"
     >

@@ -8,6 +8,7 @@ import { usePathname } from "next/navigation";
 
 const ITEMS = [
   { href: "/account", key: "profile" as const },
+  { href: "/account/addresses", key: "addresses" as const },
   { href: "/account/orders", key: "orders" as const },
   { href: "/wishlist", key: "wishlist" as const },
   { href: "/cart", key: "cart" as const },

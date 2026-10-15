@@ -8,15 +8,18 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
+const labelClass = "block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#083534]";
 const fieldClass =
-  "mt-2 w-full rounded-md border border-[#e4e4e7] bg-white px-3 py-2.5 text-sm text-[#111] outline-none focus:border-[#083534]";
+  "mt-2 h-11 w-full rounded-sm border border-[#d8d0c4] bg-[#f7f2ea] px-3 text-sm text-[#083534] outline-none placeholder:text-[#083534]/45 focus:border-[#c5a059]";
 
 export function AccountProfile({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const router = useRouter();
   const [profile, setProfile] = useState<Profile>({ name: "", email: "", provider: "email" });
   const [password, setPassword] = useState("");
+  const [currentPassword, setCurrentPassword] = useState("");
   const [saved, setSaved] = useState(false);
+  const [formError, setFormError] = useState("");
   const [ready, setReady] = useState(false);
   const [signedIn, setSignedIn] = useState(false);
 
@@ -87,17 +90,24 @@ export function AccountProfile({ locale }: { locale: Locale }) {
           event.preventDefault();
           void saveProfile({
             name: profile.name.trim(),
-            password: googleAccount ? undefined : password.trim() || undefined,
-          }).then((ok) => {
-            if (!ok) return;
+            password: password.trim() || undefined,
+            currentPassword: googleAccount ? undefined : password.trim() ? currentPassword : undefined,
+          }).then((result) => {
+            if (result !== "ok") {
+              setSaved(false);
+              setFormError(result === "short" ? t.passwordTooShort : t.wrongPassword);
+              return;
+            }
             setProfile(loadProfile());
             setPassword("");
+            setCurrentPassword("");
+            setFormError("");
             setSaved(true);
             window.setTimeout(() => setSaved(false), 2000);
           });
         }}
       >
-        <label className="block text-sm font-semibold text-[#111]">
+        <label className={labelClass}>
           {t.fullName}
           <input
             value={profile.name}
@@ -106,13 +116,13 @@ export function AccountProfile({ locale }: { locale: Locale }) {
             className={fieldClass}
           />
         </label>
-        <label className="mt-5 block text-sm font-semibold text-[#111]">
+        <label className={`${labelClass} mt-5`}>
           {t.yourEmail}
-          <input readOnly value={profile.email} className={`${fieldClass} text-[#4b5563]`} />
+          <input readOnly value={profile.email} className={fieldClass} />
         </label>
-        {googleAccount ? null : (
-          <label className="mt-5 block text-sm font-semibold text-[#111]">
-            {t.password}
+        {googleAccount ? (
+          <label className={`${labelClass} mt-5`}>
+            {t.setPassword}
             <input
               type="password"
               value={password}
@@ -122,13 +132,38 @@ export function AccountProfile({ locale }: { locale: Locale }) {
               className={fieldClass}
             />
           </label>
+        ) : (
+          <>
+            <label className={`${labelClass} mt-5`}>
+              {t.currentPassword}
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(event) => setCurrentPassword(event.target.value)}
+                autoComplete="current-password"
+                className={fieldClass}
+              />
+            </label>
+            <label className={`${labelClass} mt-5`}>
+              {t.password}
+              <input
+                type="password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                placeholder={t.newPassword}
+                autoComplete="new-password"
+                className={fieldClass}
+              />
+            </label>
+          </>
         )}
         <button
           type="submit"
-          className="mt-6 inline-flex rounded-md bg-[#111] px-4 py-2.5 text-sm font-medium text-white"
+          className="mt-6 inline-flex h-11 items-center rounded-[2px] bg-[#c5a059] px-8 text-xs font-semibold uppercase tracking-[0.12em] text-[#083534] transition-colors hover:bg-[#a9884a]"
         >
           {t.saveChanges}
         </button>
+        {formError ? <p className="mt-3 text-sm text-[#b3413a]">{formError}</p> : null}
         {saved ? <p className="mt-3 text-sm text-[#083534]">{t.changesSaved}</p> : null}
       </form>
 

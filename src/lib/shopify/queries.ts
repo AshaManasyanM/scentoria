@@ -16,7 +16,68 @@ const PRODUCT_FIELDS = `
       id
       title
       availableForSale
+      quantityAvailable
       price { amount currencyCode }
+      compareAtPrice { amount currencyCode }
+      image { url altText }
+    }
+  }
+`;
+
+export const REVIEWS_QUERY = `
+  query Reviews($type: String!, $first: Int!) {
+    metaobjects(type: $type, first: $first) {
+      nodes {
+        handle
+        updatedAt
+        fields { key value }
+      }
+    }
+  }
+`;
+
+export const TESTIMONIALS_QUERY = `
+  query Testimonials($type: String!, $first: Int!) {
+    metaobjects(type: $type, first: $first) {
+      nodes {
+        handle
+        fields { key value }
+      }
+    }
+  }
+`;
+
+export const NOTES_QUERY = `
+  query Notes($type: String!, $first: Int!) {
+    metaobjects(type: $type, first: $first) {
+      nodes {
+        handle
+        fields {
+          key
+          value
+          reference {
+            ... on MediaImage {
+              image { url }
+            }
+            ... on GenericFile {
+              url
+            }
+          }
+        }
+      }
+    }
+  }
+`;
+
+export const COLLECTIONS_QUERY = `
+  query Collections($first: Int!) {
+    collections(first: $first, sortKey: TITLE) {
+      nodes {
+        handle
+        title
+        description
+        image { url altText }
+      }
     }
   }
 `;
@@ -88,7 +149,8 @@ export const CART_QUERY = `
               id
               title
               price { amount currencyCode }
-              product { title handle featuredImage { url } }
+              compareAtPrice { amount currencyCode }
+              product { title handle vendor featuredImage { url } }
             }
           }
         }

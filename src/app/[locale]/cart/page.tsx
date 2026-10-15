@@ -2,101 +2,790 @@
 
 import { CartBagIcon } from "@/components/account-empty-state";
 import { useCart } from "@/components/cart-provider";
-import { formatMoney } from "@/lib/format";
+import type { SavedAddress } from "@/lib/address-book";
+import { countryChoices, isCountryCode } from "@/lib/countries";
+import { isUsState, usStateChoices } from "@/lib/us-states";
+import { discountPercent, formatMoney } from "@/lib/format";
 import { getDict, isLocale } from "@/lib/i18n";
 import { path } from "@/lib/path";
+import type { CartLine, Money } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
+import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
+
+function Steps({ labels, active }: { labels: string[]; active: number }) {
+  return (
+    <ol className="flex flex-wrap items-center gap-x-3 gap-y-2 text-sm">
+      {labels.map((label, index) => {
+        const on = index === active;
+        return (
+          <li key={label} className="flex items-center gap-3">
+            {index > 0 ? <span className="h-px w-8 bg-[#e1e1e1] sm:w-14" /> : null}
+            <span className={`flex items-center gap-2 ${on ? "text-[#1f6b45]" : "text-[#b5b5b5]"}`}>
+              <span
+                className={`flex h-7 w-7 items-center justify-center rounded-full border text-xs ${
+                  on ? "border-[#1f6b45]" : "border-[#d7d7d7]"
+                }`}
+              >
+                {index + 1}
+              </span>
+              {label}
+            </span>
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
+function TrashIcon() {
+  return (
+    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+      <path strokeLinecap="round" d="M4 7h16" />
+      <path strokeLinecap="round" d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
+      <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 7l.8 12.2A1.5 1.5 0 0 0 8.8 20.5h6.4a1.5 1.5 0 0 0 1.5-1.3L17.5 7" />
+      <path strokeLinecap="round" d="M10 11v6M14 11v6" />
+    </svg>
+  );
+}
+
+function sizeLabel(title: string) {
+  const cleaned = title.trim();
+  if (!cleaned || /^default title$/i.test(cleaned)) return "";
+  return cleaned.replace(/\s*\/\s*[\d.]+\s*oz$/i, "");
+}
 
 export default function CartPage() {
   const params = useParams<{ locale: string }>();
   const locale = isLocale(params.locale) ? params.locale : "en";
   const t = getDict(locale);
   const { cart, updateQty } = useCart();
-  const subtotal = cart.lines.reduce(
-    (sum, line) => sum + Number(line.price.amount) * line.quantity,
-    0,
-  );
+  const [code, setCode] = useState("");
+  const [codeNote, setCodeNote] = useState("");
+  const [step, setStep] = useState(0);
+  const [payUrl, setPayUrl] = useState<string | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
+  const [shippingCost, setShippingCost] = useState<Money | null>(null);
   const currency = cart.lines[0]?.price.currencyCode ?? "AMD";
+  const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
+  const money = (amount: number): Money => ({ amount: String(amount), currencyCode: currency });
+
+  let products = 0;
+  let payable = 0;
+  for (const line of cart.lines) {
+    const price = Number(line.price.amount);
+    const compare = Number(line.compareAtPrice?.amount);
+    const list = compare > price ? compare : price;
+    products += list * line.quantity;
+    payable += price * line.quantity;
+  }
+  const discount = Math.max(0, products - payable);
 
   if (cart.lines.length === 0) {
     return (
-      <section className="bg-white px-4 py-16 md:py-24">
-        <div className="mx-auto flex min-h-[320px] max-w-[760px] flex-col items-center justify-center text-center">
-          <CartBagIcon className="h-14 w-14 text-[#9a9188]" />
-          <h1 className="mt-5 font-serif text-[28px] font-medium text-[#083534] md:text-[32px]">{t.shoppingCart}</h1>
-          <p className="mt-3 text-[15px] leading-7 text-[#083534]">{t.emptyCart}</p>
-          <p className="mt-2 max-w-md text-sm leading-6 text-[#6b7280]">{t.emptyCartHint}</p>
-          <Link
-            href={path(locale, "/products")}
-            className="mt-6 inline-flex rounded-[2px] bg-[#083534] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
-          >
-            {t.viewAllProducts}
-          </Link>
+      <section className="bg-white px-4 py-10 md:px-8 md:py-14">
+        <div className="mx-auto max-w-[1080px]">
+          <Steps labels={checkoutSteps(t)} active={0} />
+          <h1 className="mt-8 font-serif text-4xl text-[#161616] md:text-5xl">{t.yourOrder}</h1>
+          <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
+            <CartBagIcon className="h-14 w-14 text-[#9a9188]" />
+            <p className="mt-5 text-[15px] leading-7 text-[#083534]">{t.emptyCart}</p>
+            <p className="mt-2 max-w-md text-sm leading-6 text-[#6b7280]">{t.emptyCartHint}</p>
+            <Link
+              href={path(locale, "/products")}
+              className="mt-6 inline-flex rounded-[2px] bg-[#083534] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
+            >
+              {t.viewAllProducts}
+            </Link>
+          </div>
         </div>
       </section>
     );
   }
 
   return (
-    <section className="bg-white px-4 py-10 md:px-8 md:py-16">
-      <div className="mx-auto max-w-[760px]">
-        <h1 className="text-center font-serif text-[28px] font-medium text-[#083534] md:text-[32px]">
-          {t.shoppingCart}
-        </h1>
-        <div className="mt-8 space-y-4">
-          {cart.lines.map((line) => (
-            <div key={line.id} className="flex gap-4 rounded-md border border-[#e6ddd2] bg-[#f7f2ea] p-4">
-              {line.image ? (
-                <Image src={line.image} alt="" width={88} height={110} className="h-[110px] w-[88px] rounded-sm object-cover" />
-              ) : null}
-              <div className="min-w-0 flex-1 text-center">
-                <Link href={path(locale, `/products/${line.handle}`)} className="font-serif text-xl text-[#083534]">
-                  {line.title}
-                </Link>
-                <p className="mt-1 text-sm text-[#6b7280]">{line.variantTitle}</p>
-                <p className="mt-2 text-sm text-[#083534]">{formatMoney(line.price, locale)}</p>
-                <div className="mt-3 flex items-center justify-center gap-3 text-[#083534]">
-                  <button
-                    type="button"
-                    onClick={() => updateQty(line.id, line.quantity - 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-[2px] border border-[#d8d0c4]"
-                    aria-label="Decrease quantity"
-                  >
-                    −
-                  </button>
-                  <span className="min-w-6">{line.quantity}</span>
-                  <button
-                    type="button"
-                    onClick={() => updateQty(line.id, line.quantity + 1)}
-                    className="flex h-8 w-8 items-center justify-center rounded-[2px] border border-[#d8d0c4]"
-                    aria-label="Increase quantity"
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+    <section className="bg-white px-4 py-8 md:px-8 md:py-12">
+      <div className="mx-auto max-w-[1080px]">
+        <Steps labels={checkoutSteps(t)} active={step} />
+        <div className="mt-8 flex items-baseline gap-3">
+          <h1 className="font-serif text-4xl text-[#161616] md:text-[52px] md:leading-none">
+            {step === 0 ? t.yourOrder : step === 1 ? t.addressTitle : step === 2 ? t.deliveryTitle : t.paymentTitle}
+          </h1>
+          {step === 0 ? (
+            <p className="text-sm text-[#8a8a8a]">{count === 1 ? t.oneItem : t.itemsCount.replace("{count}", String(count))}</p>
+          ) : null}
         </div>
-        <p className="mt-8 flex items-center justify-center gap-6 text-lg text-[#083534]">
-          <span>{t.subtotal}</span>
-          <span>{formatMoney({ amount: String(subtotal), currencyCode: currency }, locale)}</span>
-        </p>
-        {cart.checkoutUrl ? (
-          <a
-            href={cart.checkoutUrl}
-            className="mx-auto mt-6 flex w-full max-w-xs items-center justify-center rounded-[2px] bg-[#083534] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
-          >
-            {t.checkout}
-          </a>
-        ) : (
-          <p className="mx-auto mt-6 max-w-md text-center text-sm leading-6 text-[#6b7280]">
-            Connect the Shopify Storefront token to enable checkout. See ADMIN.md.
-          </p>
-        )}
+
+        {step > 0 ? (
+          <div className={step === 1 ? "" : "hidden"}>
+            <DeliveryStep
+              locale={locale}
+              labels={t}
+              onBack={() => setStep(0)}
+              productsLabel={formatMoney(money(products), locale)}
+              onReady={(options, url) => {
+                setShippingOptions(options);
+                setPayUrl(url);
+                const cheapest = options[0];
+                setShippingCost(cheapest ? { amount: cheapest.amount, currencyCode: cheapest.currencyCode } : null);
+                setStep(2);
+              }}
+            />
+          </div>
+        ) : null}
+        {step === 2 ? (
+          <ShippingStep
+            locale={locale}
+            labels={t}
+            options={shippingOptions}
+            initialUrl={payUrl}
+            onBack={() => setStep(1)}
+            onCost={setShippingCost}
+            onPay={(url, cost) => {
+              setPayUrl(url);
+              setShippingCost(cost);
+              setStep(3);
+            }}
+          />
+        ) : null}
+        {step === 3 && payUrl ? (
+          <PaymentStep
+            locale={locale}
+            labels={t}
+            payUrl={payUrl}
+            productsLabel={formatMoney(money(products), locale)}
+            shipping={shippingCost}
+            totalLabel={formatMoney(
+              money(
+                shippingCost?.currencyCode === currency ? payable + Number(shippingCost.amount) : payable,
+              ),
+              locale,
+            )}
+            onBack={() => setStep(2)}
+          />
+        ) : null}
+        <div className={`mt-6 rounded-[28px] bg-[#083534] px-4 py-5 text-white md:px-8 md:py-8 ${step === 0 ? "" : "hidden"}`}>
+          <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
+            <div className="min-w-0 flex-1 space-y-6">
+              {cart.lines.map((line) => (
+                <OrderLine key={line.id} line={line} locale={locale} removeLabel={t.remove} onQty={updateQty} />
+              ))}
+            </div>
+
+            <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">
+              <form
+                className="flex gap-2"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  setCodeNote(code.trim() ? t.promoInvalid : "");
+                }}
+              >
+                <input
+                  value={code}
+                  onChange={(event) => {
+                    setCode(event.target.value);
+                    setCodeNote("");
+                  }}
+                  placeholder={t.promoCode}
+                  className="h-11 min-w-0 flex-1 rounded-xl border border-white/20 bg-black/20 px-3 text-sm text-white outline-none placeholder:text-white/45"
+                />
+                <button
+                  type="submit"
+                  className="h-11 shrink-0 rounded-xl border border-white/30 px-4 text-sm text-white"
+                >
+                  {t.filterApply}
+                </button>
+              </form>
+              {codeNote ? <p className="mt-2 text-xs text-white/70">{codeNote}</p> : null}
+
+              <dl className="mt-5 space-y-3 text-sm text-white/80">
+                <div className="flex items-center justify-between gap-4">
+                  <dt>{t.productsTotal}</dt>
+                  <dd className="text-white">{formatMoney(money(products), locale)}</dd>
+                </div>
+                {discount > 0 ? (
+                  <div className="flex items-center justify-between gap-4">
+                    <dt>{t.discounts}</dt>
+                    <dd className="text-white">-{formatMoney(money(discount), locale)}</dd>
+                  </div>
+                ) : null}
+                <div className="flex items-center justify-between gap-4">
+                  <dt>{t.delivery}</dt>
+                  <dd className="text-white">{t.freeDelivery}</dd>
+                </div>
+              </dl>
+
+              <div className="mt-4 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
+                <p className="text-sm text-white/80">{t.orderTotal}</p>
+                <p className="text-2xl font-medium tracking-tight">{formatMoney(money(payable), locale)}</p>
+              </div>
+
+              {cart.checkoutUrl ? (
+                <button
+                  type="button"
+                  onClick={() => setStep(1)}
+                  className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                >
+                  {t.nextAddress} →
+                </button>
+              ) : (
+                <p className="mt-5 text-center text-sm leading-6 text-white/70">
+                  Connect the Shopify Storefront token to enable checkout. See ADMIN.md.
+                </p>
+              )}
+            </aside>
+          </div>
+        </div>
       </div>
     </section>
+  );
+}
+
+type ShippingOption = {
+  groupId: string;
+  handle: string;
+  title: string;
+  amount: string;
+  currencyCode: string;
+  kind?: "cheapest" | "faster";
+};
+
+const checkoutSteps = (t: ReturnType<typeof getDict>) => [t.stepBag, t.stepAddress, t.stepDelivery, t.stepPayment];
+
+type AddressSuggestion = {
+  id: string;
+  label: string;
+  address1: string;
+  city: string;
+  zip: string;
+  countryCode: string;
+  provinceCode?: string;
+  magicKey?: string;
+};
+
+const countryChevron = `url("data:image/svg+xml,${encodeURIComponent(
+  `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 7.5 10 12.5 15 7.5"/></svg>`,
+)}")`;
+
+function DeliveryStep({
+  locale,
+  labels: t,
+  onBack,
+  productsLabel,
+  onReady,
+}: {
+  locale: "en" | "hy";
+  labels: ReturnType<typeof getDict>;
+  onBack: () => void;
+  productsLabel: string;
+  onReady: (options: ShippingOption[], checkoutUrl: string) => void;
+}) {
+  const [form, setForm] = useState({
+    email: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
+    address1: "",
+    city: "",
+    zip: "",
+    countryCode: "AM",
+    provinceCode: "",
+  });
+  const [error, setError] = useState("");
+  const [pending, setPending] = useState(false);
+  const [suggestions, setSuggestions] = useState<AddressSuggestion[]>([]);
+  const [suggestOpen, setSuggestOpen] = useState(false);
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  const pickedAddress = useRef("");
+  const countries = useMemo(() => countryChoices(locale), [locale]);
+  const states = useMemo(() => usStateChoices(), []);
+  const field = "h-11 w-full rounded-xl border border-white/20 bg-black/20 px-3 text-sm text-white outline-none placeholder:text-white/40";
+
+  useEffect(() => {
+    void fetch("/api/addresses").then(async (response) => {
+      if (!response.ok) return;
+      const data = (await response.json()) as { addresses?: SavedAddress[] };
+      setSavedAddresses(data.addresses ?? []);
+    });
+  }, []);
+
+  useEffect(() => {
+    const query = form.address1.trim();
+    if (query.length < 3 || query === pickedAddress.current) {
+      setSuggestions([]);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      try {
+        const res = await fetch(`/api/address?q=${encodeURIComponent(query)}`, {
+          signal: controller.signal,
+        });
+        if (!res.ok) return;
+        const matches = (await res.json()) as AddressSuggestion[];
+        if (pickedAddress.current === query) return;
+        setSuggestions(matches);
+        setSuggestOpen(matches.length > 0);
+      } catch {
+        if (!controller.signal.aborted) setSuggestions([]);
+      }
+    }, 120);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [form.address1]);
+
+  function applyAddress(match: AddressSuggestion) {
+    pickedAddress.current = match.address1;
+    setForm((current) => ({
+      ...current,
+      address1: match.address1,
+      city: match.city || current.city,
+      zip: match.zip || current.zip,
+      countryCode: isCountryCode(match.countryCode) ? match.countryCode : current.countryCode,
+      provinceCode: isUsState(match.provinceCode ?? "")
+        ? (match.provinceCode ?? "").toUpperCase()
+        : match.countryCode && match.countryCode !== "US"
+          ? ""
+          : current.provinceCode,
+    }));
+    setError("");
+  }
+
+  async function chooseAddress(match: AddressSuggestion) {
+    setSuggestions([]);
+    setSuggestOpen(false);
+    applyAddress(match);
+    if (!match.magicKey) return;
+    try {
+      const res = await fetch(
+        `/api/address?magicKey=${encodeURIComponent(match.magicKey)}&text=${encodeURIComponent(match.label)}`,
+      );
+      if (!res.ok) return;
+      const detail = (await res.json()) as AddressSuggestion;
+      if (detail.address1) applyAddress(detail);
+    } catch {
+      /* the street line is already filled */
+    }
+  }
+
+  function applySaved(address: SavedAddress) {
+    pickedAddress.current = address.address1;
+    setForm((current) => ({
+      ...current,
+      firstName: address.firstName,
+      lastName: address.lastName,
+      phone: address.phone,
+      address1: address.address1,
+      city: address.city,
+      zip: address.zip,
+      countryCode: isCountryCode(address.countryCode) ? address.countryCode : current.countryCode,
+      provinceCode: address.provinceCode,
+    }));
+    setError("");
+  }
+
+  function set(key: keyof typeof form, value: string) {
+    setForm((current) => ({
+      ...current,
+      [key]: value,
+      ...(key === "countryCode" && value !== "US" ? { provinceCode: "" } : {}),
+    }));
+    setError("");
+  }
+
+  async function submit(event: FormEvent) {
+    event.preventDefault();
+    setPending(true);
+    setError("");
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "delivery", delivery: form }),
+    });
+    const data = (await res.json()) as {
+      ok: boolean;
+      error?: string;
+      checkoutUrl?: string;
+      options?: ShippingOption[];
+    };
+    setPending(false);
+    if (!data.ok) {
+      const message =
+        data.error === "rate"
+          ? t.tooManyAttempts
+          : data.error === "stock"
+          ? t.deliveryStock
+          : data.error === "market"
+            ? t.deliveryMarketError
+            : data.error === "address"
+            ? t.deliveryAddressError
+            : data.error === "shipping"
+              ? t.deliveryShippingError
+              : t.deliverySaveError;
+      setError(message);
+      return;
+    }
+    const next = [...(data.options ?? [])].sort((a, b) => Number(a.amount) - Number(b.amount));
+    if (!data.checkoutUrl || !next.length) {
+      setError(t.deliveryShippingError);
+      return;
+    }
+    onReady(next, data.checkoutUrl);
+  }
+
+  return (
+    <form onSubmit={submit} className="mt-6 rounded-[28px] bg-[#083534] px-4 py-5 text-white md:px-8 md:py-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <button type="button" onClick={onBack} className="text-sm text-white/70">
+            ← {t.backToBag}
+          </button>
+          {savedAddresses.length ? (
+            <label className="mt-4 block text-xs text-white/70">
+              {t.useSavedAddress}
+              <select
+                defaultValue=""
+                onChange={(event) => {
+                  const address = savedAddresses.find((item) => String(item.id) === event.target.value);
+                  if (address) applySaved(address);
+                }}
+                className={`${field} mt-1`}
+              >
+                <option value="" className="text-[#083534]">
+                  {t.useSavedAddress}
+                </option>
+                {savedAddresses.map((address) => (
+                  <option key={address.id} value={address.id} className="text-[#083534]">
+                    {address.label || `${address.firstName} ${address.lastName}, ${address.city}`}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          <div className="mt-4 grid gap-3 sm:grid-cols-2">
+            <label className="text-xs text-white/70">
+              {t.email}
+              <input required type="email" value={form.email} onChange={(event) => set("email", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            <label className="text-xs text-white/70">
+              {t.phone}
+              <input value={form.phone} onChange={(event) => set("phone", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            <label className="text-xs text-white/70">
+              {t.firstName}
+              <input required value={form.firstName} onChange={(event) => set("firstName", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            <label className="text-xs text-white/70">
+              {t.lastName}
+              <input required value={form.lastName} onChange={(event) => set("lastName", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            <label className={`relative text-xs text-white/70 sm:col-span-2 ${suggestOpen ? "z-30" : ""}`}>
+              {t.address}
+              <input
+                required
+                autoComplete="off"
+                value={form.address1}
+                onChange={(event) => set("address1", event.target.value)}
+                onFocus={() => suggestions.length && setSuggestOpen(true)}
+                onBlur={() => window.setTimeout(() => setSuggestOpen(false), 150)}
+                className={`${field} mt-1`}
+              />
+              {suggestOpen && suggestions.length ? (
+                <ul className="absolute left-0 right-0 top-full z-20 mt-1 overflow-hidden rounded-xl border border-white/20 bg-[#062826] shadow-lg">
+                  {suggestions.map((match) => (
+                    <li key={match.id}>
+                      <button
+                        type="button"
+                        onMouseDown={(event) => {
+                          event.preventDefault();
+                          chooseAddress(match);
+                        }}
+                        className="w-full px-3 py-2 text-left text-sm text-white hover:bg-white/10"
+                      >
+                        {match.label}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              ) : null}
+            </label>
+            <label className="text-xs text-white/70">
+              {t.city}
+              <input required value={form.city} onChange={(event) => set("city", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            {form.countryCode === "US" ? (
+              <label className="text-xs text-white/70">
+                {t.state}
+                <select
+                  required
+                  value={form.provinceCode}
+                  onChange={(event) => set("provinceCode", event.target.value)}
+                  className={`${field} mt-1 appearance-none bg-no-repeat pr-12 [background-position:right_22px_center] [background-size:14px_14px]`}
+                  style={{ backgroundImage: countryChevron }}
+                >
+                  <option value="" className="text-[#083534]">
+                    {t.state}
+                  </option>
+                  {states.map((state) => (
+                    <option key={state.code} value={state.code} className="text-[#083534]">
+                      {state.name}
+                    </option>
+                  ))}
+                </select>
+              </label>
+            ) : null}
+            <label className="text-xs text-white/70">
+              {t.postalCode}
+              <input value={form.zip} onChange={(event) => set("zip", event.target.value)} className={`${field} mt-1`} />
+            </label>
+            <label className="text-xs text-white/70 sm:col-span-2">
+              {t.country}
+              <select
+                value={form.countryCode}
+                onChange={(event) => set("countryCode", event.target.value)}
+                className={`${field} mt-1 appearance-none bg-no-repeat pr-12 [background-position:right_22px_center] [background-size:14px_14px]`}
+                style={{ backgroundImage: countryChevron }}
+              >
+                {countries.map((country) => (
+                  <option key={country.code} value={country.code} className="text-[#083534]">
+                    {country.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
+          {error ? <p className="mt-4 text-sm text-white/80">{error}</p> : null}
+        </div>
+        <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">
+          <dl className="space-y-3 text-sm text-white/80">
+            <div className="flex items-center justify-between gap-4">
+              <dt>{t.productsTotal}</dt>
+              <dd className="text-white">{productsLabel}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt>{t.delivery}</dt>
+              <dd className="text-white">—</dd>
+            </div>
+          </dl>
+          <button type="submit" disabled={pending} className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534] disabled:opacity-60">
+            {t.nextDelivery} →
+          </button>
+          <p className="mt-3 text-center text-xs leading-5 text-white/60">{t.paymentOnShopify}</p>
+        </aside>
+      </div>
+    </form>
+  );
+}
+
+function ShippingStep({
+  locale,
+  labels: t,
+  options,
+  initialUrl,
+  onBack,
+  onCost,
+  onPay,
+}: {
+  locale: "en" | "hy";
+  labels: ReturnType<typeof getDict>;
+  options: ShippingOption[];
+  initialUrl: string | null;
+  onBack: () => void;
+  onCost: (cost: Money) => void;
+  onPay: (url: string, shipping: Money) => void;
+}) {
+  const first = options[0];
+  const optionKey = (option: ShippingOption) => `${option.groupId}:${option.handle}:${option.kind ?? "cheapest"}`;
+  const [selected, setSelected] = useState(first ? optionKey(first) : "");
+  const [checkoutUrl, setCheckoutUrl] = useState(initialUrl);
+  const [pending, setPending] = useState(false);
+  const chosen = options.find((option) => optionKey(option) === selected) ?? first;
+
+  async function choose(option: ShippingOption) {
+    const key = optionKey(option);
+    setSelected(key);
+    setPending(true);
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "shipping", groupId: option.groupId, handle: option.handle }),
+    });
+    const data = (await res.json()) as { ok: boolean; checkoutUrl?: string };
+    setPending(false);
+    if (!data.ok || !data.checkoutUrl) return;
+    setCheckoutUrl(data.checkoutUrl);
+    onCost({ amount: option.amount, currencyCode: option.currencyCode });
+  }
+
+  return (
+    <div className="mt-6 rounded-[28px] bg-[#083534] px-4 py-5 text-white md:px-8 md:py-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <button type="button" onClick={onBack} className="text-sm text-white/70">
+            ← {t.backToAddress}
+          </button>
+          <fieldset className="mt-5 space-y-2">
+            <legend className="text-xs text-white/70">{t.shippingMethod}</legend>
+            {options.map((option) => {
+              const key = optionKey(option);
+              return (
+                <label key={key} className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-white/20 px-3 py-2 text-sm">
+                  <span className="flex items-center gap-2">
+                    <input type="radio" name="shipping" checked={selected === key} onChange={() => void choose(option)} />
+                    <span>
+                      <span className="block">{option.kind === "faster" ? t.shippingFaster : t.shippingCheapest}</span>
+                      {option.title ? <span className="block text-xs text-white/60">{option.title}</span> : null}
+                    </span>
+                  </span>
+                  <span>{formatMoney({ amount: option.amount, currencyCode: option.currencyCode }, locale)}</span>
+                </label>
+              );
+            })}
+          </fieldset>
+        </div>
+        <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">
+          <dl className="space-y-3 text-sm text-white/80">
+            <div className="flex items-center justify-between gap-4">
+              <dt>{t.delivery}</dt>
+              <dd className="text-white">
+                {chosen ? formatMoney({ amount: chosen.amount, currencyCode: chosen.currencyCode }, locale) : "—"}
+              </dd>
+            </div>
+          </dl>
+          <button
+            type="button"
+            disabled={!chosen || !checkoutUrl || pending}
+            onClick={() => {
+              if (!chosen || !checkoutUrl) return;
+              onPay(checkoutUrl, { amount: chosen.amount, currencyCode: chosen.currencyCode });
+            }}
+            className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534] disabled:opacity-60"
+          >
+            {t.nextPayment} →
+          </button>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function PaymentStep({
+  locale,
+  labels: t,
+  payUrl,
+  productsLabel,
+  shipping,
+  totalLabel,
+  onBack,
+}: {
+  locale: "en" | "hy";
+  labels: ReturnType<typeof getDict>;
+  payUrl: string;
+  productsLabel: string;
+  shipping: Money | null;
+  totalLabel: string;
+  onBack: () => void;
+}) {
+  return (
+    <div className="mt-6 rounded-[28px] bg-[#083534] px-4 py-5 text-white md:px-8 md:py-8">
+      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
+        <div className="min-w-0 flex-1">
+          <button type="button" onClick={onBack} className="text-sm text-white/70">
+            ← {t.backToDelivery}
+          </button>
+          <p className="mt-6 max-w-md text-sm leading-6 text-white/80">{t.paymentOnShopify}</p>
+        </div>
+        <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">
+          <dl className="space-y-3 text-sm text-white/80">
+            <div className="flex items-center justify-between gap-4">
+              <dt>{t.productsTotal}</dt>
+              <dd className="text-white">{productsLabel}</dd>
+            </div>
+            <div className="flex items-center justify-between gap-4">
+              <dt>{t.delivery}</dt>
+              <dd className="text-white">{shipping ? formatMoney(shipping, locale) : "—"}</dd>
+            </div>
+          </dl>
+          <div className="mt-4 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
+            <p className="text-sm text-white/80">{t.orderTotal}</p>
+            <p className="text-2xl font-medium tracking-tight">{totalLabel}</p>
+          </div>
+          <a href={payUrl} className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]">
+            {t.payNow} →
+          </a>
+        </aside>
+      </div>
+    </div>
+  );
+}
+
+function OrderLine({
+  line,
+  locale,
+  removeLabel,
+  onQty,
+}: {
+  line: CartLine;
+  locale: "en" | "hy";
+  removeLabel: string;
+  onQty: (lineId: string, quantity: number) => void;
+}) {
+  const percent = discountPercent(line.price, line.compareAtPrice);
+  const size = sizeLabel(line.variantTitle);
+  const meta = [size, percent ? `-${percent}%` : ""].filter(Boolean).join(" · ");
+  const linePrice: Money = { ...line.price, amount: String(Number(line.price.amount) * line.quantity) };
+  const lineCompare: Money | null =
+    percent && line.compareAtPrice
+      ? { ...line.compareAtPrice, amount: String(Number(line.compareAtPrice.amount) * line.quantity) }
+      : null;
+
+  return (
+    <div className="flex flex-wrap items-center gap-4 sm:gap-8">
+      <Link
+        href={path(locale, `/products/${line.handle}`)}
+        className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-2xl bg-white p-2"
+      >
+        {line.image ? (
+          <Image src={line.image} alt="" width={72} height={72} className="h-full w-full object-contain" />
+        ) : null}
+      </Link>
+      <div className="min-w-0">
+        {line.brand ? (
+          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">{line.brand}</p>
+        ) : null}
+        <Link href={path(locale, `/products/${line.handle}`)} className="block text-lg font-medium leading-6">
+          {line.title}
+        </Link>
+        {meta ? <p className="mt-1 text-sm text-white/60">{meta}</p> : null}
+        <div className="mt-3 inline-flex items-center gap-2.5 rounded-full bg-black/20 px-2.5 py-1.5 text-sm">
+          <button
+            type="button"
+            onClick={() => onQty(line.id, line.quantity - 1)}
+            className="flex h-6 w-6 items-center justify-center text-white"
+            aria-label={line.quantity === 1 ? removeLabel : "Decrease quantity"}
+          >
+            {line.quantity === 1 ? <TrashIcon /> : "−"}
+          </button>
+          <span className="min-w-3 text-center">{line.quantity}</span>
+          <button
+            type="button"
+            onClick={() => onQty(line.id, line.quantity + 1)}
+            className="flex h-6 w-6 items-center justify-center text-lg leading-none"
+            aria-label="Increase quantity"
+          >
+            +
+          </button>
+        </div>
+      </div>
+      <div className="shrink-0 sm:ml-4">
+        <p className="text-lg font-medium">{formatMoney(linePrice, locale)}</p>
+        {lineCompare ? (
+          <p className="text-sm text-white/45 line-through">{formatMoney(lineCompare, locale)}</p>
+        ) : null}
+      </div>
+    </div>
   );
 }

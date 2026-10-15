@@ -2,17 +2,11 @@
 
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
+import { scrollToCatalog } from "@/lib/scroll-catalog";
+import type { CatalogFilterGroup } from "@/lib/shopify/catalog";
 import type { Locale } from "@/lib/types";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState, type ReactNode } from "react";
-
-const sizes = [
-  ["travel", "sizeTravel"],
-  ["medium", "sizeMedium"],
-  ["large", "sizeLarge"],
-] as const;
-
-const discounts = ["10", "20", "30", "40", "50", "60", "70"];
 
 function CheckboxRow({
   label,
@@ -166,13 +160,11 @@ function Group({
 
 export function ProductFilters({
   locale,
-  brands,
-  notes,
+  groups,
   basePath = "/products",
 }: {
   locale: Locale;
-  brands: string[];
-  notes: string[];
+  groups: CatalogFilterGroup[];
   basePath?: string;
 }) {
   const t = getDict(locale);
@@ -184,13 +176,7 @@ export function ProductFilters({
   const [selectedGenders, setSelectedGenders] = useState(searchParams.getAll("gender"));
   const [selectedSizes, setSelectedSizes] = useState(searchParams.getAll("size"));
   const [selectedDiscounts, setSelectedDiscounts] = useState(searchParams.getAll("discount"));
-  const [open, setOpen] = useState({
-    brand: true,
-    note: true,
-    gender: true,
-    size: true,
-    discount: true,
-  });
+  const [open, setOpen] = useState<Record<string, boolean>>({});
 
   function toggle(list: string[], value: string, checked: boolean) {
     return checked ? [...list, value] : list.filter((item) => item !== value);
@@ -206,7 +192,8 @@ export function ProductFilters({
     selectedSizes.forEach((value) => params.append("size", value));
     selectedDiscounts.forEach((value) => params.append("discount", value));
     const qs = params.toString();
-    router.push(path(locale, `${basePath}${qs ? `?${qs}` : ""}`));
+    router.push(path(locale, `${basePath}${qs ? `?${qs}` : ""}`), { scroll: false });
+    scrollToCatalog();
   }
 
   function reset() {
@@ -216,7 +203,8 @@ export function ProductFilters({
     setSelectedGenders([]);
     setSelectedSizes([]);
     setSelectedDiscounts([]);
-    router.push(path(locale, basePath));
+    router.push(path(locale, basePath), { scroll: false });
+    scrollToCatalog();
   }
 
   return (
@@ -235,68 +223,47 @@ export function ProductFilters({
       />
 
       <div className="mt-4">
-        <Group title={t.filterBrand} open={open.brand} onToggle={() => setOpen((current) => ({ ...current, brand: !current.brand }))}>
-          <div className="max-h-52 overflow-y-auto pr-1">
-            {brands.map((brand) => (
-              <CheckboxRow
-                key={brand}
-                label={brand}
-                checked={selectedBrands.includes(brand)}
-                onChange={(checked) => setSelectedBrands((current) => toggle(current, brand, checked))}
-              />
-            ))}
-          </div>
-        </Group>
-        <Group title={t.filterNote} open={open.note} onToggle={() => setOpen((current) => ({ ...current, note: !current.note }))}>
-          {notes.map((note) => (
-            <CheckboxRow
-              key={note}
-              label={t.notes[note as keyof typeof t.notes]}
-              checked={selectedNotes.includes(note)}
-              onChange={(checked) => setSelectedNotes((current) => toggle(current, note, checked))}
-            />
-          ))}
-        </Group>
-        <Group title={t.filterGender} open={open.gender} onToggle={() => setOpen((current) => ({ ...current, gender: !current.gender }))}>
-          {(
-            [
-              ["men", t.men],
-              ["women", t.women],
-              ["unisex", t.unisex],
-            ] as const
-          ).map(([value, label]) => (
-            <CheckboxRow
-              key={value}
-              label={label}
-              checked={selectedGenders.includes(value)}
-              onChange={(checked) => setSelectedGenders((current) => toggle(current, value, checked))}
-            />
-          ))}
-        </Group>
-        <Group title={t.size} open={open.size} onToggle={() => setOpen((current) => ({ ...current, size: !current.size }))}>
-          {sizes.map(([value, key]) => (
-            <CheckboxRow
-              key={value}
-              label={t[key]}
-              checked={selectedSizes.includes(value)}
-              onChange={(checked) => setSelectedSizes((current) => toggle(current, value, checked))}
-            />
-          ))}
-        </Group>
-        <Group
-          title={t.filterDiscount}
-          open={open.discount}
-          onToggle={() => setOpen((current) => ({ ...current, discount: !current.discount }))}
-        >
-          {discounts.map((value) => (
-            <CheckboxRow
-              key={value}
-              label={`${value}%`}
-              checked={selectedDiscounts.includes(value)}
-              onChange={(checked) => setSelectedDiscounts((current) => toggle(current, value, checked))}
-            />
-          ))}
-        </Group>
+        {groups.map((group) => {
+          const selected =
+            group.id === "brand"
+              ? selectedBrands
+              : group.id === "note"
+                ? selectedNotes
+                : group.id === "gender"
+                  ? selectedGenders
+                  : group.id === "size"
+                    ? selectedSizes
+                    : selectedDiscounts;
+          const setSelected =
+            group.id === "brand"
+              ? setSelectedBrands
+              : group.id === "note"
+                ? setSelectedNotes
+                : group.id === "gender"
+                  ? setSelectedGenders
+                  : group.id === "size"
+                    ? setSelectedSizes
+                    : setSelectedDiscounts;
+          return (
+            <Group
+              key={group.id}
+              title={group.title}
+              open={open[group.id] !== false}
+              onToggle={() => setOpen((current) => ({ ...current, [group.id]: current[group.id] === false }))}
+            >
+              <div className={group.id === "brand" ? "max-h-52 overflow-y-auto pr-1" : undefined}>
+                {group.items.map((item) => (
+                  <CheckboxRow
+                    key={item.value}
+                    label={item.label}
+                    checked={selected.includes(item.value)}
+                    onChange={(checked) => setSelected((current) => toggle(current, item.value, checked))}
+                  />
+                ))}
+              </div>
+            </Group>
+          );
+        })}
       </div>
 
       <div className="mt-5 flex gap-3">

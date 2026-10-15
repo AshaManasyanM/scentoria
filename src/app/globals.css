@@ -122,6 +122,16 @@ a {
   text-underline-offset: 4px;
 }
 
+button,
+.btn-green,
+.btn-white {
+  cursor: pointer;
+}
+
+button:disabled {
+  cursor: default;
+}
+
 .btn-green {
   display: inline-flex;
   align-items: center;
@@ -312,6 +322,46 @@ a {
   .product-slider-prev,
   .product-slider-next {
     display: none;
+  }
+}
+
+@media (min-width: 1280px) {
+  .product-slider-prev.swiper-button-lock,
+  .product-slider-next.swiper-button-lock {
+    display: none;
+  }
+}
+
+@keyframes gallery-in {
+  from {
+    transform: translateX(calc(var(--dir) * 100%));
+  }
+  to {
+    transform: translateX(0);
+  }
+}
+
+@keyframes gallery-out {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(calc(var(--dir) * -100%));
+  }
+}
+
+.gallery-in {
+  animation: gallery-in 500ms ease-out;
+}
+
+.gallery-out {
+  animation: gallery-out 500ms ease-out forwards;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gallery-in,
+  .gallery-out {
+    animation: none;
   }
 }
 

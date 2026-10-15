@@ -4,7 +4,7 @@ import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
 
-export function Footer({ locale }: { locale: Locale }) {
+export function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
 
   return (
@@ -38,7 +38,7 @@ export function Footer({ locale }: { locale: Locale }) {
             {t.navLabel}
           </p>
           <ul className="mt-5 space-y-3 text-sm">
-            {NAV.map((key) => (
+            {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => (
               <li key={key}>
                 <Link href={hrefFor(locale, key)} className="hover:text-[#c5a059]">
                   {t.nav[key]}
@@ -55,8 +55,8 @@ export function Footer({ locale }: { locale: Locale }) {
             +374 00 000 000
           </a>
           <p className="mt-4 text-[#f7f2ea]/80">{t.yourEmail}</p>
-          <a href="mailto:hello@scentoria.am" className="mt-1 block hover:text-[#c5a059]">
-            hello@scentoria.am
+          <a href="mailto:scentoria.la@gmail.com" className="mt-1 block hover:text-[#c5a059]">
+            scentoria.la@gmail.com
           </a>
           <p className="mt-4 text-[#f7f2ea]/80">{t.workingHours}</p>
           <p className="mt-1">{t.hoursValue}</p>

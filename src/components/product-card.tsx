@@ -4,11 +4,13 @@ import { useEffect, useState } from "react";
 import { useWishlist } from "@/components/wishlist-provider";
 import { formatPriceRange } from "@/lib/format";
 import { showWishlistNotice } from "@/lib/wishlist-notice";
+import { isLoggedIn, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale, Product } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 
 export function ProductCard({
   product,
@@ -20,6 +22,7 @@ export function ProductCard({
   variant?: "grid" | "slider" | "feature" | "catalog";
 }) {
   const t = getDict(locale);
+  const router = useRouter();
   const img = product.images[0];
   const { has, toggle } = useWishlist();
   const [ready, setReady] = useState(false);
@@ -30,20 +33,29 @@ export function ProductCard({
   const catalog = variant === "catalog";
 
   function onHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
-    const adding = !saved;
-    toggle({
-      handle: product.handle,
-      title: product.title,
-      brand: product.brand,
-      image: img?.url,
+    event.preventDefault();
+    event.stopPropagation();
+    const button = event.currentTarget;
+    void refreshSession().then(() => {
+      if (!isLoggedIn()) {
+        router.push(path(locale, "/login"));
+        return;
+      }
+      const adding = !saved;
+      toggle({
+        handle: product.handle,
+        title: product.title,
+        brand: product.brand,
+        image: img?.url,
+      });
+      if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+        button.animate(
+          [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
+          { duration: 320, easing: "ease" },
+        );
+      }
+      if (adding) showWishlistNotice(t.addedToWishlist);
     });
-    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
-      event.currentTarget.animate(
-        [{ transform: "scale(1)" }, { transform: "scale(1.35)" }, { transform: "scale(1)" }],
-        { duration: 320, easing: "ease" },
-      );
-    }
-    if (adding) showWishlistNotice(t.addedToWishlist);
   }
 
   const badges = (
@@ -105,7 +117,7 @@ export function ProductCard({
         </Link>
         <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
           <h3 className="line-clamp-2 font-serif text-base font-medium leading-5">
-            {product.brand} {product.title}
+            {[product.brand, product.title].filter(Boolean).join(" ")}
           </h3>
           <div className="mt-auto pt-3">
             <p className="text-xs tracking-[0.08em] text-[#c5a059]">
@@ -164,7 +176,7 @@ export function ProductCard({
         </Link>
         <div className="flex flex-1 flex-col bg-[#284747] px-3 pb-4 pt-3 md:px-4 md:pb-5 md:pt-4">
           <h3 className="font-serif text-lg font-medium leading-6 md:min-h-14 md:text-[22px] md:leading-7">
-            {product.brand} {product.title}
+            {[product.brand, product.title].filter(Boolean).join(" ")}
           </h3>
           <div className="mt-3 flex items-center justify-between gap-3">
             <div>
@@ -228,7 +240,7 @@ export function ProductCard({
         </span>
         <div className="flex flex-1 flex-col p-4">
           <h3 className="font-serif text-xl font-medium leading-7">
-            {product.brand} {product.title}
+            {[product.brand, product.title].filter(Boolean).join(" ")}
           </h3>
           <p className="mt-1.5 text-sm tracking-[0.12em] text-[#c5a059]">
             ★★★★★ <span className="tracking-normal text-[#f7f2ea]/70">({product.reviewCount})</span>
@@ -284,7 +296,7 @@ export function ProductCard({
           </div>
         </div>
         <div className="px-1 pb-3 pt-3">
-          <p className="text-xs font-bold uppercase tracking-wide">{product.brand}</p>
+          {product.brand ? <p className="text-xs font-bold uppercase tracking-wide">{product.brand}</p> : null}
           <h3 className="mt-1 font-serif text-lg">{product.title}</h3>
           <p className="mt-1 text-sm text-star">
             ★★★★★ <span className="text-muted">({product.reviewCount})</span>

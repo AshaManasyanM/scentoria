@@ -1,3 +1,11 @@
+import { clientKey, consumeLimit, readJson, tooManyRequests } from "@/lib/rate-limit";
+import {
+  googleLoginDisabled,
+  loginPasswordAllowed,
+  newPasswordError,
+  sessionCookieOptions,
+  sessionLifetime,
+} from "@/lib/security";
 import {
   createSession,
   createUser,
@@ -12,13 +20,22 @@ import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
 const SESSION = "scentoria_session";
+const AUTH_LIMIT = 10;
+const AUTH_WINDOW_MS = 15 * 60 * 1000;
 
-function publicUser(user: { name: string; email: string; image: string | null; provider: "email" | "google" }) {
+function publicUser(user: {
+  name: string;
+  email: string;
+  image: string | null;
+  provider: "email" | "google";
+  googleSub: string | null;
+}) {
   return {
     name: user.name,
     email: user.email,
     image: user.image || undefined,
     provider: user.provider,
+    googleLinked: Boolean(user.googleSub),
   };
 }
 
@@ -27,15 +44,10 @@ async function sessionToken() {
   return jar.get(SESSION)?.value ?? "";
 }
 
-async function startSession(userId: number) {
-  const token = createSession(userId);
+async function startSession(userId: number, remember = true) {
+  const token = createSession(userId, sessionLifetime(remember));
   const jar = await cookies();
-  jar.set(SESSION, token, {
-    httpOnly: true,
-    sameSite: "lax",
-    path: "/",
-    maxAge: 60 * 60 * 24 * 30,
-  });
+  jar.set(SESSION, token, sessionCookieOptions(remember));
 }
 
 export async function GET() {
@@ -44,23 +56,33 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const body = (await request.json()) as {
+  if (!(await consumeLimit(clientKey(request, "auth-post"), AUTH_LIMIT, AUTH_WINDOW_MS))) return tooManyRequests();
+  const body = await readJson<{
     action?: string;
     name?: string;
     email?: string;
     password?: string;
     image?: string;
-  };
+    remember?: string;
+  }>(request, 8_000);
+  if (!body) return NextResponse.json({ error: "missing" }, { status: 400 });
+  if (googleLoginDisabled(body.action)) return NextResponse.json({ error: "disabled" }, { status: 403 });
+
   const email = body.email?.trim().toLowerCase() ?? "";
   const password = body.password ?? "";
+  if (body.action === "login" && !loginPasswordAllowed(password)) {
+    return NextResponse.json({ error: "password" }, { status: 401 });
+  }
 
   if (body.action === "register") {
-    if (!email || !password) return NextResponse.json({ error: "missing" }, { status: 400 });
-    if (findUserByEmail(email)) return NextResponse.json({ error: "exists" }, { status: 409 });
-    const name = body.name?.trim() || email.split("@")[0] || email;
-    const user = createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
-    await startSession(user.id);
-    return NextResponse.json({ user: publicUser(user) });
+    const problem = newPasswordError(password);
+    if (!email || email.length > 254 || problem) {
+      return NextResponse.json({ error: problem === "short" ? "short" : "missing" }, { status: 400 });
+    }
+    if (findUserByEmail(email)) return NextResponse.json({ ok: true });
+    const name = body.name?.trim().slice(0, 80) || email.split("@")[0] || email;
+    createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
+    return NextResponse.json({ ok: true });
   }
 
   if (body.action === "login") {
@@ -68,19 +90,7 @@ export async function POST(request: Request) {
     if (!user || user.provider !== "email" || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: "password" }, { status: 401 });
     }
-    await startSession(user.id);
-    return NextResponse.json({ user: publicUser(user) });
-  }
-
-  if (body.action === "google") {
-    if (!email) return NextResponse.json({ error: "missing" }, { status: 400 });
-    const existing = findUserByEmail(email);
-    const name = body.name?.trim() || existing?.name || email.split("@")[0] || email;
-    const user = existing
-      ? updateUser(existing.id, { name, image: body.image || existing.image, provider: "google", passwordHash: null })
-      : createUser({ email, name, image: body.image, provider: "google" });
-    if (!user) return NextResponse.json({ error: "missing" }, { status: 400 });
-    await startSession(user.id);
+    await startSession(user.id, body.remember === "1");
     return NextResponse.json({ user: publicUser(user) });
   }
 
@@ -88,13 +98,23 @@ export async function POST(request: Request) {
 }
 
 export async function PATCH(request: Request) {
+  if (!(await consumeLimit(clientKey(request, "auth-patch"), AUTH_LIMIT, AUTH_WINDOW_MS))) return tooManyRequests();
   const user = findUserBySession(await sessionToken());
   if (!user) return NextResponse.json({ error: "missing" }, { status: 401 });
-  const body = (await request.json()) as { name?: string; password?: string };
-  const password = body.password?.trim();
+  const body = await readJson<{ name?: string; password?: string; currentPassword?: string }>(request, 8_000);
+  if (!body) return NextResponse.json({ error: "missing" }, { status: 400 });
+  const password = body.password?.trim() ?? "";
+  if (password) {
+    const problem = newPasswordError(password);
+    if (problem) return NextResponse.json({ error: problem === "short" ? "short" : "missing" }, { status: 400 });
+    if (user.passwordHash && !verifyPassword(body.currentPassword ?? "", user.passwordHash)) {
+      return NextResponse.json({ error: "password" }, { status: 401 });
+    }
+  }
   const next = updateUser(user.id, {
-    name: body.name?.trim() || user.name,
-    passwordHash: user.provider === "email" && password ? hashPassword(password) : undefined,
+    name: body.name?.trim().slice(0, 80) || user.name,
+    passwordHash: password ? hashPassword(password) : undefined,
+    provider: password && !user.passwordHash ? "email" : undefined,
   });
   if (!next) return NextResponse.json({ error: "missing" }, { status: 400 });
   return NextResponse.json({ user: publicUser(next) });

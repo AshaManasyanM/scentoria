@@ -9,7 +9,10 @@ export type ProductVariant = {
   id: string;
   title: string;
   available: boolean;
+  quantity: number | null;
   price: Money;
+  compareAtPrice?: Money | null;
+  image?: { url: string; alt: string } | null;
 };
 
 export type StatBar = {
@@ -26,7 +29,7 @@ export type Product = {
   tags: string[];
   gender: "men" | "women" | "unisex" | "all";
   notes: string[];
-  accords: string[];
+  accords: { name: string; level: number | null }[];
   images: { url: string; alt: string }[];
   variants: ProductVariant[];
   minPrice: Money;
@@ -55,10 +58,12 @@ export type CartLine = {
   merchandiseId: string;
   handle: string;
   title: string;
+  brand: string;
   variantTitle: string;
   image?: string;
   quantity: number;
   price: Money;
+  compareAtPrice?: Money | null;
 };
 
 export type Cart = {
