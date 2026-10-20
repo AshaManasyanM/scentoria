@@ -1,6 +1,7 @@
 import { cookies } from "next/headers";
 import { isCountryCode } from "@/lib/countries";
-import { customerShippingChoices, type ShippingChoice } from "@/lib/shipping-choices";
+import { customerShippingChoices, withSetPrices, type ShippingChoice } from "@/lib/shipping-choices";
+import { shippingPrices } from "@/lib/shipping-prices";
 import { isUsState } from "@/lib/us-states";
 import { storefrontFetch, storefrontFetchDeferred } from "./fetch";
 
@@ -279,7 +280,7 @@ export async function saveDelivery(input: DeliveryDraft) {
 
   const next = await loadRatedCart(id);
   if (!next) return { ok: false as const, error: "save" as const };
-  const options = customerShippingChoices(optionsFrom(next));
+  const options = withSetPrices(customerShippingChoices(optionsFrom(next)), shippingPrices);
   const cheapest = options[0];
   if (!cheapest) return { ok: false as const, error: "shipping" as const };
   await selectShipping(cheapest.groupId, cheapest.handle);

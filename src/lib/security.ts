@@ -1,7 +1,7 @@
 export const MIN_PASSWORD = 8;
 export const MAX_PASSWORD = 256;
-export const SESSION_REMEMBER_MS = 30 * 24 * 60 * 60 * 1000;
-export const SESSION_SHORT_MS = 12 * 60 * 60 * 1000;
+export const SESSION_REMEMBER_MS = 7 * 24 * 60 * 60 * 1000;
+export const SESSION_SHORT_MS = 4 * 60 * 60 * 1000;
 
 export function newPasswordError(password: string) {
   if (!password) return "missing" as const;

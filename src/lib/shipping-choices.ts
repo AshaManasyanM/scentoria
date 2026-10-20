@@ -28,3 +28,29 @@ export function customerShippingChoices(options: Omit<ShippingChoice, "kind">[])
   );
   return [economy, { ...faster, kind: "faster" }];
 }
+
+/** Replace either price when a set amount is provided. */
+export function withSetPrices(
+  options: ShippingChoice[],
+  prices: { cheapest: number | null; faster: number | null },
+): ShippingChoice[] {
+  if (!options.length || (prices.cheapest == null && prices.faster == null)) return options;
+  const cheapest = options.find((option) => option.kind === "cheapest") ?? options[0];
+  const faster = options.find((option) => option.kind === "faster");
+  const cheap: ShippingChoice = {
+    ...cheapest,
+    kind: "cheapest",
+    amount: prices.cheapest == null ? cheapest.amount : prices.cheapest.toFixed(2),
+  };
+  const fastAmount = prices.faster == null ? (faster?.amount ?? null) : prices.faster.toFixed(2);
+  if (fastAmount == null) return [cheap];
+  return [
+    cheap,
+    {
+      ...(faster ?? { ...cheapest, title: "", kind: "faster" as const }),
+      kind: "faster",
+      title: prices.faster == null ? (faster?.title ?? "") : "",
+      amount: fastAmount,
+    },
+  ];
+}

@@ -40,6 +40,14 @@ const require = createRequire(path.join(process.cwd(), "package.json"));
 
 let db: SqliteDatabase | null = null;
 
+const boot = globalThis as typeof globalThis & { __scentoriaDevSessionsCleared?: boolean };
+
+function clearSessionsOnDevStart(connection: SqliteDatabase) {
+  if (process.env.NODE_ENV === "production" || boot.__scentoriaDevSessionsCleared) return;
+  boot.__scentoriaDevSessionsCleared = true;
+  connection.exec("DELETE FROM sessions");
+}
+
 function database() {
   if (db) return db;
   const dir = path.join(process.cwd(), "data");
@@ -86,6 +94,7 @@ function database() {
   `);
   ensureSessionExpiry(next);
   ensureAccountColumns(next);
+  clearSessionsOnDevStart(next);
   db = next;
   return next;
 }

@@ -627,23 +627,49 @@ function ShippingStep({
           <button type="button" onClick={onBack} className="text-sm text-white/70">
             ← {t.backToAddress}
           </button>
-          <fieldset className="mt-5 space-y-2">
-            <legend className="text-xs text-white/70">{t.shippingMethod}</legend>
-            {options.map((option) => {
-              const key = optionKey(option);
-              return (
-                <label key={key} className="mt-2 flex items-center justify-between gap-3 rounded-xl border border-white/20 px-3 py-2 text-sm">
-                  <span className="flex items-center gap-2">
-                    <input type="radio" name="shipping" checked={selected === key} onChange={() => void choose(option)} />
-                    <span>
-                      <span className="block">{option.kind === "faster" ? t.shippingFaster : t.shippingCheapest}</span>
-                      {option.title ? <span className="block text-xs text-white/60">{option.title}</span> : null}
+          <fieldset className="mt-5">
+            <legend className="text-xs uppercase tracking-[0.14em] text-white/55">{t.shippingMethod}</legend>
+            <div className="mt-3 space-y-3">
+              {options.map((option) => {
+                const key = optionKey(option);
+                const on = selected === key;
+                return (
+                  <label
+                    key={key}
+                    className={`flex cursor-pointer items-center justify-between gap-4 rounded-2xl border px-4 py-4 transition-colors ${
+                      on ? "border-[#c5a059] bg-[#c5a059]/12" : "border-white/15 bg-black/15 hover:border-white/35"
+                    }`}
+                  >
+                    <span className="flex min-w-0 items-center gap-3">
+                      <input
+                        type="radio"
+                        name="shipping"
+                        checked={on}
+                        onChange={() => void choose(option)}
+                        className="sr-only"
+                      />
+                      <span
+                        aria-hidden
+                        className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border ${
+                          on ? "border-[#c5a059]" : "border-white/40"
+                        }`}
+                      >
+                        <span className={`h-2.5 w-2.5 rounded-full bg-[#c5a059] ${on ? "opacity-100" : "opacity-0"}`} />
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block text-[15px] font-medium leading-5">
+                          {option.kind === "faster" ? t.shippingFaster : t.shippingCheapest}
+                        </span>
+                        {option.title ? <span className="mt-0.5 block text-xs leading-4 text-white/55">{option.title}</span> : null}
+                      </span>
                     </span>
-                  </span>
-                  <span>{formatMoney({ amount: option.amount, currencyCode: option.currencyCode }, locale)}</span>
-                </label>
-              );
-            })}
+                    <span className={`shrink-0 text-sm font-medium tabular-nums ${on ? "text-[#c5a059]" : "text-white"}`}>
+                      {formatMoney({ amount: option.amount, currencyCode: option.currencyCode }, locale)}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
           </fieldset>
         </div>
         <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">

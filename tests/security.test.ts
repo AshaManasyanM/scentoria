@@ -44,10 +44,10 @@ test("sessions expire and remembered cookies stay httpOnly", () => {
   assert.equal(sessionIsExpired(expiryFrom(Date.now(), 60_000)), false);
 });
 
-test("existing sessions keep at least thirty days from the migration", () => {
+test("existing sessions keep at least seven days from the migration", () => {
   const now = Date.parse("2026-10-12T00:00:00.000Z");
   const old = preservedSessionExpiry("2026-01-01T00:00:00.000Z", now);
-  assert.equal(Date.parse(old) >= now + 30 * 24 * 60 * 60 * 1000, true);
+  assert.equal(Date.parse(old) >= now + 7 * 24 * 60 * 60 * 1000, true);
 });
 
 test("security headers block framing and sniffing", () => {
