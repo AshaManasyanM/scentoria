@@ -76,32 +76,6 @@ export function GoogleSignInButton({
         width,
         locale,
       });
-      const box = host.current;
-      const fit = () => {
-        const frame = box.querySelector("iframe");
-        if (!frame || cancelled) return;
-        if (!frame.dataset.gsiHeight) {
-          const measured = frame.offsetHeight;
-          if (!measured || measured > 80) return;
-          frame.dataset.gsiHeight = String(measured);
-        }
-        const naturalHeight = Number(frame.dataset.gsiHeight);
-        const innerWidth = box.clientWidth;
-        const innerHeight = box.clientHeight;
-        if (!naturalHeight || !innerWidth || !innerHeight) return;
-        const bleed = 8;
-        frame.style.position = "absolute";
-        frame.style.width = `${width}px`;
-        frame.style.height = `${naturalHeight}px`;
-        frame.style.maxWidth = "none";
-        frame.style.border = "0";
-        frame.style.transformOrigin = "0 0";
-        frame.style.left = `${-bleed}px`;
-        frame.style.top = `${-bleed}px`;
-        frame.style.transform = `scale(${(innerWidth + bleed * 2) / width}, ${(innerHeight + bleed * 2) / naturalHeight})`;
-      };
-      fit();
-      requestAnimationFrame(fit);
     };
     const googleLocale = locale === "hy" ? "hy" : "en";
     const src = `https://accounts.google.com/gsi/client?hl=${googleLocale}`;
@@ -135,7 +109,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&>div>div]:!flex [&>div>div]:!h-full [&>div>div]:!w-full [&>div>div]:!items-center [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!shadow-none"
+      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&>div>div]:!block [&>div>div]:!h-full [&>div>div]:!w-full [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!bg-white [&_[role=button]]:!text-[14px] [&_[role=button]]:!font-medium [&_[role=button]]:!text-[#3c4043] [&_[role=button]]:!shadow-none"
     />
   );
 }
