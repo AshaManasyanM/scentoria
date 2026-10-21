@@ -80,19 +80,25 @@ export function GoogleSignInButton({
       const fit = () => {
         const frame = box.querySelector("iframe");
         if (!frame || cancelled) return;
-        const naturalHeight = frame.offsetHeight || 40;
-        const boxWidth = box.getBoundingClientRect().width;
-        const boxHeight = box.getBoundingClientRect().height || 44;
-        if (!naturalHeight || !boxWidth) return;
+        if (!frame.dataset.gsiHeight) {
+          const measured = frame.offsetHeight;
+          if (!measured || measured > 80) return;
+          frame.dataset.gsiHeight = String(measured);
+        }
+        const naturalHeight = Number(frame.dataset.gsiHeight);
+        const innerWidth = box.clientWidth;
+        const innerHeight = box.clientHeight;
+        if (!naturalHeight || !innerWidth || !innerHeight) return;
+        const bleed = 8;
         frame.style.position = "absolute";
-        frame.style.left = "0";
-        frame.style.top = "0";
         frame.style.width = `${width}px`;
         frame.style.height = `${naturalHeight}px`;
         frame.style.maxWidth = "none";
         frame.style.border = "0";
         frame.style.transformOrigin = "0 0";
-        frame.style.transform = `scale(${boxWidth / width}, ${boxHeight / naturalHeight})`;
+        frame.style.left = `${-bleed}px`;
+        frame.style.top = `${-bleed}px`;
+        frame.style.transform = `scale(${(innerWidth + bleed * 2) / width}, ${(innerHeight + bleed * 2) / naturalHeight})`;
       };
       fit();
       requestAnimationFrame(fit);
@@ -129,7 +135,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="relative h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!min-w-full [&_[role=button]]:!rounded-[2px] [&_[role=button]]:!border [&_[role=button]]:!border-[#d8d0c4]"
+      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&>div>div]:!flex [&>div>div]:!h-full [&>div>div]:!w-full [&>div>div]:!items-center [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!shadow-none"
     />
   );
 }
