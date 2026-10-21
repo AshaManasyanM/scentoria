@@ -109,7 +109,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="h-11 w-full overflow-hidden rounded-[2px] [&>div]:!block [&>div]:!h-11 [&>div]:!w-full [&>div>div]:!block [&>div>div]:!h-11 [&>div>div]:!w-full [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!min-w-full [&_[role=button]]:!rounded-[2px] [&_[role=button]]:!border [&_[role=button]]:!border-[#d8d0c4]"
+      className="relative h-11 w-full overflow-hidden rounded-[2px] [&>div]:!relative [&>div]:!h-11 [&>div]:!w-full [&_iframe]:!absolute [&_iframe]:!left-0 [&_iframe]:!top-0 [&_iframe]:!z-10 [&_iframe]:!h-11 [&_iframe]:!w-full [&_iframe]:!max-w-none [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!min-w-full [&_[role=button]]:!rounded-[2px] [&_[role=button]]:!border [&_[role=button]]:!border-[#d8d0c4]"
     />
   );
 }
