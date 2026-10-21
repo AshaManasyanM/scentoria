@@ -182,8 +182,11 @@ export function ProductFilters({
     return checked ? [...list, value] : list.filter((item) => item !== value);
   }
 
+  const searchText = searchParams.get("q") ?? "";
+
   function apply() {
     const params = new URLSearchParams();
+    if (searchText) params.set("q", searchText);
     if (sort === "new") params.set("new", "1");
     else if (sort) params.set("sort", sort);
     selectedGenders.forEach((value) => params.append("gender", value));
@@ -221,6 +224,8 @@ export function ProductFilters({
           { value: "new", label: t.sortNew },
         ]}
       />
+
+      {searchText ? <p className="mt-4 text-sm text-[#083534]">{t.search}: {searchText}</p> : null}
 
       <div className="mt-4">
         {groups.map((group) => {

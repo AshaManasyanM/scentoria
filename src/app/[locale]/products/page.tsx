@@ -5,7 +5,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { brandHandle, catalogFilterGroups, filterProducts, getBrands, getCatalog, getNotes, getShopFilters, standardFilterFallback, uniqueBrands } from "@/lib/shopify/catalog";
+import { brandHandle, catalogFilterGroups, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getShopFilters, standardFilterFallback, uniqueBrands } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -23,6 +23,7 @@ export default async function ProductsPage({
     sort?: string;
     new?: string;
     page?: string;
+    q?: string;
   }>;
 }) {
   const locale = await localeFrom(params);
@@ -48,6 +49,17 @@ export default async function ProductsPage({
     key: note.key,
     label: note.label || (note.key in t.notes ? t.notes[note.key as keyof typeof t.notes] : note.key),
   }));
+  const textQuery = (Array.isArray(query.q) ? query.q[0] : query.q)?.trim() ?? "";
+  const facet = textQuery
+    ? exactSearchFacet(textQuery, brands, notes, [
+        { value: "men", label: t.men },
+        { value: "women", label: t.women },
+        { value: "unisex", label: t.unisex },
+      ])
+    : null;
+  if (facet?.brand) redirect(catalogHref(locale, "/products", { ...query, q: undefined, brand: facet.brand }, 1));
+  if (facet?.note) redirect(catalogHref(locale, "/products", { ...query, q: undefined, note: facet.note }, 1));
+  if (facet?.gender) redirect(catalogHref(locale, "/products", { ...query, q: undefined, gender: facet.gender }, 1));
   const shopFilters = await getShopFilters();
   const groups = catalogFilterGroups(
     shopFilters,
@@ -77,6 +89,7 @@ export default async function ProductsPage({
     discount: query.discount,
     isNew: query.new === "1",
     sort: query.sort,
+    query: facet ? "" : textQuery,
   });
   const paging = catalogSlice(list, query.page);
   if (paging.needsRedirect) redirect(catalogHref(locale, "/products", query, paging.page));
@@ -90,7 +103,7 @@ export default async function ProductsPage({
           <div className="mx-auto w-full max-w-[1320px]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.perfumes}</p>
             <h1 className="mt-3 max-w-3xl font-serif text-[32px] font-medium leading-[1.15] text-[#f7f2ea] md:text-[clamp(40px,4.5vw,56px)]">
-              {focusBrand ?? t.perfumesHero}
+              {focusBrand ?? (textQuery || t.perfumesHero)}
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-[#f7f2ea]/90">{brandStory ?? t.perfumesSub}</p>
           </div>
@@ -101,7 +114,7 @@ export default async function ProductsPage({
       <section id="catalog" className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
         <div className="mx-auto flex max-w-[1320px] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <Suspense fallback={null}>
-            <ProductFilters locale={locale} groups={groups} />
+            <ProductFilters key={catalogQuery(query)} locale={locale} groups={groups} />
           </Suspense>
           <div className="min-w-0 flex-1">
             <ProductGrid products={paging.items} locale={locale} variant="catalog" />

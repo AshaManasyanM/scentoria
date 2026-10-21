@@ -46,10 +46,13 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
     };
   }, [menu]);
 
-  const goSearch = (e: React.FormEvent) => {
+  const goSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMenu(false);
-    router.push(`${path(locale, "/search")}?q=${encodeURIComponent(q)}`);
+    const term = String(new FormData(e.currentTarget).get("q") ?? "").trim();
+    if (!term) return;
+    setQ(term);
+    router.push(`${path(locale, "/products")}?q=${encodeURIComponent(term)}`);
   };
 
   return (
@@ -58,25 +61,26 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
       <header className="sticky top-0 z-40 bg-bg">
         <div className="mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
           <form className="hidden md:block" onSubmit={goSearch}>
-            <label className="relative block w-full max-w-[240px]">
-              <svg
-                viewBox="0 0 24 24"
-                aria-hidden
-                className="pointer-events-none absolute left-3.5 top-1/2 h-[18px] w-[18px] -translate-y-1/2 text-[#8a8178]"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="1.8"
+            <div className="relative block w-full max-w-[240px]">
+              <button
+                type="submit"
+                aria-label={t.search}
+                className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[#8a8178]"
               >
-                <circle cx="11" cy="11" r="6.5" />
-                <path d="M16 16.5 20 20.5" strokeLinecap="round" />
-              </svg>
+                <svg viewBox="0 0 24 24" aria-hidden className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="M16 16.5 20 20.5" strokeLinecap="round" />
+                </svg>
+              </button>
               <input
+                name="q"
+                aria-label={t.search}
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder={`${t.search}...`}
                 className="h-10 w-full rounded-full border border-white bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#d9d0c6]"
               />
-            </label>
+            </div>
           </form>
           <div className="hidden items-center max-md:flex">
             <button
@@ -157,6 +161,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             <div className="mx-auto flex min-h-full max-w-[1350px] flex-col px-8 pb-10 pt-6">
               <form onSubmit={goSearch} className="mx-2 mb-5">
                 <input
+                  name="q"
                   value={q}
                   onChange={(e) => setQ(e.target.value)}
                   placeholder={`${t.search}...`}

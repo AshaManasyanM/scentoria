@@ -184,6 +184,7 @@ const en = {
   emptyWishlist: "You have no wishlist yet",
   emptyWishlistHint: "Start exploring and save your favorite perfumes",
   joinCommunity: "Join our community",
+  footerSlogan: "Masterpieces only",
   footerJoin: "Join community",
   communityHint: "If you don’t have an account yet, sign up. If you already have one, sign in.",
   size: "Size",
@@ -354,6 +355,7 @@ const en = {
 const hy: typeof en = {
   ...en,
   tagline: "№1 օնլայն օծանելիքի խանութ",
+  footerSlogan: "Միայն գլուխգործոցներ",
   nav: {
     home: "Գլխավոր",
     about: "Մեր մասին",

@@ -500,6 +500,7 @@ export function filterProducts(
     isNew?: boolean;
     featured?: boolean;
     sort?: string;
+    query?: string;
   },
 ) {
   const genders = asList(opts.gender).filter((g) => g !== "all");
@@ -537,6 +538,23 @@ export function filterProducts(
     return true;
   });
 
+  const needle = opts.query?.trim().toLowerCase() ?? "";
+  if (needle) {
+    list = list.filter((product) => {
+      const haystack = [
+        product.title,
+        product.brand,
+        ...product.tags,
+        ...product.notes,
+        ...product.accords.map((accord) => accord.name),
+        ...product.variants.map((variant) => variant.title),
+      ]
+        .join(" ")
+        .toLowerCase();
+      return haystack.includes(needle);
+    });
+  }
+
   if (opts.sort === "price-asc") {
     list = [...list].sort((a, b) => Number(a.minPrice.amount) - Number(b.minPrice.amount));
   } else if (opts.sort === "price-desc") {
@@ -545,6 +563,23 @@ export function filterProducts(
     list = [...list].sort((a, b) => a.title.localeCompare(b.title));
   }
   return list;
+}
+
+export function exactSearchFacet(
+  raw: string,
+  brands: string[],
+  notes: { key: string; label: string }[],
+  genders: { value: string; label: string }[],
+) {
+  const query = raw.trim().toLowerCase();
+  if (!query) return null;
+  const brand = brands.find((item) => item.toLowerCase() === query);
+  if (brand) return { brand };
+  const note = notes.find((item) => item.key.toLowerCase() === query || item.label.toLowerCase() === query);
+  if (note) return { note: note.key };
+  const gender = genders.find((item) => item.value.toLowerCase() === query || item.label.toLowerCase() === query);
+  if (gender) return { gender: gender.value };
+  return null;
 }
 
 export function brandHandle(brand: string) {

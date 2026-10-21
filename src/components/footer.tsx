@@ -3,6 +3,7 @@ import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
+import Image from "next/image";
 
 export function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
@@ -11,10 +12,17 @@ export function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
     <footer className="mt-auto bg-[#083534] text-[#f7f2ea]">
       <div className="mx-auto grid max-w-[1280px] gap-12 px-4 py-14 md:grid-cols-[1.1fr_0.8fr_1fr] md:px-8">
         <div>
-          <Link href={path(locale)} className="font-serif text-[32px] font-medium">
-            {t.brand}
+          <Link href={path(locale)} className="inline-block">
+            <Image
+              src="/brand/scentoria-prive.png"
+              alt={t.brand}
+              width={112}
+              height={112}
+              className="h-14 w-14 object-contain"
+            />
           </Link>
-          <p className="mt-8 text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">
+          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#c5a059]">{t.footerSlogan}</p>
+          <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">
             {t.footerJoin}
           </p>
           <div className="mt-4 flex gap-3">

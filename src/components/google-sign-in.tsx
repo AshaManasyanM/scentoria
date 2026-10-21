@@ -40,9 +40,14 @@ export function GoogleSignInButton({
   useEffect(() => {
     if (!clientId || !host.current) return;
     let cancelled = false;
+    let renderedWidth = 0;
     const render = () => {
       const google = (window as Window & { google?: GoogleAccounts }).google;
       if (!google || !host.current || cancelled) return;
+      const measured = Math.floor(host.current.getBoundingClientRect().width);
+      const width = Math.min(400, Math.max(240, measured || 240));
+      if (renderedWidth === width && host.current.childElementCount > 0) return;
+      renderedWidth = width;
       host.current.replaceChildren();
       google.accounts.id.initialize({
         client_id: clientId,
@@ -64,11 +69,11 @@ export function GoogleSignInButton({
       google.accounts.id.renderButton(host.current, {
         type: "standard",
         theme: "outline",
-        size: "large",
+        size: "medium",
         text: "continue_with",
         shape: "rectangular",
         logo_alignment: "center",
-        width: 400,
+        width,
         locale,
       });
     };
@@ -83,18 +88,20 @@ export function GoogleSignInButton({
     if (current) {
       if ((window as Window & { google?: GoogleAccounts }).google) render();
       else current.addEventListener("load", render, { once: true });
-      return () => {
-        cancelled = true;
-      };
+    } else {
+      const script = document.createElement("script");
+      script.src = src;
+      script.async = true;
+      script.dataset.scentoriaGsi = "1";
+      script.addEventListener("load", render, { once: true });
+      document.head.appendChild(script);
     }
-    const script = document.createElement("script");
-    script.src = src;
-    script.async = true;
-    script.dataset.scentoriaGsi = "1";
-    script.addEventListener("load", render, { once: true });
-    document.head.appendChild(script);
+    const observed = host.current;
+    const observer = new ResizeObserver(() => render());
+    observer.observe(observed);
     return () => {
       cancelled = true;
+      observer.disconnect();
     };
   }, [clientId, locale, mode]);
 
@@ -102,7 +109,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="w-full [&>div]:!w-full [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!rounded-[2px] [&_[role=button]]:!border [&_[role=button]]:!border-[#d8d0c4]"
+      className="h-11 w-full overflow-hidden rounded-[2px] [&>div]:!block [&>div]:!h-11 [&>div]:!w-full [&>div>div]:!block [&>div>div]:!h-11 [&>div>div]:!w-full [&_[role=button]]:!box-border [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!min-w-full [&_[role=button]]:!rounded-[2px] [&_[role=button]]:!border [&_[role=button]]:!border-[#d8d0c4]"
     />
   );
 }
