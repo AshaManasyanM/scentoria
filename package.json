@@ -7,7 +7,7 @@
     "build": "NODE_OPTIONS='--experimental-sqlite' next build",
     "start": "NODE_OPTIONS='--experimental-sqlite' next start",
     "lint": "eslint",
-    "test": "node --experimental-strip-types --test tests/security.test.ts",
+    "test": "node --experimental-strip-types --test tests/security.test.ts tests/shipping-choices.test.ts tests/checkout-quote.test.ts",
     "test:auth": "NODE_OPTIONS='--experimental-sqlite' node --test tests/auth-security.mjs"
   },
   "dependencies": {

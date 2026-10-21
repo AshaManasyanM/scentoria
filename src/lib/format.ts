@@ -14,6 +14,16 @@ export function formatMoney(money: Money, _locale = "en") {
   return `${grouped} ${money.currencyCode}`;
 }
 
+/** Shopify shipping amounts keep their cents so the summary matches checkout. */
+export function formatExactMoney(money: Money) {
+  const n = Number(money.amount);
+  if (!Number.isFinite(n)) return "";
+  if (money.currencyCode === "AMD") return formatMoney(money);
+  const [whole, cents] = n.toFixed(2).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  return `${grouped}.${cents} ${money.currencyCode}`;
+}
+
 export function sizeWithOz(title: string) {
   if (/\boz\b/i.test(title)) return title;
   const match = title.match(/(\d+(?:[.,]\d+)?)\s*ml\b/i);

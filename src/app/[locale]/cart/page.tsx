@@ -5,8 +5,18 @@ import { useCart } from "@/components/cart-provider";
 import type { SavedAddress } from "@/lib/address-book";
 import { countryChoices, isCountryCode } from "@/lib/countries";
 import { isUsState, usStateChoices } from "@/lib/us-states";
-import { discountPercent, formatMoney } from "@/lib/format";
+import { checkoutQuote, type CartCostQuote } from "@/lib/checkout-quote";
+import { discountPercent, formatExactMoney, formatMoney } from "@/lib/format";
 import { getDict, isLocale } from "@/lib/i18n";
+import {
+  customerShippingChoices,
+  selectedShippingTotal,
+  formatDayRange,
+  shippingComparison,
+  shippingFacts,
+  type ShippingChoice,
+  type ShippingSelection,
+} from "@/lib/shipping-choices";
 import { path } from "@/lib/path";
 import type { CartLine, Money } from "@/lib/types";
 import Image from "next/image";
@@ -65,8 +75,13 @@ export default function CartPage() {
   const [codeNote, setCodeNote] = useState("");
   const [step, setStep] = useState(0);
   const [payUrl, setPayUrl] = useState<string | null>(null);
-  const [shippingOptions, setShippingOptions] = useState<ShippingOption[]>([]);
-  const [shippingCost, setShippingCost] = useState<Money | null>(null);
+  const [shippingOptions, setShippingOptions] = useState<ShippingChoice[]>([]);
+  const [shippingSelection, setShippingSelection] = useState<ShippingSelection[]>([]);
+  const [shippingNotice, setShippingNotice] = useState("");
+  const [ratesPending, setRatesPending] = useState(false);
+  const [shopifyCost, setShopifyCost] = useState<CartCostQuote | null>(null);
+  const shippingCost = selectedShippingTotal(shippingOptions, shippingSelection);
+  const cartKey = cart.lines.map((line) => `${line.merchandiseId}:${line.quantity}`).join("|");
   const currency = cart.lines[0]?.price.currencyCode ?? "AMD";
   const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
   const money = (amount: number): Money => ({ amount: String(amount), currencyCode: currency });
@@ -81,6 +96,11 @@ export default function CartPage() {
     payable += price * line.quantity;
   }
   const discount = Math.max(0, products - payable);
+  const quote = checkoutQuote(shopifyCost, {
+    products: payable,
+    shipping: shippingAmount(shippingCost, currency),
+    currency,
+  });
 
   if (cart.lines.length === 0) {
     return (
@@ -122,13 +142,26 @@ export default function CartPage() {
             <DeliveryStep
               locale={locale}
               labels={t}
+              step={step}
+              cartKey={cartKey}
+              preference={shippingSelection}
+              onPending={setRatesPending}
               onBack={() => setStep(0)}
               productsLabel={formatMoney(money(products), locale)}
-              onReady={(options, url) => {
-                setShippingOptions(options);
-                setPayUrl(url);
-                const cheapest = options[0];
-                setShippingCost(cheapest ? { amount: cheapest.amount, currencyCode: cheapest.currencyCode } : null);
+              onReady={(result) => {
+                setShippingOptions(result.options);
+                setShippingSelection(result.selection);
+                setShopifyCost(result.cost);
+                setPayUrl(result.selectionMissing || !result.options.length ? null : result.checkoutUrl);
+                setShippingNotice(
+                  result.notice
+                    ? result.notice
+                    : result.selectionMissing
+                      ? t.shippingSelectionGone
+                      : result.options.length
+                        ? ""
+                        : t.shippingUnavailable,
+                );
                 setStep(2);
               }}
             />
@@ -136,32 +169,33 @@ export default function CartPage() {
         ) : null}
         {step === 2 ? (
           <ShippingStep
-            locale={locale}
             labels={t}
             options={shippingOptions}
+            selection={shippingSelection}
+            notice={shippingNotice}
+            ratesPending={ratesPending}
             initialUrl={payUrl}
             onBack={() => setStep(1)}
-            onCost={setShippingCost}
-            onPay={(url, cost) => {
+            onChosen={(selection, options, url, cost) => {
+              setShippingSelection(selection);
+              setShippingOptions(options);
+              setShopifyCost(cost);
               setPayUrl(url);
-              setShippingCost(cost);
+              setShippingNotice("");
+            }}
+            onPay={(url) => {
+              setPayUrl(url);
               setStep(3);
             }}
           />
         ) : null}
         {step === 3 && payUrl ? (
           <PaymentStep
-            locale={locale}
             labels={t}
             payUrl={payUrl}
-            productsLabel={formatMoney(money(products), locale)}
+            productsLabel={formatMoney(money(payable), locale)}
             shipping={shippingCost}
-            totalLabel={formatMoney(
-              money(
-                shippingCost?.currencyCode === currency ? payable + Number(shippingCost.amount) : payable,
-              ),
-              locale,
-            )}
+            quote={quote}
             onBack={() => setStep(2)}
           />
         ) : null}
@@ -242,16 +276,22 @@ export default function CartPage() {
   );
 }
 
-type ShippingOption = {
-  groupId: string;
-  handle: string;
-  title: string;
-  amount: string;
-  currencyCode: string;
-  kind?: "cheapest" | "faster";
+const checkoutSteps = (t: ReturnType<typeof getDict>) => [t.stepBag, t.stepAddress, t.stepDelivery, t.stepPayment];
+
+type DeliveryRates = {
+  options: ShippingChoice[];
+  checkoutUrl: string;
+  selection: ShippingSelection[];
+  selectionMissing: boolean;
+  cost: CartCostQuote | null;
+  notice?: string;
 };
 
-const checkoutSteps = (t: ReturnType<typeof getDict>) => [t.stepBag, t.stepAddress, t.stepDelivery, t.stepPayment];
+function shippingAmount(money: Money | null, currency: string) {
+  if (!money || money.currencyCode !== currency) return 0;
+  const amount = Number(money.amount);
+  return Number.isFinite(amount) ? amount : 0;
+}
 
 type AddressSuggestion = {
   id: string;
@@ -271,15 +311,23 @@ const countryChevron = `url("data:image/svg+xml,${encodeURIComponent(
 function DeliveryStep({
   locale,
   labels: t,
+  step,
+  cartKey,
+  preference,
+  onPending,
   onBack,
   productsLabel,
   onReady,
 }: {
   locale: "en" | "hy";
   labels: ReturnType<typeof getDict>;
+  step: number;
+  cartKey: string;
+  preference: ShippingSelection[];
+  onPending: (pending: boolean) => void;
   onBack: () => void;
   productsLabel: string;
-  onReady: (options: ShippingOption[], checkoutUrl: string) => void;
+  onReady: (result: DeliveryRates) => void;
 }) {
   const [form, setForm] = useState({
     email: "",
@@ -298,9 +346,18 @@ function DeliveryStep({
   const [suggestOpen, setSuggestOpen] = useState(false);
   const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
   const pickedAddress = useRef("");
+  const formRef = useRef(form);
+  const preferenceRef = useRef(preference);
+  const ratedKey = useRef<string | null>(null);
+  const requestId = useRef(0);
   const countries = useMemo(() => countryChoices(locale), [locale]);
   const states = useMemo(() => usStateChoices(), []);
   const field = "h-11 w-full rounded-xl border border-white/20 bg-black/20 px-3 text-sm text-white outline-none placeholder:text-white/40";
+
+  useEffect(() => {
+    formRef.current = form;
+    preferenceRef.current = preference;
+  }, [form, preference]);
 
   useEffect(() => {
     void fetch("/api/addresses").then(async (response) => {
@@ -396,44 +453,79 @@ function DeliveryStep({
     setError("");
   }
 
-  async function submit(event: FormEvent) {
-    event.preventDefault();
+  async function requestRates(delivery: typeof form, key: string) {
+    const id = ++requestId.current;
     setPending(true);
+    onPending(true);
     setError("");
-    const res = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "delivery", delivery: form }),
-    });
-    const data = (await res.json()) as {
-      ok: boolean;
-      error?: string;
-      checkoutUrl?: string;
-      options?: ShippingOption[];
-    };
-    setPending(false);
-    if (!data.ok) {
-      const message =
-        data.error === "rate"
-          ? t.tooManyAttempts
-          : data.error === "stock"
-          ? t.deliveryStock
-          : data.error === "market"
-            ? t.deliveryMarketError
-            : data.error === "address"
-            ? t.deliveryAddressError
-            : data.error === "shipping"
-              ? t.deliveryShippingError
-              : t.deliverySaveError;
-      setError(message);
-      return;
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "delivery", delivery, selected: preferenceRef.current }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        checkoutUrl?: string;
+        options?: ShippingChoice[];
+        selection?: ShippingSelection[];
+        selectionMissing?: boolean;
+        cost?: CartCostQuote | null;
+      };
+      if (id !== requestId.current) return;
+      if (!data.ok || !data.checkoutUrl || !data.options) {
+        const message =
+          data.error === "rate"
+            ? t.tooManyAttempts
+            : data.error === "stock"
+              ? t.deliveryStock
+              : data.error === "market"
+                ? t.deliveryMarketError
+                : data.error === "address"
+                  ? t.deliveryAddressError
+                  : data.error === "shipping"
+                    ? t.shippingUnavailable
+                    : t.deliverySaveError;
+        setError(message);
+        if (ratedKey.current) {
+          onReady({ options: [], checkoutUrl: "", selection: [], selectionMissing: false, cost: null, notice: message });
+        }
+        return;
+      }
+      ratedKey.current = key;
+      onReady({
+        options: data.options,
+        checkoutUrl: data.checkoutUrl,
+        selection: data.selection ?? [],
+        selectionMissing: Boolean(data.selectionMissing),
+        cost: data.cost ?? null,
+      });
+    } catch {
+      if (id === requestId.current) {
+        setError(t.deliverySaveError);
+        if (ratedKey.current) {
+          onReady({ options: [], checkoutUrl: "", selection: [], selectionMissing: false, cost: null, notice: t.deliverySaveError });
+        }
+      }
+    } finally {
+      if (id === requestId.current) {
+        setPending(false);
+        onPending(false);
+      }
     }
-    const next = [...(data.options ?? [])].sort((a, b) => Number(a.amount) - Number(b.amount));
-    if (!data.checkoutUrl || !next.length) {
-      setError(t.deliveryShippingError);
-      return;
-    }
-    onReady(next, data.checkoutUrl);
+  }
+
+  useEffect(() => {
+    if (step < 2 || !ratedKey.current || ratedKey.current === cartKey) return;
+    void requestRates(formRef.current, cartKey);
+    // Rates are refreshed only after the cart itself changes.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [cartKey, step]);
+
+  function submit(event: FormEvent) {
+    event.preventDefault();
+    void requestRates(form, cartKey);
   }
 
   return (
@@ -571,7 +663,7 @@ function DeliveryStep({
             </div>
           </dl>
           <button type="submit" disabled={pending} className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534] disabled:opacity-60">
-            {t.nextDelivery} →
+            {pending ? t.shippingLoading : `${t.nextDelivery} →`}
           </button>
           <p className="mt-3 text-center text-xs leading-5 text-white/60">{t.paymentOnShopify}</p>
         </aside>
@@ -580,44 +672,134 @@ function DeliveryStep({
   );
 }
 
+function shippingPrice(option: ShippingChoice, freeLabel: string) {
+  if (Number(option.amount) === 0) return freeLabel;
+  return formatExactMoney(option);
+}
+
+function optionHeading(option: ShippingChoice, t: ReturnType<typeof getDict>) {
+  if (option.kind === "cheapest") return t.shippingCheapest;
+  if (option.kind === "faster") return t.shippingFaster;
+  return option.title || t.shippingMethod;
+}
+
+function optionDetail(option: ShippingChoice) {
+  const facts = shippingFacts(option);
+  const lines: string[] = [];
+  const title = option.title.trim();
+  const named = facts.carrier && !title.toLowerCase().startsWith(facts.carrier.toLowerCase())
+    ? `${facts.carrier} · ${title}`
+    : title;
+  if ((option.kind === "cheapest" || option.kind === "faster") && named) lines.push(named);
+  else if (option.kind === "option" && facts.carrier && named !== title) lines.push(facts.carrier);
+  if (option.description && option.description !== option.title && !lines.includes(option.description) && !deliveryAlreadyShown(option)) {
+    lines.push(option.description);
+  }
+  return lines.join(" — ");
+}
+
+function deliveryAlreadyShown(option: ShippingChoice) {
+  return Boolean(shippingFacts(option).days && option.description && /^\d/.test(option.description.trim()));
+}
+
+function optionDays(option: ShippingChoice, t: ReturnType<typeof getDict>) {
+  const days = shippingFacts(option).days;
+  if (!days) return "";
+  return t.shippingBusinessDays.replace("{range}", formatDayRange(days));
+}
+
+function optionComparison(option: ShippingChoice, options: ShippingChoice[], t: ReturnType<typeof getDict>) {
+  const compared = shippingComparison(option, options);
+  const parts: string[] = [];
+  if (compared.daysDifference) {
+    const count = Math.abs(compared.daysDifference);
+    const sooner = compared.daysDifference > 0;
+    const label = count === 1
+      ? (sooner ? t.shippingSooner : t.shippingLater)
+      : (sooner ? t.shippingSoonerPlural : t.shippingLaterPlural);
+    parts.push(label.replace("{count}", String(count)));
+  }
+  if (compared.priceDifference) {
+    parts.push(`+${formatExactMoney({ amount: compared.priceDifference, currencyCode: option.currencyCode })}`);
+  }
+  return parts.join(" · ");
+}
+
 function ShippingStep({
-  locale,
   labels: t,
   options,
+  selection,
+  notice,
+  ratesPending,
   initialUrl,
   onBack,
-  onCost,
+  onChosen,
   onPay,
 }: {
-  locale: "en" | "hy";
   labels: ReturnType<typeof getDict>;
-  options: ShippingOption[];
+  options: ShippingChoice[];
+  selection: ShippingSelection[];
+  notice: string;
+  ratesPending: boolean;
   initialUrl: string | null;
   onBack: () => void;
-  onCost: (cost: Money) => void;
-  onPay: (url: string, shipping: Money) => void;
+  onChosen: (selection: ShippingSelection[], options: ShippingChoice[], url: string, cost: CartCostQuote | null) => void;
+  onPay: (url: string) => void;
 }) {
-  const first = options[0];
-  const optionKey = (option: ShippingOption) => `${option.groupId}:${option.handle}:${option.kind ?? "cheapest"}`;
-  const [selected, setSelected] = useState(first ? optionKey(first) : "");
-  const [checkoutUrl, setCheckoutUrl] = useState(initialUrl);
   const [pending, setPending] = useState(false);
-  const chosen = options.find((option) => optionKey(option) === selected) ?? first;
+  const [error, setError] = useState("");
+  const cost = selectedShippingTotal(options, selection);
+  const ready = Boolean(cost && initialUrl && !ratesPending && !pending);
 
-  async function choose(option: ShippingOption) {
-    const key = optionKey(option);
-    setSelected(key);
+  async function choose(option: ShippingChoice) {
+    if (ratesPending || pending) return;
+    const next = [
+      ...selection.filter((item) => item.groupId !== option.groupId),
+      { groupId: option.groupId, handle: option.handle },
+    ];
     setPending(true);
-    const res = await fetch("/api/cart", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ action: "shipping", groupId: option.groupId, handle: option.handle }),
-    });
-    const data = (await res.json()) as { ok: boolean; checkoutUrl?: string };
-    setPending(false);
-    if (!data.ok || !data.checkoutUrl) return;
-    setCheckoutUrl(data.checkoutUrl);
-    onCost({ amount: option.amount, currencyCode: option.currencyCode });
+    setError("");
+    try {
+      const res = await fetch("/api/cart", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "shipping", selected: next }),
+      });
+      const data = (await res.json()) as {
+        ok: boolean;
+        error?: string;
+        checkoutUrl?: string;
+        confirmed?: {
+          groupId: string;
+          handle: string;
+          title: string;
+          description: string;
+          amount: string;
+          currencyCode: string;
+        }[];
+        cost?: CartCostQuote | null;
+      };
+      if (!data.ok || !data.checkoutUrl || !data.confirmed) {
+        setError(data.error === "unavailable" ? t.shippingSelectionGone : t.shippingUpdateError);
+        return;
+      }
+      const priced = customerShippingChoices(options.map((item) => {
+        const match = data.confirmed?.find((confirmed) => confirmed.groupId === item.groupId && confirmed.handle === item.handle);
+        if (!match) return item;
+        return {
+          ...item,
+          title: match.title || item.title,
+          description: match.description || item.description,
+          amount: match.amount,
+          currencyCode: match.currencyCode,
+        };
+      }));
+      onChosen(next, priced, data.checkoutUrl, data.cost ?? null);
+    } catch {
+      setError(t.deliverySaveError);
+    } finally {
+      setPending(false);
+    }
   }
 
   return (
@@ -627,12 +809,19 @@ function ShippingStep({
           <button type="button" onClick={onBack} className="text-sm text-white/70">
             ← {t.backToAddress}
           </button>
-          <fieldset className="mt-5">
+          <fieldset className="mt-5" disabled={ratesPending || pending}>
             <legend className="text-xs uppercase tracking-[0.14em] text-white/55">{t.shippingMethod}</legend>
+            {ratesPending ? <p className="mt-3 text-sm text-white/70">{t.shippingLoading}</p> : null}
+            {notice ? <p className="mt-3 text-sm text-white/80">{notice}</p> : null}
+            {error ? <p className="mt-3 text-sm text-white/80">{error}</p> : null}
+            {!ratesPending && !options.length && !notice ? <p className="mt-3 text-sm text-white/80">{t.shippingUnavailable}</p> : null}
             <div className="mt-3 space-y-3">
               {options.map((option) => {
-                const key = optionKey(option);
-                const on = selected === key;
+                const key = `${option.groupId}:${option.handle}`;
+                const on = selection.some((item) => item.groupId === option.groupId && item.handle === option.handle);
+                const detail = optionDetail(option);
+                const days = optionDays(option, t);
+                const comparison = optionComparison(option, options, t);
                 return (
                   <label
                     key={key}
@@ -643,7 +832,7 @@ function ShippingStep({
                     <span className="flex min-w-0 items-center gap-3">
                       <input
                         type="radio"
-                        name="shipping"
+                        name={`shipping-${option.groupId}`}
                         checked={on}
                         onChange={() => void choose(option)}
                         className="sr-only"
@@ -657,14 +846,16 @@ function ShippingStep({
                         <span className={`h-2.5 w-2.5 rounded-full bg-[#c5a059] ${on ? "opacity-100" : "opacity-0"}`} />
                       </span>
                       <span className="min-w-0">
-                        <span className="block text-[15px] font-medium leading-5">
-                          {option.kind === "faster" ? t.shippingFaster : t.shippingCheapest}
-                        </span>
-                        {option.title ? <span className="mt-0.5 block text-xs leading-4 text-white/55">{option.title}</span> : null}
+                        <span className="block text-[15px] font-medium leading-5">{optionHeading(option, t)}</span>
+                        {detail ? <span className="mt-0.5 block text-xs leading-4 text-white/55">{detail}</span> : null}
+                        {days ? <span className="mt-0.5 block text-xs leading-4 text-white/55">{days}</span> : null}
+                        {comparison ? (
+                          <span className={`mt-0.5 block text-xs leading-4 ${on ? "text-[#c5a059]" : "text-white/80"}`}>{comparison}</span>
+                        ) : null}
                       </span>
                     </span>
                     <span className={`shrink-0 text-sm font-medium tabular-nums ${on ? "text-[#c5a059]" : "text-white"}`}>
-                      {formatMoney({ amount: option.amount, currencyCode: option.currencyCode }, locale)}
+                      {shippingPrice(option, t.shippingFree)}
                     </span>
                   </label>
                 );
@@ -676,21 +867,19 @@ function ShippingStep({
           <dl className="space-y-3 text-sm text-white/80">
             <div className="flex items-center justify-between gap-4">
               <dt>{t.delivery}</dt>
-              <dd className="text-white">
-                {chosen ? formatMoney({ amount: chosen.amount, currencyCode: chosen.currencyCode }, locale) : "—"}
-              </dd>
+              <dd className="text-white">{cost ? (Number(cost.amount) === 0 ? t.shippingFree : formatExactMoney(cost)) : "—"}</dd>
             </div>
           </dl>
           <button
             type="button"
-            disabled={!chosen || !checkoutUrl || pending}
+            disabled={!ready}
             onClick={() => {
-              if (!chosen || !checkoutUrl) return;
-              onPay(checkoutUrl, { amount: chosen.amount, currencyCode: chosen.currencyCode });
+              if (!initialUrl || !cost) return;
+              onPay(initialUrl);
             }}
             className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534] disabled:opacity-60"
           >
-            {t.nextPayment} →
+            {ratesPending || pending ? t.shippingLoading : `${t.nextPayment} →`}
           </button>
         </aside>
       </div>
@@ -699,50 +888,51 @@ function ShippingStep({
 }
 
 function PaymentStep({
-  locale,
   labels: t,
   payUrl,
   productsLabel,
   shipping,
-  totalLabel,
+  quote,
   onBack,
 }: {
-  locale: "en" | "hy";
   labels: ReturnType<typeof getDict>;
   payUrl: string;
   productsLabel: string;
   shipping: Money | null;
-  totalLabel: string;
+  quote: ReturnType<typeof checkoutQuote>;
   onBack: () => void;
 }) {
+  const payClass = "mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534] disabled:opacity-60";
+  const shownTotal = quote.verified ? quote.total : quote.estimatedTotal;
   return (
     <div className="mt-6 rounded-[28px] bg-[#083534] px-4 py-5 text-white md:px-8 md:py-8">
-      <div className="flex flex-col gap-8 lg:flex-row lg:items-start">
-        <div className="min-w-0 flex-1">
-          <button type="button" onClick={onBack} className="text-sm text-white/70">
-            ← {t.backToDelivery}
-          </button>
-          <p className="mt-6 max-w-md text-sm leading-6 text-white/80">{t.paymentOnShopify}</p>
-        </div>
-        <aside className="flex w-full shrink-0 flex-col rounded-[22px] border border-white/25 p-4 lg:w-[360px] lg:p-5">
-          <dl className="space-y-3 text-sm text-white/80">
-            <div className="flex items-center justify-between gap-4">
-              <dt>{t.productsTotal}</dt>
-              <dd className="text-white">{productsLabel}</dd>
-            </div>
-            <div className="flex items-center justify-between gap-4">
-              <dt>{t.delivery}</dt>
-              <dd className="text-white">{shipping ? formatMoney(shipping, locale) : "—"}</dd>
-            </div>
-          </dl>
-          <div className="mt-4 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
-            <p className="text-sm text-white/80">{t.orderTotal}</p>
-            <p className="text-2xl font-medium tracking-tight">{totalLabel}</p>
+      <button type="button" onClick={onBack} className="text-sm text-white/70">
+        ← {t.backToDelivery}
+      </button>
+      <div className="mt-6 rounded-[22px] border border-white/25 p-4 md:p-6">
+        <dl className="space-y-3 text-sm text-white/80">
+          <div className="flex items-center justify-between gap-4">
+            <dt>{t.productsTotal}</dt>
+            <dd className="text-white">{productsLabel}</dd>
           </div>
-          <a href={payUrl} className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]">
-            {t.payNow} →
-          </a>
-        </aside>
+          <div className="flex items-center justify-between gap-4">
+            <dt>{t.delivery}</dt>
+            <dd className="text-white">
+              {shipping ? (Number(shipping.amount) === 0 ? t.shippingFree : formatExactMoney(shipping)) : "—"}
+            </dd>
+          </div>
+          <div className="flex items-center justify-between gap-4">
+            <dt>{t.tax}</dt>
+            <dd className="text-right text-white">{quote.tax ? formatExactMoney(quote.tax) : t.taxAtCheckout}</dd>
+          </div>
+        </dl>
+        <div className="mt-4 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
+          <p className="text-sm text-white/80">{quote.verified ? t.orderTotal : t.estimatedTotal}</p>
+          <p className="text-2xl font-medium tracking-tight">{shownTotal ? formatExactMoney(shownTotal) : "—"}</p>
+        </div>
+        <a href={payUrl} className={`${payClass} w-full`}>
+          {t.payNow} →
+        </a>
       </div>
     </div>
   );

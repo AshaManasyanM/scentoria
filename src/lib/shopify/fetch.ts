@@ -48,6 +48,7 @@ export async function storefrontFetchDeferred<T>(
       },
       body: JSON.stringify({ query, variables }),
       cache: "no-store",
+      signal: AbortSignal.timeout(20_000),
     });
     if (!res.ok) return null;
     const merged = mergeDeferred(res.headers.get("content-type") ?? "", await res.text());

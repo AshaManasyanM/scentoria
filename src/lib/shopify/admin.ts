@@ -4,6 +4,10 @@ const adminApi = `https://${shopDomain}/admin/api/2025-01/graphql.json`;
 
 let cached: { token: string; expiresAt: number } | null = null;
 
+export function resetAdminToken() {
+  cached = null;
+}
+
 export async function adminToken() {
   if (cached && cached.expiresAt > Date.now() + 60_000) return cached.token;
   const clientId = process.env.SHOPIFY_CLIENT_ID ?? "";
