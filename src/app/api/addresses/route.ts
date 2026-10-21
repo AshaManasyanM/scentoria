@@ -15,7 +15,7 @@ const SESSION = "scentoria_session";
 
 async function currentUser() {
   const jar = await cookies();
-  return findUserBySession(jar.get(SESSION)?.value ?? "");
+  return await findUserBySession(jar.get(SESSION)?.value ?? "");
 }
 
 function draftFrom(body: Partial<AddressDraft> | null): AddressDraft | null {
@@ -38,7 +38,7 @@ export async function GET(request: Request) {
   if (!(await consumeLimit(clientKey(request, "addresses"), 60, 60_000))) return tooManyRequests();
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "missing" }, { status: 401 });
-  return NextResponse.json({ addresses: listAddresses(user.id) });
+  return NextResponse.json({ addresses: await listAddresses(user.id) });
 }
 
 export async function POST(request: Request) {
@@ -47,8 +47,9 @@ export async function POST(request: Request) {
   if (!user) return NextResponse.json({ error: "missing" }, { status: 401 });
   const draft = draftFrom(await readJson<Partial<AddressDraft>>(request, 4_000));
   if (!draft || addressDraftError(draft)) return NextResponse.json({ error: "address" }, { status: 400 });
-  if (countAddresses(user.id) >= 12) return NextResponse.json({ error: "address" }, { status: 400 });
-  const saved = createAddress(user.id, { ...draft, isDefault: draft.isDefault || countAddresses(user.id) === 0 });
+  const addressCount = await countAddresses(user.id);
+  if (addressCount >= 12) return NextResponse.json({ error: "address" }, { status: 400 });
+  const saved = await createAddress(user.id, { ...draft, isDefault: draft.isDefault || addressCount === 0 });
   return NextResponse.json({ address: saved });
 }
 
@@ -62,7 +63,7 @@ export async function PATCH(request: Request) {
   if (!draft || !Number.isInteger(id) || addressDraftError(draft)) {
     return NextResponse.json({ error: "address" }, { status: 400 });
   }
-  const saved = updateAddress(user.id, id, draft);
+  const saved = await updateAddress(user.id, id, draft);
   if (!saved) return NextResponse.json({ error: "address" }, { status: 404 });
   return NextResponse.json({ address: saved });
 }
@@ -72,8 +73,8 @@ export async function DELETE(request: Request) {
   const user = await currentUser();
   if (!user) return NextResponse.json({ error: "missing" }, { status: 401 });
   const id = Number(new URL(request.url).searchParams.get("id"));
-  if (!Number.isInteger(id) || !deleteAddress(user.id, id)) {
+  if (!Number.isInteger(id) || !(await deleteAddress(user.id, id))) {
     return NextResponse.json({ error: "address" }, { status: 404 });
   }
-  return NextResponse.json({ addresses: listAddresses(user.id) });
+  return NextResponse.json({ addresses: await listAddresses(user.id) });
 }

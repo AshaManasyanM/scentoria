@@ -45,13 +45,13 @@ async function sessionToken() {
 }
 
 async function startSession(userId: number, remember = true) {
-  const token = createSession(userId, sessionLifetime(remember));
+  const token = await createSession(userId, sessionLifetime(remember));
   const jar = await cookies();
   jar.set(SESSION, token, sessionCookieOptions(remember));
 }
 
 export async function GET() {
-  const user = findUserBySession(await sessionToken());
+  const user = await findUserBySession(await sessionToken());
   return NextResponse.json({ user: user ? publicUser(user) : null });
 }
 
@@ -79,14 +79,14 @@ export async function POST(request: Request) {
     if (!email || email.length > 254 || problem) {
       return NextResponse.json({ error: problem === "short" ? "short" : "missing" }, { status: 400 });
     }
-    if (findUserByEmail(email)) return NextResponse.json({ ok: true });
+    if (await findUserByEmail(email)) return NextResponse.json({ ok: true });
     const name = body.name?.trim().slice(0, 80) || email.split("@")[0] || email;
-    createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
+    await createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
     return NextResponse.json({ ok: true });
   }
 
   if (body.action === "login") {
-    const user = email ? findUserByEmail(email) : undefined;
+    const user = email ? await findUserByEmail(email) : undefined;
     if (!user || user.provider !== "email" || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
       return NextResponse.json({ error: "password" }, { status: 401 });
     }
@@ -99,7 +99,7 @@ export async function POST(request: Request) {
 
 export async function PATCH(request: Request) {
   if (!(await consumeLimit(clientKey(request, "auth-patch"), AUTH_LIMIT, AUTH_WINDOW_MS))) return tooManyRequests();
-  const user = findUserBySession(await sessionToken());
+  const user = await findUserBySession(await sessionToken());
   if (!user) return NextResponse.json({ error: "missing" }, { status: 401 });
   const body = await readJson<{ name?: string; password?: string; currentPassword?: string }>(request, 8_000);
   if (!body) return NextResponse.json({ error: "missing" }, { status: 400 });
@@ -111,7 +111,7 @@ export async function PATCH(request: Request) {
       return NextResponse.json({ error: "password" }, { status: 401 });
     }
   }
-  const next = updateUser(user.id, {
+  const next = await updateUser(user.id, {
     name: body.name?.trim().slice(0, 80) || user.name,
     passwordHash: password ? hashPassword(password) : undefined,
     provider: password && !user.passwordHash ? "email" : undefined,
@@ -122,7 +122,7 @@ export async function PATCH(request: Request) {
 
 export async function DELETE() {
   const token = await sessionToken();
-  if (token) deleteSession(token);
+  if (token) await deleteSession(token);
   const jar = await cookies();
   jar.delete(SESSION);
   return NextResponse.json({ user: null });

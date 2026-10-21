@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { DatabaseSync } from "node:sqlite";
+import mysql from "mysql2/promise";
 import test from "node:test";
 
 const base = process.env.SCENTORIA_BASE_URL ?? "http://127.0.0.1:3000";
@@ -21,13 +21,23 @@ function post(path, payload, cookie = "") {
   return send("POST", path, payload, cookie);
 }
 
-function removeTestAccount(target = email) {
-  const db = new DatabaseSync("data/scentoria.sqlite");
-  const row = db.prepare("SELECT id FROM users WHERE email = ?").get(target);
-  if (!row) return;
-  db.prepare("DELETE FROM addresses WHERE user_id = ?").run(row.id);
-  db.prepare("DELETE FROM sessions WHERE user_id = ?").run(row.id);
-  db.prepare("DELETE FROM users WHERE id = ? AND email = ?").run(row.id, target);
+async function removeTestAccount(target = email) {
+  const db = await mysql.createConnection({
+    host: process.env.DB_HOST || "127.0.0.1",
+    port: Number(process.env.DB_PORT || 3306),
+    user: process.env.DB_USERNAME || "root",
+    password: process.env.DB_PASSWORD ?? "",
+    database: process.env.DB_DATABASE || "scentoria",
+  });
+  const [rows] = await db.execute("SELECT id FROM users WHERE email = ?", [target]);
+  const row = rows[0];
+  if (row) {
+    await db.execute("DELETE FROM addresses WHERE user_id = ?", [row.id]);
+    await db.execute("DELETE FROM sessions WHERE user_id = ?", [row.id]);
+    await db.execute("DELETE FROM reviews WHERE user_id = ?", [row.id]);
+    await db.execute("DELETE FROM users WHERE id = ? AND email = ?", [row.id, target]);
+  }
+  await db.end();
 }
 
 test("live auth rejects google and protects email accounts", async () => {
@@ -104,7 +114,7 @@ test("live auth rejects google and protects email accounts", async () => {
   const visiting = nextLogin.headers.get("set-cookie") ?? "";
   assert.equal(/Max-Age=/i.test(visiting), false);
 
-  removeTestAccount();
+  await removeTestAccount();
   const gone = await post("/api/auth", { action: "login", email, password: replacement });
   assert.equal(gone.status, 401);
 });

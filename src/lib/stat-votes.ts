@@ -17,7 +17,7 @@ export async function voteStat(handle: string, category: string, option: string,
     return { ok: false as const, error: "invalid" as const };
   }
   if (!/^[a-zA-Z0-9-]{8,80}$/.test(voterId)) return { ok: false as const, error: "invalid" as const };
-  const saved = addStatVote(handle, key, optionKey, voterId);
+  const saved = await addStatVote(handle, key, optionKey, voterId);
   if (!saved) return { ok: false as const, error: "once" as const };
-  return { ok: true as const, counts: statVoteCounts(handle)[key] ?? {} };
+  return { ok: true as const, counts: (await statVoteCounts(handle))[key] ?? {} };
 }

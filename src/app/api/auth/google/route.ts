@@ -24,7 +24,7 @@ function publicUser(user: {
 }
 
 async function startSession(userId: number) {
-  const token = createSession(userId, sessionLifetime(true));
+  const token = await createSession(userId, sessionLifetime(true));
   const jar = await cookies();
   jar.set(SESSION, token, sessionCookieOptions(true));
 }
@@ -39,20 +39,20 @@ export async function POST(request: Request) {
 
   const plan = googleLinkPlan({
     sub: identity.sub,
-    existingBySub: findUserByGoogleSub(identity.sub) ?? null,
-    existingByEmail: findUserByEmail(identity.email) ?? null,
+    existingBySub: (await findUserByGoogleSub(identity.sub)) ?? null,
+    existingByEmail: (await findUserByEmail(identity.email)) ?? null,
   });
   if (plan.action === "confirm") return NextResponse.json({ error: "link" }, { status: 409 });
   if (plan.action === "reject") return NextResponse.json({ error: "google" }, { status: 409 });
 
   if (plan.action === "sign-in") {
-    const user = findUserByGoogleSub(identity.sub);
+    const user = await findUserByGoogleSub(identity.sub);
     if (!user) return NextResponse.json({ error: "google" }, { status: 401 });
     await startSession(user.id);
     return NextResponse.json({ user: publicUser(user) });
   }
 
-  const created = createUser({
+  const created = await createUser({
     email: identity.email,
     name: identity.name,
     image: identity.picture ?? undefined,

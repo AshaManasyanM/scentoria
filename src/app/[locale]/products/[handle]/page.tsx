@@ -32,9 +32,9 @@ export default async function ProductPage({
   const related = product.brand
     ? products.filter((p) => p.brand === product.brand && p.handle !== product.handle).slice(0, 4)
     : [];
-  const user = findUserBySession((await cookies()).get("scentoria_session")?.value ?? "");
+  const user = await findUserBySession((await cookies()).get("scentoria_session")?.value ?? "");
   const comments = await publishedProductReviews(product.handle);
-  const votes = statVoteCounts(product.handle);
+  const votes = await statVoteCounts(product.handle);
 
   return (
     <>
