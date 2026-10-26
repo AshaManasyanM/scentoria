@@ -76,6 +76,24 @@ export function GoogleSignInButton({
         width,
         locale,
       });
+      const box = host.current;
+      const place = () => {
+        const frame = box.querySelector("iframe");
+        if (!frame || cancelled || box.querySelector("[role=button]")) return;
+        const spacer = frame.previousElementSibling;
+        if (spacer instanceof HTMLElement) spacer.style.display = "none";
+        frame.style.position = "absolute";
+        frame.style.left = "0";
+        frame.style.top = "0";
+        frame.style.width = "100%";
+        frame.style.height = "100%";
+        frame.style.maxWidth = "none";
+        frame.style.border = "0";
+      };
+      place();
+      const frames = new MutationObserver(place);
+      frames.observe(box, { childList: true, subtree: true });
+      window.setTimeout(() => frames.disconnect(), 4000);
     };
     const googleLocale = locale === "hy" ? "hy" : "en";
     const src = `https://accounts.google.com/gsi/client?hl=${googleLocale}`;
@@ -109,7 +127,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&>div>div]:!block [&>div>div]:!h-full [&>div>div]:!w-full [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!bg-white [&_[role=button]]:!text-[14px] [&_[role=button]]:!font-medium [&_[role=button]]:!text-[#3c4043] [&_[role=button]]:!shadow-none"
+      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!relative [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&:not(:has([role=button]))>div>div]:!hidden [&:not(:has([role=button]))_iframe]:!absolute [&:not(:has([role=button]))_iframe]:!inset-0 [&:not(:has([role=button]))_iframe]:!h-full [&:not(:has([role=button]))_iframe]:!w-full [&:not(:has([role=button]))_iframe]:!max-w-none [&:not(:has([role=button]))_iframe]:!border-0 [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!bg-white [&_[role=button]]:!text-[14px] [&_[role=button]]:!font-medium [&_[role=button]]:!text-[#3c4043] [&_[role=button]]:!shadow-none"
     />
   );
 }
