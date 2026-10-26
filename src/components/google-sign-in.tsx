@@ -15,6 +15,9 @@ type GoogleAccounts = {
   };
 };
 
+const GOOGLE_BUTTON_MIN_WIDTH = 240;
+const GOOGLE_BUTTON_MAX_WIDTH = 400;
+
 export function GoogleSignInButton({
   locale,
   mode = "signin",
@@ -43,12 +46,13 @@ export function GoogleSignInButton({
     let renderedWidth = 0;
     const render = () => {
       const google = (window as Window & { google?: GoogleAccounts }).google;
-      if (!google || !host.current || cancelled) return;
-      const measured = Math.floor(host.current.getBoundingClientRect().width);
-      const width = Math.min(400, Math.max(240, measured || 240));
-      if (renderedWidth === width && host.current.childElementCount > 0) return;
+      const box = host.current;
+      if (!google || !box || cancelled) return;
+      const measured = Math.floor(box.getBoundingClientRect().width);
+      const width = Math.min(GOOGLE_BUTTON_MAX_WIDTH, Math.max(GOOGLE_BUTTON_MIN_WIDTH, measured || GOOGLE_BUTTON_MIN_WIDTH));
+      if (renderedWidth === width && box.childElementCount > 0) return;
       renderedWidth = width;
-      host.current.replaceChildren();
+      box.replaceChildren();
       google.accounts.id.initialize({
         client_id: clientId,
         callback: (response) => {
@@ -66,34 +70,16 @@ export function GoogleSignInButton({
           });
         },
       });
-      google.accounts.id.renderButton(host.current, {
+      google.accounts.id.renderButton(box, {
         type: "standard",
         theme: "outline",
-        size: "medium",
+        size: "large",
         text: "continue_with",
         shape: "rectangular",
         logo_alignment: "center",
         width,
         locale,
       });
-      const box = host.current;
-      const place = () => {
-        const frame = box.querySelector("iframe");
-        if (!frame || cancelled || box.querySelector("[role=button]")) return;
-        const spacer = frame.previousElementSibling;
-        if (spacer instanceof HTMLElement) spacer.style.display = "none";
-        frame.style.position = "absolute";
-        frame.style.left = "0";
-        frame.style.top = "0";
-        frame.style.width = "100%";
-        frame.style.height = "100%";
-        frame.style.maxWidth = "none";
-        frame.style.border = "0";
-      };
-      place();
-      const frames = new MutationObserver(place);
-      frames.observe(box, { childList: true, subtree: true });
-      window.setTimeout(() => frames.disconnect(), 4000);
     };
     const googleLocale = locale === "hy" ? "hy" : "en";
     const src = `https://accounts.google.com/gsi/client?hl=${googleLocale}`;
@@ -127,7 +113,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="relative box-border h-11 w-full overflow-hidden rounded-[2px] border border-[#d8d0c4] bg-white [&>div]:!relative [&>div]:!block [&>div]:!h-full [&>div]:!w-full [&:not(:has([role=button]))>div>div]:!hidden [&:not(:has([role=button]))_iframe]:!absolute [&:not(:has([role=button]))_iframe]:!inset-0 [&:not(:has([role=button]))_iframe]:!h-full [&:not(:has([role=button]))_iframe]:!w-full [&:not(:has([role=button]))_iframe]:!max-w-none [&:not(:has([role=button]))_iframe]:!border-0 [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]]:!rounded-none [&_[role=button]]:!border-0 [&_[role=button]]:!bg-white [&_[role=button]]:!text-[14px] [&_[role=button]]:!font-medium [&_[role=button]]:!text-[#3c4043] [&_[role=button]]:!shadow-none"
+      className="w-full [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]>div:first-child]:!inset-0 [&_[role=button]>div:first-child]:!h-full [&_[role=button]>div:first-child]:!w-full"
     />
   );
 }
