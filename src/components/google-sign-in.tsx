@@ -73,8 +73,8 @@ export function GoogleSignInButton({
       google.accounts.id.renderButton(box, {
         type: "standard",
         theme: "outline",
-        size: "large",
-        text: "continue_with",
+        size: "medium",
+        text: "signin_with",
         shape: "rectangular",
         logo_alignment: "center",
         width,
@@ -113,7 +113,7 @@ export function GoogleSignInButton({
   return (
     <div
       ref={host}
-      className="w-full [&_[role=button]]:!box-border [&_[role=button]]:!flex [&_[role=button]]:!h-11 [&_[role=button]]:!w-full [&_[role=button]]:!max-w-none [&_[role=button]]:!items-center [&_[role=button]]:!justify-center [&_[role=button]>div:first-child]:!inset-0 [&_[role=button]>div:first-child]:!h-full [&_[role=button]>div:first-child]:!w-full"
+      className="flex w-full justify-center"
     />
   );
 }
