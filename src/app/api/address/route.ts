@@ -51,7 +51,7 @@ export async function GET(request: Request) {
 
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Scentoria" },
+      headers: { "User-Agent": "Scentoria Prive" },
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
     });
@@ -98,7 +98,7 @@ async function resolveAddress(text: string, magicKey: string): Promise<Suggestio
   url.searchParams.set("outFields", "StAddr,City,Postal,Country,RegionAbbr");
   try {
     const res = await fetch(url, {
-      headers: { "User-Agent": "Scentoria" },
+      headers: { "User-Agent": "Scentoria Prive" },
       cache: "no-store",
       signal: AbortSignal.timeout(4000),
     });

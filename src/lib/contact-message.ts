@@ -37,7 +37,7 @@ export async function sendContactMessage(_prev: { ok: boolean } | null, formData
         phone: phone || "—",
         message: details,
         _replyto: email,
-        _subject: `Scentoria: ${subject}`,
+        _subject: `Scentoria Prive: ${subject}`,
         _template: "table",
         _captcha: "false",
       }),

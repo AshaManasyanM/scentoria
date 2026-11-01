@@ -11,6 +11,7 @@ import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
@@ -132,10 +133,19 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           </div>
           <Link
             href={path(locale)}
-            className="font-serif text-[28px] font-semibold tracking-tight text-[#143028] md:text-[34px]"
+            className="justify-self-center"
+            aria-label={t.brand}
             onClick={() => setMenu(false)}
           >
-            {t.brand}
+            <Image
+              src="/brand/scentoria-prive.png"
+              alt={t.brand}
+              width={112}
+              height={112}
+              priority
+              unoptimized
+              className="h-12 w-12 object-contain md:h-14 md:w-14"
+            />
           </Link>
           <div className="flex items-center justify-end gap-3 text-[#143028] md:gap-5">
             <Link

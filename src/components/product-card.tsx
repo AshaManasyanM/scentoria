@@ -112,7 +112,7 @@ export function ProductCard({
           {img ? (
             <Image src={img.url} alt={img.alt} fill sizes="220px" className="object-cover" />
           ) : (
-            <div className="flex h-full items-center justify-center text-sm text-[#083534]/50">Scentoria</div>
+            <div className="flex h-full items-center justify-center text-sm text-[#083534]/50">{t.brand}</div>
           )}
         </Link>
         <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
@@ -170,7 +170,7 @@ export function ProductCard({
             />
           ) : (
             <div className="flex h-full items-center justify-center bg-[#0e4544] text-[#f7f2ea]/70">
-              Scentoria
+              {t.brand}
             </div>
           )}
         </Link>
@@ -231,7 +231,7 @@ export function ProductCard({
               className="object-cover"
             />
           ) : (
-            <div className="flex h-full items-center justify-center text-muted">Scentoria</div>
+            <div className="flex h-full items-center justify-center text-muted">{t.brand}</div>
           )}
           {badges}
         </Link>
@@ -274,7 +274,7 @@ export function ProductCard({
                 className="object-contain p-4 transition duration-500 group-hover:scale-105"
               />
             ) : (
-              <div className="flex h-full items-center justify-center text-muted">Scentoria</div>
+              <div className="flex h-full items-center justify-center text-muted">{t.brand}</div>
             )}
           </div>
           <div className="absolute left-3 top-3 flex flex-col gap-1">

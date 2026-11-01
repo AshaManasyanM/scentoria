@@ -55,7 +55,7 @@ export function WishlistItems({
                   {image ? (
                     <Image src={image} alt="" fill sizes="260px" className="object-contain p-4" />
                   ) : (
-                    <span className="flex h-full items-center justify-center text-sm text-[#083534]/50">Scentoria</span>
+                    <span className="flex h-full items-center justify-center text-sm text-[#083534]/50">{t.brand}</span>
                   )}
                 </Link>
                 <p className="mt-3 text-xs font-semibold uppercase tracking-[0.08em]">{brand}</p>

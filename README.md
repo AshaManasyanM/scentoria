@@ -1,4 +1,4 @@
-# Scentoria
+# Scentoria Prive
 
 Perfume shop storefront (Next.js + Shopify). Add products in [Shopify Admin](https://gfc5xh-m1.myshopify.com/admin); they appear on the site.
 

@@ -13,6 +13,7 @@ import {
   PRODUCT_BY_HANDLE_QUERY,
   PRODUCTS_QUERY,
   SEARCH_QUERY,
+  SHOP_POLICIES_QUERY,
   TESTIMONIALS_QUERY,
 } from "./queries";
 
@@ -167,13 +168,26 @@ export async function getTestimonials(): Promise<Testimonial[]> {
   return items.length ? items : mockTestimonials;
 }
 
-const sectionNames = ["types", "bestsellers", "brands", "arrivals", "notes", "sale", "testimonials", "share", "faq", "about"] as const;
+const sectionNames = [
+  "hero",
+  "types",
+  "bestsellers",
+  "brands",
+  "arrivals",
+  "notes",
+  "sale",
+  "testimonials",
+  "share",
+  "faq",
+  "about",
+] as const;
 export type SectionName = (typeof sectionNames)[number];
 
 export const getSectionVisibility = cache(async () => {
   const visible = Object.fromEntries(sectionNames.map((name) => [name, true])) as Record<SectionName, boolean>;
   if (!hasStorefrontToken()) return visible;
 
+  // Preferred: metaobject type "section", handle = section name, field visible/show/enabled = true|false
   const named = await sectionEntries("section");
   for (const entry of named) {
     if (!sectionNames.includes(entry.handle as SectionName)) continue;
@@ -181,8 +195,10 @@ export const getSectionVisibility = cache(async () => {
     if (value !== null) visible[entry.handle as SectionName] = value;
   }
 
+  // Fallback: a metaobject whose type matches the section name (e.g. type "notes") with a visibility field
   await Promise.all(
     sectionNames.map(async (name) => {
+      if (named.some((entry) => entry.handle === name && sectionFlag(entry) !== null)) return;
       const entries = await sectionEntries(name === "faq" ? "faqs" : name);
       const value = entries.map(sectionFlag).find((item) => item !== null);
       if (value !== undefined && value !== null) visible[name] = value;
@@ -218,6 +234,49 @@ export async function getContactEmail() {
     .map((entry) => metaValue(entry.fields, ["email", "mail"]))
     .find((value) => value.includes("@"));
   return email || fallbackContactEmail;
+}
+
+export type ShopPolicy = {
+  handle: string;
+  title: string;
+  body: string;
+};
+
+const policyOrder = ["privacy-policy", "refund-policy", "shipping-policy", "terms-of-service"] as const;
+
+export const getShopPolicies = cache(async (): Promise<ShopPolicy[]> => {
+  if (!hasStorefrontToken()) return [];
+  const data = await storefrontFetch<{
+    shop: {
+      privacyPolicy: { title: string; handle: string; body: string } | null;
+      refundPolicy: { title: string; handle: string; body: string } | null;
+      shippingPolicy: { title: string; handle: string; body: string } | null;
+      termsOfService: { title: string; handle: string; body: string } | null;
+    };
+  }>(SHOP_POLICIES_QUERY);
+  if (!data?.shop) return [];
+  const list = [
+    data.shop.privacyPolicy,
+    data.shop.refundPolicy,
+    data.shop.shippingPolicy,
+    data.shop.termsOfService,
+  ]
+    .filter((policy): policy is { title: string; handle: string; body: string } => Boolean(policy?.handle && policy.body?.trim()))
+    .map((policy) => ({
+      handle: policy.handle,
+      title: policy.title,
+      body: policy.body,
+    }));
+  return [...list].sort((a, b) => {
+    const ai = policyOrder.indexOf(a.handle as (typeof policyOrder)[number]);
+    const bi = policyOrder.indexOf(b.handle as (typeof policyOrder)[number]);
+    return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi);
+  });
+});
+
+export async function getShopPolicy(handle: string) {
+  const policies = await getShopPolicies();
+  return policies.find((policy) => policy.handle === handle) ?? null;
 }
 
 export async function getFaqs(): Promise<{ question: string; answer: string }[]> {
@@ -276,7 +335,7 @@ export async function getHeroSlides(): Promise<{ url: string; alt: string }[]> {
       const order = Number(orderRaw);
       return {
         url: noteImage(entry.fields),
-        alt: metaValue(entry.fields, ["alt", "title", "name", "caption"]) || "Scentoria",
+        alt: metaValue(entry.fields, ["alt", "title", "name", "caption"]) || "Scentoria Prive",
         order: orderRaw && Number.isFinite(order) ? order : index,
       };
     })

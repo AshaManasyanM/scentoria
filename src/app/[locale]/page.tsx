@@ -1,9 +1,11 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { HeroSlider } from "@/components/hero-slider";
+import { NoteGrid } from "@/components/note-grid";
 import { PageEnd } from "@/components/page-end";
 import { ProductSlider } from "@/components/product-slider";
+import { SiteNav } from "@/components/site-nav";
 import { Testimonials } from "@/components/testimonials";
-import { NoteGrid } from "@/components/note-grid";
+import { catalogHref } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
@@ -50,20 +52,20 @@ export default async function HomePage({
   const t = getDict(locale);
   const { products, source } = await getCatalog();
   const sections = await getSectionVisibility();
-  const heroSlides = await getHeroSlides();
+  const heroSlides = sections.hero ? await getHeroSlides() : [];
   const brands = sections.brands ? (await getBrands()).slice(0, 8) : [];
-  const testimonials = await getHomeReviews(products);
+  const testimonials = sections.testimonials ? await getHomeReviews(products) : [];
   const notes = sections.notes
     ? (await getNotes()).map((note) => ({
         key: note.key,
-        href: path(locale, `/notes/${note.key}`),
+        href: catalogHref(locale, "/products", { note: note.key }, 1),
         image: note.image,
         label: note.label || (note.key in t.notes ? t.notes[note.key as keyof typeof t.notes] : note.key),
       }))
     : [];
-  const featured = filterProducts(products, { featured: true }).slice(0, 8);
-  const newest = filterProducts(products, { isNew: true }).slice(0, 8);
-  const sale = filterProducts(products, { sale: true }).slice(0, 8);
+  const featured = sections.bestsellers ? filterProducts(products, { featured: true }).slice(0, 8) : [];
+  const newest = sections.arrivals ? filterProducts(products, { isNew: true }).slice(0, 8) : [];
+  const sale = sections.sale ? filterProducts(products, { sale: true }).slice(0, 8) : [];
 
   const typeLabels: Record<string, string> = {
     all: t.allFragrances,
@@ -72,17 +74,21 @@ export default async function HomePage({
     unisex: t.unisex,
   };
 
+  const hiddenNav = [
+    ...(!sections.about ? ["about"] : []),
+    ...(!sections.brands ? ["brands"] : []),
+    ...(!sections.sale ? ["sales"] : []),
+  ];
+
   return (
     <>
-      <HeroSlider
-        images={heroSlides}
-        locale={locale}
-        hiddenNav={[
-          ...(!sections.about ? ["about"] : []),
-          ...(!sections.brands ? ["brands"] : []),
-          ...(!sections.sale ? ["sales"] : []),
-        ]}
-      />
+      {sections.hero ? (
+        <HeroSlider images={heroSlides} locale={locale} hiddenNav={hiddenNav} />
+      ) : (
+        <div className="hidden md:block">
+          <SiteNav locale={locale} hiddenNav={hiddenNav} />
+        </div>
+      )}
       <CatalogBanner locale={locale} source={source} />
 
       {sections.types ? (
@@ -244,7 +250,7 @@ export default async function HomePage({
         </section>
       ) : null}
 
-      {testimonials.length ? (
+      {sections.testimonials && testimonials.length ? (
         <Testimonials
           eyebrow={t.testimonials}
           heading={t.testimonialsSub.replace(/\.$/, "")}

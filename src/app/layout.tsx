@@ -15,11 +15,11 @@ const display = Fraunces({
 
 export const metadata: Metadata = {
   title: {
-    default: "Scentoria | Luxury Perfumes",
-    template: "%s | Scentoria",
+    default: "Scentoria Prive | Luxury Perfumes",
+    template: "%s | Scentoria Prive",
   },
   description:
-    "Scentoria — luxury and niche perfumes, authentic bottles and decants, delivered with care.",
+    "Scentoria Prive — luxury and niche perfumes, authentic bottles and decants, delivered with care.",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {

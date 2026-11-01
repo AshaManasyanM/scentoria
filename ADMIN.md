@@ -8,7 +8,7 @@ Admin: https://gfc5xh-m1.myshopify.com/admin
 4. Tags: `men` / `women` / `unisex`, note names (`floral`, `woody`, …), `sale`, `new`, `bestseller`
 5. **Save** and **Publish**
 
-The Scentoria site reads the Storefront API. Until `SHOPIFY_STOREFRONT_ACCESS_TOKEN` is set in `.env.local`, the site shows a sample catalog.
+The Scentoria Prive site reads the Storefront API. Until `SHOPIFY_STOREFRONT_ACCESS_TOKEN` is set in `.env.local`, the site shows a sample catalog.
 
 ## Storefront token
 

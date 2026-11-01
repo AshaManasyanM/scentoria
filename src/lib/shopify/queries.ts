@@ -108,6 +108,17 @@ export const SEARCH_QUERY = `
   }
 `;
 
+export const SHOP_POLICIES_QUERY = `
+  query ShopPolicies {
+    shop {
+      privacyPolicy { title handle body }
+      refundPolicy { title handle body }
+      shippingPolicy { title handle body }
+      termsOfService { title handle body }
+    }
+  }
+`;
+
 export const CART_CREATE = `
   mutation CartCreate($lines: [CartLineInput!]) {
     cartCreate(input: { lines: $lines }) {

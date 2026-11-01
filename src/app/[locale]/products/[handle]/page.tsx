@@ -1,5 +1,6 @@
 import { AccordBars } from "@/components/accord-bars";
 import { AddToCart } from "@/components/add-to-cart";
+import { AuthenticityBadge } from "@/components/authenticity-badge";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductReviews } from "@/components/product-reviews";
 import { Testimonials } from "@/components/testimonials";
@@ -88,6 +89,7 @@ export default async function ProductPage({
           <StatBars title={t.seasonTitle} handle={product.handle} category="season" items={product.season} counts={votes.season} />
           <StatBars title={t.sillageTitle} handle={product.handle} category="sillage" items={product.sillage} counts={votes.sillage} />
           <StatBars title={t.timeOfDayTitle} handle={product.handle} category="time" items={product.timeOfDay} counts={votes.time} />
+          <AuthenticityBadge locale={locale} />
         </div>
       </div>
       {comments.length ? (

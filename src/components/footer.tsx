@@ -1,16 +1,32 @@
 import { NAV, hrefFor } from "@/lib/nav";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
+import { getShopPolicies } from "@/lib/shopify/catalog";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
 import Image from "next/image";
 
-export function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
+const policyFallback = [
+  { handle: "privacy-policy", key: "privacyPolicy" as const },
+  { handle: "refund-policy", key: "refundPolicy" as const },
+  { handle: "shipping-policy", key: "shippingPolicy" as const },
+  { handle: "terms-of-service", key: "termsOfService" as const },
+];
+
+export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
+  const shopPolicies = await getShopPolicies();
+  const policies = policyFallback.map((item) => {
+    const live = shopPolicies.find((policy) => policy.handle === item.handle);
+    return {
+      handle: item.handle,
+      title: live?.title || t[item.key],
+    };
+  });
 
   return (
     <footer className="mt-auto bg-[#083534] text-[#f7f2ea]">
-      <div className="mx-auto grid max-w-[1280px] gap-12 px-4 py-14 md:grid-cols-[1.1fr_0.8fr_1fr] md:px-8">
+      <div className="mx-auto grid max-w-[1280px] gap-12 px-4 py-14 md:grid-cols-[1.1fr_0.8fr_0.8fr_1fr] md:px-8">
         <div>
           <Link href={path(locale)} className="inline-block">
             <Image
@@ -56,13 +72,22 @@ export function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           </ul>
         </nav>
 
+        <nav aria-label={t.policies}>
+          <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{t.policies}</p>
+          <ul className="mt-5 space-y-3 text-sm">
+            {policies.map((policy) => (
+              <li key={policy.handle}>
+                <Link href={path(locale, `/policies/${policy.handle}`)} className="hover:text-[#c5a059]">
+                  {policy.title}
+                </Link>
+              </li>
+            ))}
+          </ul>
+        </nav>
+
         <div className="text-sm">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{t.contact}</p>
-          <p className="mt-5 text-[#f7f2ea]/80">{t.phoneNumber}</p>
-          <a href="tel:+37400000000" className="mt-1 block hover:text-[#c5a059]">
-            +374 00 000 000
-          </a>
-          <p className="mt-4 text-[#f7f2ea]/80">{t.yourEmail}</p>
+          <p className="mt-5 text-[#f7f2ea]/80">{t.yourEmail}</p>
           <a href="mailto:scentoria.la@gmail.com" className="mt-1 block hover:text-[#c5a059]">
             scentoria.la@gmail.com
           </a>

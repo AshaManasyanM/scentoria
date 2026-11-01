@@ -254,7 +254,7 @@ export const mockTestimonials: Testimonial[] = [
   {
     name: "Mariam S.",
     product: "Love Hibiscus",
-    text: "Soft, floral, and so elegant. Scentoria’s recommendations were spot on.",
+    text: "Soft, floral, and so elegant. Scentoria Prive’s recommendations were spot on.",
     date: "2026-07-16",
   },
 ];
