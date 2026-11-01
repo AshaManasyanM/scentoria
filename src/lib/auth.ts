@@ -37,9 +37,14 @@ export function nameFromEmail(email: string) {
 }
 
 export async function refreshSession() {
-  const response = await fetch("/api/auth");
-  const data = (await response.json()) as { user: Profile | null };
-  return applyUser(data.user);
+  try {
+    const response = await fetch("/api/auth");
+    if (!response.ok) return applyUser(null);
+    const data = (await response.json()) as { user?: Profile | null };
+    return applyUser(data.user ?? null);
+  } catch {
+    return applyUser(null);
+  }
 }
 
 function authReason(error?: string) {
@@ -49,53 +54,77 @@ function authReason(error?: string) {
   return "password" as const;
 }
 
+async function readAuthJson(response: Response) {
+  try {
+    return (await response.json()) as { user?: Profile; error?: string };
+  } catch {
+    return {} as { user?: Profile; error?: string };
+  }
+}
+
 async function postAuth(body: Record<string, string | undefined>) {
-  const response = await fetch("/api/auth", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-  const data = (await response.json()) as { user?: Profile; error?: string };
-  if (!response.ok || !data.user) return { ok: false as const, reason: authReason(data.error) };
-  applyUser(data.user);
-  return { ok: true as const };
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const data = await readAuthJson(response);
+    if (!response.ok || !data.user) return { ok: false as const, reason: authReason(data.error) };
+    applyUser(data.user);
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, reason: "password" as const };
+  }
 }
 
 export async function signUp(input: { name: string; email: string; password: string }) {
-  const response = await fetch("/api/auth", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "register", name: input.name, email: input.email, password: input.password }),
-  });
-  const data = (await response.json()) as { error?: string };
-  if (!response.ok) return { ok: false as const, reason: authReason(data.error) };
-  return { ok: true as const };
+  try {
+    const response = await fetch("/api/auth", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "register", name: input.name, email: input.email, password: input.password }),
+    });
+    const data = await readAuthJson(response);
+    if (!response.ok) return { ok: false as const, reason: authReason(data.error) };
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, reason: "password" as const };
+  }
 }
 
 export async function signInWithGoogleCredential(credential: string) {
-  const response = await fetch("/api/auth/google", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
-  });
-  const data = (await response.json()) as { user?: Profile; error?: string };
-  if (data.error === "link") return { ok: false as const, reason: "link" as const };
-  if (data.error === "rate") return { ok: false as const, reason: "rate" as const };
-  if (!response.ok || !data.user) return { ok: false as const, reason: "google" as const };
-  applyUser(data.user);
-  return { ok: true as const };
+  try {
+    const response = await fetch("/api/auth/google", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+    const data = await readAuthJson(response);
+    if (data.error === "link") return { ok: false as const, reason: "link" as const };
+    if (data.error === "rate") return { ok: false as const, reason: "rate" as const };
+    if (!response.ok || !data.user) return { ok: false as const, reason: "google" as const };
+    applyUser(data.user);
+    return { ok: true as const };
+  } catch {
+    return { ok: false as const, reason: "google" as const };
+  }
 }
 
 export async function connectGoogle(credential: string) {
-  const response = await fetch("/api/auth/google/link", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ credential }),
-  });
-  const data = (await response.json()) as { user?: Profile };
-  if (!response.ok || !data.user) return false;
-  applyUser(data.user);
-  return true;
+  try {
+    const response = await fetch("/api/auth/google/link", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ credential }),
+    });
+    const data = await readAuthJson(response);
+    if (!response.ok || !data.user) return false;
+    applyUser(data.user);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 export function signInWithEmail(input: { email: string; password: string; remember: boolean }) {

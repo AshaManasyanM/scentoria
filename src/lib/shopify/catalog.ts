@@ -285,18 +285,13 @@ export async function getHeroSlides(): Promise<{ url: string; alt: string }[]> {
     .map(({ url, alt }) => ({ url, alt }));
 }
 
-const filterGroupIds = ["brand", "note", "gender", "size", "discount"] as const;
+const filterGroupIds = ["note", "gender", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
 export type CatalogFilterGroup = { id: FilterGroupId; title: string; items: FilterChoice[] };
 export type ShopFilterConfig = Partial<Record<FilterGroupId, { title: string; items: FilterChoice[] }>>;
 
 const filterGroupAliases: Record<string, FilterGroupId> = {
-  brand: "brand",
-  brands: "brand",
-  vendor: "brand",
-  "բրենդ": "brand",
-  "բրենդներ": "brand",
   note: "note",
   notes: "note",
   "նոտա": "note",
@@ -308,11 +303,6 @@ const filterGroupAliases: Record<string, FilterGroupId> = {
   sizes: "size",
   "չափս": "size",
   "չափսեր": "size",
-  discount: "discount",
-  discounts: "discount",
-  sale: "discount",
-  "զեղչ": "discount",
-  "զեղչեր": "discount",
 };
 
 function filterShown(value: string) {
@@ -336,7 +326,6 @@ function filterValue(group: FilterGroupId, value: string) {
     if (size === "large" || /100\s*ml\s*\+/.test(size)) return "large";
     return size;
   }
-  if (group === "discount") return text.match(/\d+/)?.[0] ?? text;
   if (group === "note") return text.toLowerCase();
   return text;
 }
@@ -397,41 +386,54 @@ export const getShopFilters = cache(async (): Promise<ShopFilterConfig> => {
 export function catalogFilterGroups(
   shop: ShopFilterConfig,
   titles: Record<FilterGroupId, string>,
-  fallback: Record<FilterGroupId, FilterChoice[]>,
 ): CatalogFilterGroup[] {
   return filterGroupIds.flatMap((id) => {
     const custom = shop[id];
-    const items = custom ? custom.items : fallback[id];
-    if (!items.length) return [];
-    return [{ id, title: custom?.title || titles[id], items }];
+    if (!custom?.items.length) return [];
+    return [{ id, title: custom.title || titles[id], items: custom.items }];
   });
 }
 
-export function standardFilterFallback(input: {
-  brands: string[];
-  notes: { key: string; label: string }[];
-  men: string;
-  women: string;
-  unisex: string;
-  sizeTravel: string;
-  sizeMedium: string;
-  sizeLarge: string;
-}): Record<FilterGroupId, FilterChoice[]> {
-  return {
-    brand: input.brands.map((brand) => ({ value: brand, label: brand })),
-    note: input.notes.map((note) => ({ value: note.key, label: note.label || note.key })),
-    gender: [
-      { value: "men", label: input.men },
-      { value: "women", label: input.women },
-      { value: "unisex", label: input.unisex },
-    ],
-    size: [
-      { value: "travel", label: input.sizeTravel },
-      { value: "medium", label: input.sizeMedium },
-      { value: "large", label: input.sizeLarge },
-    ],
-    discount: ["10", "20", "30", "40", "50", "60", "70"].map((value) => ({ value, label: `${value}%` })),
-  };
+export type BottleColorOption = {
+  key: string;
+  label: string;
+  image: string;
+  sizes: string[];
+};
+
+export const getBottleColors = cache(async (): Promise<BottleColorOption[]> => {
+  if (!hasStorefrontToken()) return [];
+  const data = await storefrontFetch<{
+    metaobjects: { nodes: { handle: string; fields: NoteField[] }[] };
+  }>(NOTES_QUERY, { type: "bottle_color", first: 50 });
+  const entries = data?.metaobjects?.nodes ?? [];
+  return entries
+    .map((entry, index) => {
+      const shown = filterShown(metaValue(entry.fields, ["show", "visible", "enabled"]));
+      if (!shown) return null;
+      const label = metaValue(entry.fields, ["label", "name", "title"]) || entry.handle;
+      const key = (metaValue(entry.fields, ["value", "key"]) || entry.handle).trim().toLowerCase();
+      const image = noteImage(entry.fields);
+      if (!key || !label || !image) return null;
+      const orderRaw = metaValue(entry.fields, ["order", "position", "sort"]);
+      const order = orderRaw && Number.isFinite(Number(orderRaw)) ? Number(orderRaw) : index;
+      const sizes = metaValue(entry.fields, ["sizes", "size", "variants"])
+        .split(",")
+        .map((item) => item.trim().toLowerCase())
+        .filter(Boolean);
+      return { key, label, image, sizes, order };
+    })
+    .filter((item): item is BottleColorOption & { order: number } => Boolean(item))
+    .sort((a, b) => a.order - b.order || a.label.localeCompare(b.label))
+    .map(({ key, label, image, sizes }) => ({ key, label, image, sizes }));
+});
+
+export function bottleColorsForSize(colors: BottleColorOption[], variantTitle: string) {
+  const title = variantTitle.toLowerCase();
+  return colors.filter((color) => {
+    if (!color.sizes.length) return true;
+    return color.sizes.some((size) => title.includes(size));
+  });
 }
 
 export async function getNotes(): Promise<ShopNote[]> {

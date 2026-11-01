@@ -10,11 +10,7 @@ export function CatalogBanner({
   source: CatalogSource;
 }) {
   const t = getDict(locale);
-  if (source === "shopify") {
-    return (
-      <p className="bg-bg-2 px-4 py-3 text-center text-sm leading-snug text-gold">{t.liveBanner}</p>
-    );
-  }
+  if (source === "shopify") return null;
   if (source === "empty") {
     return (
       <p className="bg-bg-2 px-4 py-3 text-center text-sm leading-snug text-gold">{t.emptyCatalog}</p>

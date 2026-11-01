@@ -153,7 +153,7 @@ export function GoogleSignInButton({
       <button
         type="button"
         onClick={openGoogle}
-        className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[2px] border border-[#747775] bg-white px-3 text-[14px] font-medium leading-5 text-[#1f1f1f] transition-colors group-hover:bg-[#f8f9fa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#747775]"
+        className="inline-flex h-11 w-full items-center justify-center gap-3 rounded-[2px] border border-[#d8d0c4] bg-white px-3 text-[14px] font-medium leading-5 text-[#1f1f1f] transition-colors group-hover:bg-[#f8f9fa] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-[#c5a059]"
       >
         <GoogleMark />
         Sign in with Google

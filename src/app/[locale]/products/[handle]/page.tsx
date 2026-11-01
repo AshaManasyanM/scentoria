@@ -11,7 +11,7 @@ import { TrustRow } from "@/components/trust-row";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
-import { getCatalog, getProduct } from "@/lib/shopify/catalog";
+import { getBottleColors, getCatalog, getProduct } from "@/lib/shopify/catalog";
 import { publishedProductReviews } from "@/lib/shopify/reviews";
 import { findUserBySession, statVoteCounts } from "@/lib/users-db";
 import { cookies } from "next/headers";
@@ -28,6 +28,7 @@ export default async function ProductPage({
   const product = await getProduct(handle);
   if (!product) notFound();
   const t = getDict(locale);
+  const bottleColors = await getBottleColors();
   const { products } = await getCatalog();
   const related = product.brand
     ? products.filter((p) => p.brand === product.brand && p.handle !== product.handle).slice(0, 4)
@@ -58,7 +59,7 @@ export default async function ProductPage({
             ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
           </p>
           <div className="mt-8">
-            <AddToCart locale={locale} />
+            <AddToCart locale={locale} bottleColors={bottleColors} />
           </div>
           <AccordBars title={t.mainAccords} accords={product.accords} />
         </div>

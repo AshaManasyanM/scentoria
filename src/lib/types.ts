@@ -15,6 +15,13 @@ export type ProductVariant = {
   image?: { url: string; alt: string } | null;
 };
 
+export type BottleColor = {
+  key: string;
+  label: string;
+  image: string;
+  sizes: string[];
+};
+
 export type StatBar = {
   label: string;
   value: number;
@@ -60,6 +67,7 @@ export type CartLine = {
   title: string;
   brand: string;
   variantTitle: string;
+  bottleColor?: string;
   image?: string;
   quantity: number;
   price: Money;

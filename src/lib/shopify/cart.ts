@@ -11,10 +11,24 @@ const CART_COOKIE = "scentoria_cart_id";
 const LOCAL_COOKIE = "scentoria_local_cart";
 const QTY_COOKIE = "scentoria_cart_qty";
 
+export const BOTTLE_COLOR_ATTR = "Bottle color";
+export const RANDOM_BOTTLE_COLOR = "random";
+
 type LocalLine = {
   merchandiseId: string;
   quantity: number;
+  bottleColor?: string;
 };
+
+function lineAttributes(bottleColor?: string) {
+  const value = bottleColor?.trim();
+  if (!value) return [];
+  return [{ key: BOTTLE_COLOR_ATTR, value }];
+}
+
+function attributeColor(attributes?: { key: string; value: string }[] | null) {
+  return attributes?.find((item) => item.key === BOTTLE_COLOR_ATTR)?.value?.trim() || undefined;
+}
 
 async function readLocal(): Promise<LocalLine[]> {
   const jar = await cookies();
@@ -56,12 +70,13 @@ async function localCart(): Promise<Cart> {
     const variant = product?.variants.find((v) => v.id === item.merchandiseId);
     if (!product || !variant) continue;
     lines.push({
-      id: item.merchandiseId,
+      id: item.bottleColor ? `${item.merchandiseId}::${item.bottleColor}` : item.merchandiseId,
       merchandiseId: item.merchandiseId,
       handle: product.handle,
       title: product.title,
       brand: product.brand,
       variantTitle: variant.title,
+      bottleColor: item.bottleColor,
       image: variant.image?.url || product.images[0]?.url,
       quantity: item.quantity,
       price: variant.price,
@@ -86,6 +101,7 @@ export async function getCart(): Promise<Cart> {
         nodes: {
           id: string;
           quantity: number;
+          attributes?: { key: string; value: string }[] | null;
           merchandise: {
             id: string;
             title: string;
@@ -114,6 +130,7 @@ export async function getCart(): Promise<Cart> {
         title: line.merchandise.product.title,
         brand: brandFromVendor(line.merchandise.product.vendor),
         variantTitle: line.merchandise.title,
+        bottleColor: attributeColor(line.attributes),
         image: line.merchandise.product.featuredImage?.url,
         quantity,
         price: line.merchandise.price,
@@ -123,12 +140,15 @@ export async function getCart(): Promise<Cart> {
   };
 }
 
-export async function addLine(merchandiseId: string, quantity: number): Promise<Cart> {
+export async function addLine(merchandiseId: string, quantity: number, bottleColor?: string): Promise<Cart> {
+  const color = bottleColor?.trim() || undefined;
   if (!hasStorefrontToken()) {
     const stored = await readLocal();
-    const existing = stored.find((l) => l.merchandiseId === merchandiseId);
+    const existing = stored.find(
+      (l) => l.merchandiseId === merchandiseId && (l.bottleColor || undefined) === color,
+    );
     if (existing) existing.quantity += quantity;
-    else stored.push({ merchandiseId, quantity });
+    else stored.push({ merchandiseId, quantity, bottleColor: color });
     await writeLocal(stored);
     return localCart();
   }
@@ -139,7 +159,8 @@ export async function addLine(merchandiseId: string, quantity: number): Promise<
 
   const jar = await cookies();
   let cartId = jar.get(CART_COOKIE)?.value;
-  const lines = [{ merchandiseId, quantity }];
+  const attributes = lineAttributes(color);
+  const lines = [{ merchandiseId, quantity, ...(attributes.length ? { attributes } : {}) }];
 
   if (!cartId) {
     const created = await storefrontFetch<{
@@ -158,10 +179,14 @@ export async function setLineQuantity(lineId: string, quantity: number): Promise
     const stored = await readLocal();
     const next =
       quantity <= 0
-        ? stored.filter((l) => l.merchandiseId !== lineId)
-        : stored.map((l) =>
-            l.merchandiseId === lineId ? { ...l, quantity } : l,
-          );
+        ? stored.filter((l) => {
+            const id = l.bottleColor ? `${l.merchandiseId}::${l.bottleColor}` : l.merchandiseId;
+            return id !== lineId;
+          })
+        : stored.map((l) => {
+            const id = l.bottleColor ? `${l.merchandiseId}::${l.bottleColor}` : l.merchandiseId;
+            return id === lineId ? { ...l, quantity } : l;
+          });
     await writeLocal(next);
     return localCart();
   }

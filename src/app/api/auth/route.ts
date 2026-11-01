@@ -51,50 +51,58 @@ async function startSession(userId: number, remember = true) {
 }
 
 export async function GET() {
-  const user = await findUserBySession(await sessionToken());
-  return NextResponse.json({ user: user ? publicUser(user) : null });
+  try {
+    const user = await findUserBySession(await sessionToken());
+    return NextResponse.json({ user: user ? publicUser(user) : null });
+  } catch {
+    return NextResponse.json({ user: null }, { status: 503 });
+  }
 }
 
 export async function POST(request: Request) {
-  if (!(await consumeLimit(clientKey(request, "auth-post"), AUTH_LIMIT, AUTH_WINDOW_MS))) return tooManyRequests();
-  const body = await readJson<{
-    action?: string;
-    name?: string;
-    email?: string;
-    password?: string;
-    image?: string;
-    remember?: string;
-  }>(request, 8_000);
-  if (!body) return NextResponse.json({ error: "missing" }, { status: 400 });
-  if (googleLoginDisabled(body.action)) return NextResponse.json({ error: "disabled" }, { status: 403 });
+  try {
+    if (!(await consumeLimit(clientKey(request, "auth-post"), AUTH_LIMIT, AUTH_WINDOW_MS))) return tooManyRequests();
+    const body = await readJson<{
+      action?: string;
+      name?: string;
+      email?: string;
+      password?: string;
+      image?: string;
+      remember?: string;
+    }>(request, 8_000);
+    if (!body) return NextResponse.json({ error: "missing" }, { status: 400 });
+    if (googleLoginDisabled(body.action)) return NextResponse.json({ error: "disabled" }, { status: 403 });
 
-  const email = body.email?.trim().toLowerCase() ?? "";
-  const password = body.password ?? "";
-  if (body.action === "login" && !loginPasswordAllowed(password)) {
-    return NextResponse.json({ error: "password" }, { status: 401 });
-  }
-
-  if (body.action === "register") {
-    const problem = newPasswordError(password);
-    if (!email || email.length > 254 || problem) {
-      return NextResponse.json({ error: problem === "short" ? "short" : "missing" }, { status: 400 });
-    }
-    if (await findUserByEmail(email)) return NextResponse.json({ ok: true });
-    const name = body.name?.trim().slice(0, 80) || email.split("@")[0] || email;
-    await createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
-    return NextResponse.json({ ok: true });
-  }
-
-  if (body.action === "login") {
-    const user = email ? await findUserByEmail(email) : undefined;
-    if (!user || user.provider !== "email" || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+    const email = body.email?.trim().toLowerCase() ?? "";
+    const password = body.password ?? "";
+    if (body.action === "login" && !loginPasswordAllowed(password)) {
       return NextResponse.json({ error: "password" }, { status: 401 });
     }
-    await startSession(user.id, body.remember === "1");
-    return NextResponse.json({ user: publicUser(user) });
-  }
 
-  return NextResponse.json({ error: "missing" }, { status: 400 });
+    if (body.action === "register") {
+      const problem = newPasswordError(password);
+      if (!email || email.length > 254 || problem) {
+        return NextResponse.json({ error: problem === "short" ? "short" : "missing" }, { status: 400 });
+      }
+      if (await findUserByEmail(email)) return NextResponse.json({ ok: true });
+      const name = body.name?.trim().slice(0, 80) || email.split("@")[0] || email;
+      await createUser({ email, name, provider: "email", passwordHash: hashPassword(password) });
+      return NextResponse.json({ ok: true });
+    }
+
+    if (body.action === "login") {
+      const user = email ? await findUserByEmail(email) : undefined;
+      if (!user || user.provider !== "email" || !user.passwordHash || !verifyPassword(password, user.passwordHash)) {
+        return NextResponse.json({ error: "password" }, { status: 401 });
+      }
+      await startSession(user.id, body.remember === "1");
+      return NextResponse.json({ user: publicUser(user) });
+    }
+
+    return NextResponse.json({ error: "missing" }, { status: 400 });
+  } catch {
+    return NextResponse.json({ error: "unavailable" }, { status: 503 });
+  }
 }
 
 export async function PATCH(request: Request) {

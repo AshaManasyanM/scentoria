@@ -16,6 +16,7 @@ export async function POST(request: Request) {
     merchandiseId?: string;
     lineId?: string;
     quantity?: number;
+    bottleColor?: string;
     delivery?: DeliveryDraft;
     groupId?: string;
     handle?: string;
@@ -39,7 +40,7 @@ export async function POST(request: Request) {
     return NextResponse.json(cart);
   }
   if (body.merchandiseId) {
-    const cart = await addLine(body.merchandiseId, body.quantity ?? 1);
+    const cart = await addLine(body.merchandiseId, body.quantity ?? 1, body.bottleColor);
     return NextResponse.json(cart);
   }
   return NextResponse.json({ error: "Invalid cart payload" }, { status: 400 });

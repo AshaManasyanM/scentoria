@@ -14,7 +14,7 @@ type CartContextValue = {
   cart: Cart;
   count: number;
   refresh: () => Promise<void>;
-  addItem: (merchandiseId: string, quantity?: number) => Promise<boolean>;
+  addItem: (merchandiseId: string, quantity?: number, bottleColor?: string) => Promise<boolean>;
   updateQty: (lineId: string, quantity: number) => Promise<void>;
 };
 
@@ -35,11 +35,11 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
   }, [refresh]);
 
   const addItem = useCallback(
-    async (merchandiseId: string, quantity = 1) => {
+    async (merchandiseId: string, quantity = 1, bottleColor?: string) => {
       const res = await fetch("/api/cart", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ merchandiseId, quantity }),
+        body: JSON.stringify({ merchandiseId, quantity, bottleColor }),
       });
       if (res.ok) {
         setCart(await res.json());

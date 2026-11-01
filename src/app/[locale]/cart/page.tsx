@@ -949,9 +949,12 @@ function OrderLine({
   removeLabel: string;
   onQty: (lineId: string, quantity: number) => void;
 }) {
+  const labels = getDict(locale);
   const percent = discountPercent(line.price, line.compareAtPrice);
   const size = sizeLabel(line.variantTitle);
-  const meta = [size, percent ? `-${percent}%` : ""].filter(Boolean).join(" · ");
+  const color =
+    line.bottleColor === "random" ? labels.randomColor : line.bottleColor ? line.bottleColor : "";
+  const meta = [size, color, percent ? `-${percent}%` : ""].filter(Boolean).join(" · ");
   const linePrice: Money = { ...line.price, amount: String(Number(line.price.amount) * line.quantity) };
   const lineCompare: Money | null =
     percent && line.compareAtPrice

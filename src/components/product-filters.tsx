@@ -171,11 +171,9 @@ export function ProductFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sort, setSort] = useState(searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? ""));
-  const [selectedBrands, setSelectedBrands] = useState(searchParams.getAll("brand"));
   const [selectedNotes, setSelectedNotes] = useState(searchParams.getAll("note"));
   const [selectedGenders, setSelectedGenders] = useState(searchParams.getAll("gender"));
   const [selectedSizes, setSelectedSizes] = useState(searchParams.getAll("size"));
-  const [selectedDiscounts, setSelectedDiscounts] = useState(searchParams.getAll("discount"));
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   function toggle(list: string[], value: string, checked: boolean) {
@@ -190,10 +188,10 @@ export function ProductFilters({
     if (sort === "new") params.set("new", "1");
     else if (sort) params.set("sort", sort);
     selectedGenders.forEach((value) => params.append("gender", value));
-    selectedBrands.forEach((value) => params.append("brand", value));
     selectedNotes.forEach((value) => params.append("note", value));
     selectedSizes.forEach((value) => params.append("size", value));
-    selectedDiscounts.forEach((value) => params.append("discount", value));
+    const brand = searchParams.getAll("brand");
+    brand.forEach((value) => params.append("brand", value));
     const qs = params.toString();
     router.push(path(locale, `${basePath}${qs ? `?${qs}` : ""}`), { scroll: false });
     scrollToCatalog();
@@ -201,11 +199,9 @@ export function ProductFilters({
 
   function reset() {
     setSort("");
-    setSelectedBrands([]);
     setSelectedNotes([]);
     setSelectedGenders([]);
     setSelectedSizes([]);
-    setSelectedDiscounts([]);
     router.push(path(locale, basePath), { scroll: false });
     scrollToCatalog();
   }
@@ -230,25 +226,9 @@ export function ProductFilters({
       <div className="mt-4">
         {groups.map((group) => {
           const selected =
-            group.id === "brand"
-              ? selectedBrands
-              : group.id === "note"
-                ? selectedNotes
-                : group.id === "gender"
-                  ? selectedGenders
-                  : group.id === "size"
-                    ? selectedSizes
-                    : selectedDiscounts;
+            group.id === "note" ? selectedNotes : group.id === "gender" ? selectedGenders : selectedSizes;
           const setSelected =
-            group.id === "brand"
-              ? setSelectedBrands
-              : group.id === "note"
-                ? setSelectedNotes
-                : group.id === "gender"
-                  ? setSelectedGenders
-                  : group.id === "size"
-                    ? setSelectedSizes
-                    : setSelectedDiscounts;
+            group.id === "note" ? setSelectedNotes : group.id === "gender" ? setSelectedGenders : setSelectedSizes;
           return (
             <Group
               key={group.id}
@@ -256,7 +236,7 @@ export function ProductFilters({
               open={open[group.id] !== false}
               onToggle={() => setOpen((current) => ({ ...current, [group.id]: current[group.id] === false }))}
             >
-              <div className={group.id === "brand" ? "max-h-52 overflow-y-auto pr-1" : undefined}>
+              <div>
                 {group.items.map((item) => (
                   <CheckboxRow
                     key={item.value}

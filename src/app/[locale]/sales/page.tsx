@@ -5,7 +5,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { catalogFilterGroups, filterProducts, getCatalog, getNotes, getShopFilters, isSectionVisible, standardFilterFallback, uniqueBrands } from "@/lib/shopify/catalog";
+import { catalogFilterGroups, filterProducts, getCatalog, getShopFilters, isSectionVisible } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -19,7 +19,6 @@ export default async function SalesPage({
     note?: string | string[];
     brand?: string | string[];
     size?: string | string[];
-    discount?: string | string[];
     sort?: string;
     new?: string;
     page?: string;
@@ -30,39 +29,17 @@ export default async function SalesPage({
   const query = await searchParams;
   const t = getDict(locale);
   const { products, source } = await getCatalog();
-  const saleProducts = filterProducts(products, { sale: true });
-  const brands = uniqueBrands(saleProducts);
-  const notes = (await getNotes()).map((note) => ({
-    key: note.key,
-    label: note.label || (note.key in t.notes ? t.notes[note.key as keyof typeof t.notes] : note.key),
-  }));
   const shopFilters = await getShopFilters();
-  const groups = catalogFilterGroups(
-    shopFilters,
-    {
-      brand: t.filterBrand,
-      note: t.filterNote,
-      gender: t.filterGender,
-      size: t.size,
-      discount: t.filterDiscount,
-    },
-    standardFilterFallback({
-      brands,
-      notes,
-      men: t.men,
-      women: t.women,
-      unisex: t.unisex,
-      sizeTravel: t.sizeTravel,
-      sizeMedium: t.sizeMedium,
-      sizeLarge: t.sizeLarge,
-    }),
-  );
+  const groups = catalogFilterGroups(shopFilters, {
+    note: t.filterNote,
+    gender: t.filterGender,
+    size: t.size,
+  });
   const list = filterProducts(products, {
     gender: query.gender,
     note: query.note,
     brand: query.brand,
     size: query.size,
-    discount: query.discount,
     isNew: query.new === "1",
     sort: query.sort,
     sale: true,

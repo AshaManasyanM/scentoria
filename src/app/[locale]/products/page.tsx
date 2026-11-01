@@ -5,7 +5,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { brandHandle, catalogFilterGroups, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getShopFilters, standardFilterFallback, uniqueBrands } from "@/lib/shopify/catalog";
+import { brandHandle, catalogFilterGroups, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getShopFilters, uniqueBrands } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -19,7 +19,6 @@ export default async function ProductsPage({
     note?: string | string[];
     brand?: string | string[];
     size?: string | string[];
-    discount?: string | string[];
     sort?: string;
     new?: string;
     page?: string;
@@ -61,32 +60,16 @@ export default async function ProductsPage({
   if (facet?.note) redirect(catalogHref(locale, "/products", { ...query, q: undefined, note: facet.note }, 1));
   if (facet?.gender) redirect(catalogHref(locale, "/products", { ...query, q: undefined, gender: facet.gender }, 1));
   const shopFilters = await getShopFilters();
-  const groups = catalogFilterGroups(
-    shopFilters,
-    {
-      brand: t.filterBrand,
-      note: t.filterNote,
-      gender: t.filterGender,
-      size: t.size,
-      discount: t.filterDiscount,
-    },
-    standardFilterFallback({
-      brands,
-      notes,
-      men: t.men,
-      women: t.women,
-      unisex: t.unisex,
-      sizeTravel: t.sizeTravel,
-      sizeMedium: t.sizeMedium,
-      sizeLarge: t.sizeLarge,
-    }),
-  );
+  const groups = catalogFilterGroups(shopFilters, {
+    note: t.filterNote,
+    gender: t.filterGender,
+    size: t.size,
+  });
   const list = filterProducts(products, {
     gender: query.gender,
     note: query.note,
     brand: query.brand,
     size: query.size,
-    discount: query.discount,
     isNew: query.new === "1",
     sort: query.sort,
     query: facet ? "" : textQuery,

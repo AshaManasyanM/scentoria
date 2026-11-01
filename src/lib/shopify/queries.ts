@@ -144,6 +144,7 @@ export const CART_QUERY = `
         nodes {
           id
           quantity
+          attributes { key value }
           merchandise {
             ... on ProductVariant {
               id

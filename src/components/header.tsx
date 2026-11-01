@@ -13,7 +13,7 @@ import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
@@ -24,6 +24,8 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const [menu, setMenu] = useState(false);
   const [q, setQ] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [pinned, setPinned] = useState(false);
+  const quoteRef = useRef<HTMLDivElement>(null);
 
   const home = path(locale);
   const isHome = pathname === home || pathname === `${home}/`;
@@ -46,6 +48,27 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
     };
   }, [menu]);
 
+  useEffect(() => {
+    let frame = 0;
+    const update = () => {
+      const quoteHeight = quoteRef.current?.offsetHeight ?? 0;
+      const next = window.scrollY > quoteHeight;
+      setPinned((current) => (current === next ? current : next));
+    };
+    const onScroll = () => {
+      cancelAnimationFrame(frame);
+      frame = requestAnimationFrame(update);
+    };
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+    return () => {
+      cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onScroll);
+    };
+  }, []);
+
   const goSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setMenu(false);
@@ -56,9 +79,15 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   };
 
   return (
-    <div>
-      <QuoteBar />
-      <header className="sticky top-0 z-40 bg-bg">
+    <>
+      <div ref={quoteRef}>
+        <QuoteBar />
+      </div>
+      <header
+        className={`sticky top-0 z-40 bg-bg transition-shadow duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          pinned ? "shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "shadow-none"
+        }`}
+      >
         <div className="mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
           <form className="hidden md:block" onSubmit={goSearch}>
             <div className="relative block w-full max-w-[240px]">
@@ -229,6 +258,6 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </div>
           </div>
       </header>
-    </div>
+    </>
   );
 }
