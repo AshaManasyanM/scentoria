@@ -14,6 +14,7 @@ import {
   PRODUCTS_QUERY,
   SEARCH_QUERY,
   SHOP_POLICIES_QUERY,
+  SUGGEST_QUERY,
   TESTIMONIALS_QUERY,
 } from "./queries";
 
@@ -86,6 +87,86 @@ export async function searchProducts(query: string): Promise<Product[]> {
       p.brand.toLowerCase().includes(q) ||
       p.tags.some((t) => t.toLowerCase().includes(q)),
   );
+}
+
+export type ProductSuggestion = {
+  handle: string;
+  title: string;
+  image?: string;
+};
+
+function scoreSuggestion(product: { title: string; brand?: string; tags?: string[] }, q: string) {
+  const title = product.title.toLowerCase();
+  const tokens = q.split(/\s+/).filter(Boolean);
+  const words = title.split(/[^a-z0-9à-öø-ÿ]+/i).filter(Boolean);
+  if (title === q) return 100;
+  if (title.startsWith(q)) return 90;
+  if (tokens.length > 1 && tokens.every((token) => title.includes(token))) return 85;
+  if (words.some((word) => word.startsWith(q))) return 80;
+  if (title.includes(q)) return 65;
+  if (tokens.length === 1 && (product.brand || "").toLowerCase().includes(q)) return 35;
+  if (tokens.length === 1 && (product.tags || []).some((tag) => tag.toLowerCase().includes(q))) return 20;
+  return 0;
+}
+
+function rankSuggestions(
+  products: { handle: string; title: string; image?: string; brand?: string; tags?: string[] }[],
+  q: string,
+  limit: number,
+): ProductSuggestion[] {
+  return products
+    .map((product) => {
+      const score = scoreSuggestion(product, q);
+      if (!score) return null;
+      return { score, handle: product.handle, title: product.title, image: product.image };
+    })
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
+    .slice(0, limit)
+    .map(({ handle, title, image }) => ({ handle, title, image }));
+}
+
+export async function suggestProducts(query: string, limit = 8): Promise<ProductSuggestion[]> {
+  const raw = query.trim();
+  const q = raw.toLowerCase();
+  if (q.length < 1) return [];
+
+  // Name suggestions are title-based: only show perfumes whose name actually matches.
+  const { products } = await getCatalog();
+  const local = rankSuggestions(
+    products.map((product) => ({
+      handle: product.handle,
+      title: product.title,
+      image: product.images[0]?.url,
+      brand: product.brand,
+      tags: product.tags,
+    })),
+    q,
+    limit,
+  );
+  if (local.length) return local;
+
+  if (!hasStorefrontToken()) return [];
+
+  try {
+    const data = await storefrontFetch<{
+      search: { edges: { node: { handle: string; title: string; featuredImage?: { url: string } | null } | null }[] };
+    }>(SUGGEST_QUERY, { query: raw, first: Math.max(limit * 3, 16) }, { fresh: true });
+    return rankSuggestions(
+      (data?.search?.edges || [])
+        .map((edge) => edge.node)
+        .filter((node): node is NonNullable<typeof node> => Boolean(node?.handle && node?.title))
+        .map((node) => ({
+          handle: node.handle,
+          title: node.title,
+          image: node.featuredImage?.url || undefined,
+        })),
+      q,
+      limit,
+    );
+  } catch {
+    return [];
+  }
 }
 
 export function uniqueBrands(products: Product[]) {

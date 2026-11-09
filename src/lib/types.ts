@@ -78,4 +78,8 @@ export type Cart = {
   id: string | null;
   checkoutUrl: string | null;
   lines: CartLine[];
+  subtotal?: Money | null;
+  total?: Money | null;
+  discountAmount?: Money | null;
+  discountCodes?: { code: string; applicable: boolean }[];
 };

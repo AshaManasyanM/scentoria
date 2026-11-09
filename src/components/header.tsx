@@ -3,6 +3,7 @@
 import { AccountMenu } from "@/components/account-menu";
 import { LanguageSwitcher } from "@/components/language-switcher";
 import { QuoteBar } from "@/components/quote-bar";
+import { SearchBox } from "@/components/search-box";
 import { NAV, hrefFor } from "@/lib/nav";
 import { SiteNav } from "@/components/site-nav";
 import { useCart } from "./cart-provider";
@@ -13,13 +14,12 @@ import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
   const pathname = usePathname();
-  const router = useRouter();
   const { count } = useCart();
   const { items: wishlist } = useWishlist();
   const [menu, setMenu] = useState(false);
@@ -70,48 +70,20 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
     };
   }, []);
 
-  const goSearch = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    setMenu(false);
-    const term = String(new FormData(e.currentTarget).get("q") ?? "").trim();
-    if (!term) return;
-    setQ(term);
-    router.push(`${path(locale, "/products")}?q=${encodeURIComponent(term)}`);
-  };
-
   return (
     <>
       <div ref={quoteRef}>
         <QuoteBar />
       </div>
       <header
-        className={`sticky top-0 z-40 bg-bg transition-shadow duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+        className={`sticky top-0 z-40 overflow-visible bg-bg transition-shadow duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
           pinned ? "shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "shadow-none"
         }`}
       >
-        <div className="mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
-          <form className="hidden md:block" onSubmit={goSearch}>
-            <div className="relative block w-full max-w-[240px]">
-              <button
-                type="submit"
-                aria-label={t.search}
-                className="absolute left-2 top-1/2 flex h-7 w-7 -translate-y-1/2 items-center justify-center text-[#8a8178]"
-              >
-                <svg viewBox="0 0 24 24" aria-hidden className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.8">
-                  <circle cx="11" cy="11" r="6.5" />
-                  <path d="M16 16.5 20 20.5" strokeLinecap="round" />
-                </svg>
-              </button>
-              <input
-                name="q"
-                aria-label={t.search}
-                value={q}
-                onChange={(e) => setQ(e.target.value)}
-                placeholder={`${t.search}...`}
-                className="h-10 w-full rounded-full border border-white bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#d9d0c6]"
-              />
-            </div>
-          </form>
+        <div className="relative z-50 mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-visible px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
+          <div className="relative z-50 hidden overflow-visible md:block">
+            <SearchBox locale={locale} value={q} onChange={setQ} />
+          </div>
           <div className="hidden items-center max-md:flex">
             <button
               type="button"
@@ -170,7 +142,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </Link>
             <AccountMenu locale={locale} />
             <Link
-              href={path(locale, loggedIn ? "/cart" : "/login")}
+              href={path(locale, "/cart")}
               aria-label={t.cart}
               className="relative inline-flex transition-colors hover:text-[#c5a059]"
             >
@@ -198,15 +170,9 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           aria-hidden={!menu}
         >
             <div className="mx-auto flex min-h-full max-w-[1350px] flex-col px-8 pb-10 pt-6">
-              <form onSubmit={goSearch} className="mx-2 mb-5">
-                <input
-                  name="q"
-                  value={q}
-                  onChange={(e) => setQ(e.target.value)}
-                  placeholder={`${t.search}...`}
-                  className="h-9 w-full rounded-full border border-line bg-white px-4 text-sm text-fg outline-none placeholder:text-muted focus:border-gold"
-                />
-              </form>
+              <div className="mx-2 mb-5">
+                <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+              </div>
               <nav className="flex flex-col">
                 {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
                   const href = hrefFor(locale, key);

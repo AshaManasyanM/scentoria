@@ -3,14 +3,12 @@
 import { showCartNotice } from "@/lib/cart-notice";
 import { useCart } from "./cart-provider";
 import { ProductPrice, useProductSelection } from "./product-selection";
-import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { sizeWithOz } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { BottleColor, Locale, ProductVariant } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 const RANDOM_BOTTLE_COLOR = "random";
@@ -35,6 +33,27 @@ function stockText(variant: ProductVariant, t: ReturnType<typeof getDict>) {
   return t.outOfStock;
 }
 
+function withCheckoutDiscount(url: string, code: string) {
+  if (!code.trim()) return url;
+  try {
+    const next = new URL(url);
+    next.searchParams.set("discount", code.trim());
+    return next.toString();
+  } catch {
+    return url;
+  }
+}
+
+function savedPromoCode(cartCodes?: { code: string; applicable: boolean }[]) {
+  const active = cartCodes?.find((item) => item.applicable)?.code;
+  if (active) return active;
+  try {
+    return (localStorage.getItem("scentoria_subscribe_code") || "").trim();
+  } catch {
+    return "";
+  }
+}
+
 export function AddToCart({
   locale,
   bottleColors = [],
@@ -43,7 +62,6 @@ export function AddToCart({
   bottleColors?: BottleColor[];
 }) {
   const t = getDict(locale);
-  const router = useRouter();
   const { cart, addItem } = useCart();
   const { product, index, select } = useProductSelection();
   const selected = product.variants[index] ?? product.variants[0];
@@ -53,17 +71,9 @@ export function AddToCart({
   );
   const [colorKey, setColorKey] = useState(RANDOM_BOTTLE_COLOR);
   const [colorsOpen, setColorsOpen] = useState(Boolean(bottleColors.length));
-  const [loggedIn, setLoggedIn] = useState(false);
+  const [busy, setBusy] = useState<"cart" | "buy" | null>(null);
   const colorsRef = useRef<HTMLDivElement>(null);
   const inCart = selected ? cart.lines.some((line) => line.merchandiseId === selected.id && line.quantity > 0) : false;
-  const loginHref = path(locale, `/login?next=${encodeURIComponent(path(locale, `/products/${product.handle}`))}`);
-
-  useEffect(() => {
-    const sync = () => setLoggedIn(isLoggedIn());
-    void refreshSession().then(sync);
-    window.addEventListener(AUTH_EVENT, sync);
-    return () => window.removeEventListener(AUTH_EVENT, sync);
-  }, []);
 
   useEffect(() => {
     setColorKey(RANDOM_BOTTLE_COLOR);
@@ -81,8 +91,19 @@ export function AddToCart({
     if (bottleColors.length) setColorsOpen(true);
   };
 
-  const requireLogin = () => {
-    router.push(loginHref);
+  const resolveBottleColor = () => {
+    if (!colors.length) return undefined;
+    return colorKey === RANDOM_BOTTLE_COLOR
+      ? RANDOM_BOTTLE_COLOR
+      : colors.find((color) => color.key === colorKey)?.label || colorKey;
+  };
+
+  const ensureColorChoice = () => {
+    if (colors.length && !colorsOpen) {
+      setColorsOpen(true);
+      return false;
+    }
+    return true;
   };
 
   return (
@@ -156,38 +177,48 @@ export function AddToCart({
       {selected.available ? null : (
         <p className="rounded-md bg-[#f3efe8] px-4 py-3 text-sm text-muted">{t.deliveryStock}</p>
       )}
-      {!loggedIn ? <p className="text-sm text-[#6b635c]">{t.loginToOrder}</p> : null}
-      <div className={inCart && loggedIn ? "flex gap-3" : ""}>
+      <div className="space-y-3">
+        <div className={inCart ? "flex gap-3" : ""}>
+          <button
+            type="button"
+            disabled={!selected.available || busy !== null}
+            onClick={async () => {
+              if (!selected.available || busy) return;
+              if (!ensureColorChoice()) return;
+              setBusy("cart");
+              const added = await addItem(selected.id, 1, resolveBottleColor());
+              setBusy(null);
+              if (added) showCartNotice(t.addedToCart);
+            }}
+            className="btn-green w-full disabled:opacity-60"
+          >
+            {selected.available ? t.addToCart : t.outOfStock}
+          </button>
+          {inCart ? (
+            <Link href={path(locale, "/cart")} className="btn-green w-full !bg-[#083534] !text-[#f7f2ea] hover:!bg-[#284747]">
+              {t.goToCart}
+            </Link>
+          ) : null}
+        </div>
         <button
           type="button"
-          disabled={!selected.available}
+          disabled={!selected.available || busy !== null}
           onClick={async () => {
-            if (!selected.available) return;
-            if (!loggedIn) {
-              requireLogin();
+            if (!selected.available || busy) return;
+            if (!ensureColorChoice()) return;
+            setBusy("buy");
+            const next = await addItem(selected.id, 1, resolveBottleColor());
+            setBusy(null);
+            if (!next?.checkoutUrl) {
+              showCartNotice(t.buyNowUnavailable);
               return;
             }
-            if (colors.length && !colorsOpen) {
-              setColorsOpen(true);
-              return;
-            }
-            const bottleColor = !colors.length
-              ? undefined
-              : colorKey === RANDOM_BOTTLE_COLOR
-                ? RANDOM_BOTTLE_COLOR
-                : colors.find((color) => color.key === colorKey)?.label || colorKey;
-            const added = await addItem(selected.id, 1, bottleColor);
-            if (added) showCartNotice(t.addedToCart);
+            window.location.href = withCheckoutDiscount(next.checkoutUrl, savedPromoCode(next.discountCodes));
           }}
-          className="btn-green w-full disabled:opacity-60"
+          className="btn-green w-full !border-[#083534] !bg-[#f7f2ea] !text-[#083534] hover:!border-[#c5a059] hover:!bg-[#c5a059] hover:!text-[#083534] disabled:opacity-60"
         >
-          {!loggedIn ? t.signIn : selected.available ? t.addToCart : t.outOfStock}
+          {busy === "buy" ? "…" : t.buyNow}
         </button>
-        {inCart && loggedIn ? (
-          <Link href={path(locale, "/cart")} className="btn-green w-full !bg-[#083534] !text-[#f7f2ea] hover:!bg-[#284747]">
-            {t.goToCart}
-          </Link>
-        ) : null}
       </div>
     </div>
   );

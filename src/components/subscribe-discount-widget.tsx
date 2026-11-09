@@ -1,10 +1,12 @@
 "use client";
 
+import { useCart } from "@/components/cart-provider";
 import { getDict } from "@/lib/i18n";
 import type { Locale } from "@/lib/types";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 const STORAGE_KEY = "scentoria_subscribe_widget_v3";
+const CODE_KEY = "scentoria_subscribe_code";
 const DISCOUNT_CODE = (process.env.NEXT_PUBLIC_SUBSCRIBE_DISCOUNT_CODE || "WELCOME10").trim();
 
 type Phase = "form" | "sent" | "code";
@@ -12,6 +14,8 @@ type Mode = "hidden" | "modal" | "corner";
 
 export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
   const t = getDict(locale);
+  const { applyPromo } = useCart();
+  const appliedRef = useRef("");
   const [mode, setMode] = useState<Mode>("hidden");
   const [email, setEmail] = useState("");
   const [phase, setPhase] = useState<Phase>("form");
@@ -20,6 +24,18 @@ export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
   const [busy, setBusy] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const autoApplyCode = (nextCode: string) => {
+    const normalized = nextCode.trim();
+    if (!normalized || appliedRef.current === normalized) return;
+    appliedRef.current = normalized;
+    try {
+      localStorage.setItem(CODE_KEY, normalized);
+    } catch {
+      // ignore
+    }
+    void applyPromo(normalized);
+  };
+
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
     const welcome = params.get("welcome");
@@ -27,6 +43,7 @@ export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
       setCode(welcome);
       setPhase("code");
       setMode("modal");
+      autoApplyCode(welcome);
       try {
         localStorage.setItem(STORAGE_KEY, "subscribed");
       } catch {
@@ -36,10 +53,18 @@ export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
     }
 
     let saved = "";
+    let savedCode = "";
     try {
       saved = localStorage.getItem(STORAGE_KEY) || "";
+      savedCode = localStorage.getItem(CODE_KEY) || "";
     } catch {
       saved = "";
+      savedCode = "";
+    }
+
+    if (savedCode) {
+      setCode(savedCode);
+      autoApplyCode(savedCode);
     }
 
     if (saved === "subscribed") return;
@@ -50,6 +75,7 @@ export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
 
     const timer = window.setTimeout(() => setMode("modal"), 2500);
     return () => window.clearTimeout(timer);
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- apply once on mount / welcome link
   }, []);
 
   const persist = (value: string) => {
@@ -94,9 +120,11 @@ export function SubscribeDiscountWidget({ locale }: { locale: Locale }) {
         setError(data.error === "rate" ? t.subscribeRateLimited : t.subscribeFailed);
         return;
       }
-      setCode(data.code || DISCOUNT_CODE);
+      const nextCode = data.code || DISCOUNT_CODE;
+      setCode(nextCode);
       setPhase(data.emailed ? "sent" : "code");
       persist("subscribed");
+      autoApplyCode(nextCode);
     } catch {
       setError(t.subscribeFailed);
     } finally {

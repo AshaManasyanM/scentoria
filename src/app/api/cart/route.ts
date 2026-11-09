@@ -1,5 +1,5 @@
 import { clientKey, consumeLimit, readJson, tooManyRequests } from "@/lib/rate-limit";
-import { addLine, getCart, setLineQuantity } from "@/lib/shopify/cart";
+import { addLine, applyDiscountCode, getCart, setLineQuantity } from "@/lib/shopify/cart";
 import type { ShippingSelection } from "@/lib/shipping-choices";
 import { saveDelivery, selectShipping, type DeliveryDraft } from "@/lib/shopify/checkout";
 import { NextResponse } from "next/server";
@@ -17,6 +17,7 @@ export async function POST(request: Request) {
     lineId?: string;
     quantity?: number;
     bottleColor?: string;
+    code?: string;
     delivery?: DeliveryDraft;
     groupId?: string;
     handle?: string;
@@ -34,6 +35,13 @@ export async function POST(request: Request) {
   }
   if (body.action === "shipping" && body.groupId && body.handle) {
     return NextResponse.json(await selectShipping([{ groupId: body.groupId, handle: body.handle }]));
+  }
+  if (body.action === "discount") {
+    const result = await applyDiscountCode(typeof body.code === "string" ? body.code : "");
+    return NextResponse.json(result.cart, {
+      status: result.ok ? 200 : 400,
+      headers: result.message ? { "x-promo-message": result.message } : undefined,
+    });
   }
   if (body.action === "update" && body.lineId) {
     const cart = await setLineQuantity(body.lineId, body.quantity ?? 0);

@@ -22,7 +22,7 @@ import { path } from "@/lib/path";
 import type { CartLine, Money } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams, useRouter } from "next/navigation";
+import { useParams } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 function Steps({ labels, active }: { labels: string[]; active: number }) {
@@ -82,13 +82,13 @@ export default function CartPage() {
   const params = useParams<{ locale: string }>();
   const locale = isLocale(params.locale) ? params.locale : "en";
   const t = getDict(locale);
-  const router = useRouter();
-  const { cart, updateQty } = useCart();
+  const { cart, updateQty, applyPromo } = useCart();
   const [authReady, setAuthReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [code, setCode] = useState("");
   const [appliedCode, setAppliedCode] = useState("");
   const [codeNote, setCodeNote] = useState("");
+  const [promoPending, setPromoPending] = useState(false);
   const [step, setStep] = useState(0);
   const [payUrl, setPayUrl] = useState<string | null>(null);
   const checkoutPayUrl = withCheckoutDiscount(payUrl, appliedCode);
@@ -99,7 +99,7 @@ export default function CartPage() {
   const [shopifyCost, setShopifyCost] = useState<CartCostQuote | null>(null);
   const shippingCost = selectedShippingTotal(shippingOptions, shippingSelection);
   const cartKey = cart.lines.map((line) => `${line.merchandiseId}:${line.quantity}`).join("|");
-  const currency = cart.lines[0]?.price.currencyCode ?? "AMD";
+  const currency = cart.lines[0]?.price.currencyCode ?? cart.subtotal?.currencyCode ?? "AMD";
   const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
   const money = (amount: number): Money => ({ amount: String(amount), currencyCode: currency });
 
@@ -112,12 +112,42 @@ export default function CartPage() {
     products += list * line.quantity;
     payable += price * line.quantity;
   }
-  const discount = Math.max(0, products - payable);
+  const compareDiscount = Math.max(0, products - payable);
+  const promoDiscount = Number(cart.discountAmount?.amount || 0);
+  const discount = compareDiscount + Math.max(0, promoDiscount);
+  const originalTotal = payable;
+  const discountedTotal =
+    cart.total && Number(cart.total.amount) >= 0 && promoDiscount > 0
+      ? Number(cart.total.amount)
+      : Math.max(0, payable - Math.max(0, promoDiscount));
   const quote = checkoutQuote(shopifyCost, {
-    products: payable,
+    products: discountedTotal,
     shipping: shippingAmount(shippingCost, currency),
     currency,
   });
+
+  useEffect(() => {
+    const active = cart.discountCodes?.find((item) => item.applicable)?.code;
+    if (active) {
+      setAppliedCode(active);
+      setCode((prev) => prev || active);
+      if (Number(cart.discountAmount?.amount || 0) > 0) setCodeNote(t.promoSaved);
+      return;
+    }
+    let savedCode = "";
+    try {
+      savedCode = (localStorage.getItem("scentoria_subscribe_code") || "").trim();
+    } catch {
+      savedCode = "";
+    }
+    if (!savedCode || appliedCode) return;
+    setCode(savedCode);
+    void applyPromo(savedCode).then((result) => {
+      if (!result.ok) return;
+      setAppliedCode(savedCode);
+      setCodeNote(t.promoSaved);
+    });
+  }, [cart.discountCodes, cart.discountAmount, appliedCode, applyPromo, t.promoSaved]);
 
   useEffect(() => {
     let alive = true;
@@ -134,16 +164,13 @@ export default function CartPage() {
     };
   }, []);
 
-  useEffect(() => {
-    if (!authReady || loggedIn) return;
-    router.replace(path(locale, `/login?next=${encodeURIComponent(path(locale, "/cart"))}`));
-  }, [authReady, loggedIn, locale, router]);
+  const loginCheckoutHref = path(locale, `/login?next=${encodeURIComponent(path(locale, "/cart"))}`);
 
-  if (!authReady || !loggedIn) {
+  if (!authReady) {
     return (
       <section className="bg-white px-4 py-10 md:px-8 md:py-14">
         <div className="mx-auto max-w-[1080px]">
-          <p className="text-sm text-[#6b635c]">{t.loginToOrder}</p>
+          <p className="text-sm text-[#6b635c]">…</p>
         </div>
       </section>
     );
@@ -240,7 +267,7 @@ export default function CartPage() {
           <PaymentStep
             labels={t}
             payUrl={checkoutPayUrl}
-            productsLabel={formatMoney(money(payable), locale)}
+            productsLabel={formatMoney(money(discountedTotal), locale)}
             shipping={shippingCost}
             quote={quote}
             onBack={() => setStep(2)}
@@ -250,7 +277,14 @@ export default function CartPage() {
           <div className="flex flex-col gap-8 lg:flex-row lg:items-center">
             <div className="min-w-0 flex-1 space-y-6">
               {cart.lines.map((line) => (
-                <OrderLine key={line.id} line={line} locale={locale} removeLabel={t.remove} onQty={updateQty} />
+                <OrderLine
+                  key={line.id}
+                  line={line}
+                  locale={locale}
+                  removeLabel={t.remove}
+                  onQty={updateQty}
+                  promoFactor={promoDiscount > 0 && originalTotal > 0 ? Math.max(0, 1 - promoDiscount / originalTotal) : 1}
+                />
               ))}
             </div>
 
@@ -263,10 +297,20 @@ export default function CartPage() {
                   if (!next) {
                     setAppliedCode("");
                     setCodeNote(t.promoInvalid);
+                    void applyPromo("");
                     return;
                   }
-                  setAppliedCode(next);
-                  setCodeNote(t.promoSaved);
+                  setPromoPending(true);
+                  void applyPromo(next).then((result) => {
+                    setPromoPending(false);
+                    if (!result.ok) {
+                      setAppliedCode("");
+                      setCodeNote(t.promoInvalid);
+                      return;
+                    }
+                    setAppliedCode(next);
+                    setCodeNote(t.promoSaved);
+                  });
                 }}
               >
                 <input
@@ -280,7 +324,8 @@ export default function CartPage() {
                 />
                 <button
                   type="submit"
-                  className="h-11 shrink-0 rounded-xl border border-white/30 px-4 text-sm text-white"
+                  disabled={promoPending}
+                  className="h-11 shrink-0 rounded-xl border border-white/30 px-4 text-sm text-white disabled:opacity-60"
                 >
                   {t.filterApply}
                 </button>
@@ -291,11 +336,11 @@ export default function CartPage() {
               <dl className="mt-5 space-y-3 text-sm text-white/80">
                 <div className="flex items-center justify-between gap-4">
                   <dt>{t.productsTotal}</dt>
-                  <dd className="text-white">{formatMoney(money(products), locale)}</dd>
+                  <dd className="text-white">{formatMoney(money(originalTotal), locale)}</dd>
                 </div>
                 {discount > 0 ? (
                   <div className="flex items-center justify-between gap-4">
-                    <dt>{t.discounts}</dt>
+                    <dt>{t.discounts}{appliedCode ? ` (${appliedCode})` : ""}</dt>
                     <dd className="text-white">-{formatMoney(money(discount), locale)}</dd>
                   </div>
                 ) : null}
@@ -307,17 +352,40 @@ export default function CartPage() {
 
               <div className="mt-4 flex items-end justify-between gap-4 border-t border-white/15 pt-4">
                 <p className="text-sm text-white/80">{t.orderTotal}</p>
-                <p className="text-2xl font-medium tracking-tight">{formatMoney(money(payable), locale)}</p>
+                <div className="text-right">
+                  {promoDiscount > 0 ? (
+                    <p className="text-sm text-white/45 line-through">{formatMoney(money(originalTotal), locale)}</p>
+                  ) : null}
+                  <p className="text-2xl font-medium tracking-tight">{formatMoney(money(discountedTotal), locale)}</p>
+                </div>
               </div>
 
               {cart.checkoutUrl ? (
-                <button
-                  type="button"
-                  onClick={() => setStep(1)}
-                  className="mt-5 flex h-12 items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                >
-                  {t.nextAddress} →
-                </button>
+                <div className="mt-5 space-y-3">
+                  {loggedIn ? (
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                    >
+                      {t.nextAddress} →
+                    </button>
+                  ) : (
+                    <Link
+                      href={loginCheckoutHref}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                    >
+                      {t.signIn} →
+                    </Link>
+                  )}
+                  <a
+                    href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
+                    className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                  >
+                    {t.buyNow} →
+                  </a>
+                  {!loggedIn ? <p className="text-center text-xs text-white/60">{t.loginToCheckout}</p> : null}
+                </div>
               ) : (
                 <p className="mt-5 text-center text-sm leading-6 text-white/70">
                   Connect the Shopify Storefront token to enable checkout. See ADMIN.md.
@@ -998,11 +1066,13 @@ function OrderLine({
   locale,
   removeLabel,
   onQty,
+  promoFactor = 1,
 }: {
   line: CartLine;
   locale: "en" | "hy";
   removeLabel: string;
   onQty: (lineId: string, quantity: number) => void;
+  promoFactor?: number;
 }) {
   const labels = getDict(locale);
   const percent = discountPercent(line.price, line.compareAtPrice);
@@ -1010,9 +1080,15 @@ function OrderLine({
   const color =
     line.bottleColor === "random" ? labels.randomColor : line.bottleColor ? line.bottleColor : "";
   const meta = [size, color, percent ? `-${percent}%` : ""].filter(Boolean).join(" · ");
-  const linePrice: Money = { ...line.price, amount: String(Number(line.price.amount) * line.quantity) };
-  const lineCompare: Money | null =
-    percent && line.compareAtPrice
+  const rawLine = Number(line.price.amount) * line.quantity;
+  const hasPromo = promoFactor > 0 && promoFactor < 1;
+  const linePrice: Money = {
+    ...line.price,
+    amount: String(hasPromo ? Math.round(rawLine * promoFactor * 100) / 100 : rawLine),
+  };
+  const lineCompare: Money | null = hasPromo
+    ? { ...line.price, amount: String(rawLine) }
+    : percent && line.compareAtPrice
       ? { ...line.compareAtPrice, amount: String(Number(line.compareAtPrice.amount) * line.quantity) }
       : null;
 

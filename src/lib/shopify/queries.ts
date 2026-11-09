@@ -108,6 +108,22 @@ export const SEARCH_QUERY = `
   }
 `;
 
+export const SUGGEST_QUERY = `
+  query Suggest($query: String!, $first: Int!) {
+    search(query: $query, first: $first, types: PRODUCT) {
+      edges {
+        node {
+          ... on Product {
+            handle
+            title
+            featuredImage { url }
+          }
+        }
+      }
+    }
+  }
+`;
+
 export const SHOP_POLICIES_QUERY = `
   query ShopPolicies {
     shop {
@@ -146,11 +162,43 @@ export const CART_LINES_UPDATE = `
   }
 `;
 
+export const CART_DISCOUNT_CODES_UPDATE = `
+  mutation CartDiscountCodesUpdate($cartId: ID!, $discountCodes: [String!]!) {
+    cartDiscountCodesUpdate(cartId: $cartId, discountCodes: $discountCodes) {
+      cart {
+        id
+        checkoutUrl
+        discountCodes { code applicable }
+        cost {
+          subtotalAmount { amount currencyCode }
+          totalAmount { amount currencyCode }
+        }
+        discountAllocations {
+          discountedAmount { amount currencyCode }
+        }
+      }
+      userErrors { field message }
+    }
+  }
+`;
+
+const CART_COST_FIELDS = `
+  discountCodes { code applicable }
+  cost {
+    subtotalAmount { amount currencyCode }
+    totalAmount { amount currencyCode }
+  }
+  discountAllocations {
+    discountedAmount { amount currencyCode }
+  }
+`;
+
 export const CART_QUERY = `
   query Cart($id: ID!) {
     cart(id: $id) {
       id
       checkoutUrl
+      ${CART_COST_FIELDS}
       lines(first: 50) {
         nodes {
           id

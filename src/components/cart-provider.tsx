@@ -14,8 +14,9 @@ type CartContextValue = {
   cart: Cart;
   count: number;
   refresh: () => Promise<void>;
-  addItem: (merchandiseId: string, quantity?: number, bottleColor?: string) => Promise<boolean>;
+  addItem: (merchandiseId: string, quantity?: number, bottleColor?: string) => Promise<Cart | null>;
   updateQty: (lineId: string, quantity: number) => Promise<void>;
+  applyPromo: (code: string) => Promise<{ ok: boolean; message?: string }>;
 };
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -41,11 +42,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ merchandiseId, quantity, bottleColor }),
       });
-      if (res.ok) {
-        setCart(await res.json());
-        return true;
-      }
-      return false;
+      if (!res.ok) return null;
+      const next = (await res.json()) as Cart;
+      setCart(next);
+      return next;
     },
     [],
   );
@@ -59,11 +59,25 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
     if (res.ok) setCart(await res.json());
   }, []);
 
+  const applyPromo = useCallback(async (code: string) => {
+    const res = await fetch("/api/cart", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ action: "discount", code }),
+    });
+    const next = (await res.json().catch(() => null)) as Cart | null;
+    if (next && Array.isArray(next.lines)) setCart(next);
+    return {
+      ok: res.ok,
+      message: res.headers.get("x-promo-message") || undefined,
+    };
+  }, []);
+
   const count = cart.lines.reduce((sum, line) => sum + line.quantity, 0);
 
   const value = useMemo(
-    () => ({ cart, count, refresh, addItem, updateQty }),
-    [cart, count, refresh, addItem, updateQty],
+    () => ({ cart, count, refresh, addItem, updateQty, applyPromo }),
+    [cart, count, refresh, addItem, updateQty, applyPromo],
   );
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
