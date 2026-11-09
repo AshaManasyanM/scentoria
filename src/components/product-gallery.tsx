@@ -18,7 +18,7 @@ export function ProductGallery() {
   const current = media[Math.min(active, Math.max(media.length - 1, 0))] ?? null;
 
   return (
-    <div className="mx-auto w-full max-w-[520px] md:mx-0">
+    <div className="mx-auto w-full max-w-[620px] md:mx-0">
       <div className="relative">
         <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-[#e6e6e6] bg-white">
           {percent ? (
@@ -32,7 +32,7 @@ export function ProductGallery() {
               alt={current.alt || product.title}
               fill
               className="object-contain p-3 sm:p-4"
-              sizes="(max-width: 768px) 100vw, 520px"
+              sizes="(max-width: 768px) 100vw, 620px"
               priority
             />
           ) : null}
@@ -48,11 +48,11 @@ export function ProductGallery() {
                 type="button"
                 aria-label={image.alt || `${product.title} ${i + 1}`}
                 onClick={() => setActive(i)}
-                className={`relative h-[72px] w-[72px] overflow-hidden rounded-2xl border bg-white ${
+                className={`relative h-[80px] w-[80px] overflow-hidden rounded-2xl border bg-white ${
                   isActive ? "border-[#c5c5c5]" : "border-[#e6e6e6]"
                 }`}
               >
-                <Image src={image.url} alt="" fill className="object-contain p-1.5" sizes="72px" />
+                <Image src={image.url} alt="" fill className="object-contain p-1.5" sizes="80px" />
               </button>
             );
           })}

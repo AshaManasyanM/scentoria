@@ -40,7 +40,7 @@ export default async function ProductPage({
   return (
     <>
       <ProductSelection product={product}>
-      <div className="mx-auto grid max-w-[min(100%,72rem)] gap-8 px-[clamp(1rem,2.5vw,1.25rem)] py-[clamp(2rem,4vw,4rem)] md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:items-start md:gap-10 xl:gap-12">
+      <div className="mx-auto grid max-w-[min(100%,78rem)] gap-8 px-[clamp(1rem,2.5vw,1.25rem)] py-[clamp(2rem,4vw,4rem)] md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)] md:items-start md:gap-10 xl:gap-12">
         <ProductGallery />
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">

@@ -25,8 +25,11 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const [menu, setMenu] = useState(false);
   const [q, setQ] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
-  const [pinned, setPinned] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
+  const [compact, setCompact] = useState(false);
   const quoteRef = useRef<HTMLDivElement>(null);
+  const stickyRef = useRef<HTMLElement>(null);
+  const navSentinelRef = useRef<HTMLDivElement>(null);
 
   const home = path(locale);
   const isHome = pathname === home || pathname === `${home}/`;
@@ -49,12 +52,26 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
     };
   }, [menu]);
 
+  // White header/menu as soon as the quote bar is gone.
   useEffect(() => {
     let frame = 0;
     const update = () => {
       const quoteHeight = quoteRef.current?.offsetHeight ?? 0;
-      const next = window.scrollY > quoteHeight;
-      setPinned((current) => (current === next ? current : next));
+      const y = window.scrollY;
+      const enterAt = quoteHeight + 8;
+      const exitAt = Math.max(0, quoteHeight - 2);
+      setScrolled((current) => {
+        const next = current ? y > exitAt : y > enterAt;
+        return current === next ? current : next;
+      });
+      if (isHome) {
+        const homeEnter = quoteHeight + 40;
+        const homeExit = Math.max(0, quoteHeight + 8);
+        setCompact((current) => {
+          const next = current ? y > homeExit : y > homeEnter;
+          return current === next ? current : next;
+        });
+      }
     };
     const onScroll = () => {
       cancelAnimationFrame(frame);
@@ -68,31 +85,68 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
       window.removeEventListener("scroll", onScroll);
       window.removeEventListener("resize", onScroll);
     };
-  }, []);
+  }, [isHome]);
+
+  // Other pages: logo → menu when the page nav has scrolled under the sticky bar.
+  useEffect(() => {
+    if (isHome) return;
+    const sticky = stickyRef.current;
+    const sentinel = navSentinelRef.current;
+    if (!sticky || !sentinel) return;
+
+    const observe = () => {
+      const headerH = sticky.offsetHeight || 64;
+      const io = new IntersectionObserver(
+        ([entry]) => {
+          const next = !entry.isIntersecting;
+          setCompact((current) => (current === next ? current : next));
+        },
+        {
+          root: null,
+          threshold: 0,
+          rootMargin: `-${headerH + 2}px 0px 0px 0px`,
+        },
+      );
+      io.observe(sentinel);
+      return io;
+    };
+
+    let io = observe();
+    const onResize = () => {
+      io.disconnect();
+      io = observe();
+    };
+    window.addEventListener("resize", onResize);
+    return () => {
+      io.disconnect();
+      window.removeEventListener("resize", onResize);
+    };
+  }, [isHome, pathname]);
 
   return (
     <>
       <div ref={quoteRef}>
         <QuoteBar />
       </div>
+
+      {/* Sticky bar keeps a fixed height — only opacity/color animate */}
       <header
-        className={`sticky top-0 z-40 overflow-visible transition-[background-color,box-shadow,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          pinned
-            ? "bg-white/95 shadow-[0_8px_24px_rgba(8,53,52,0.12)] backdrop-blur-md"
-            : "bg-bg shadow-none"
+        ref={stickyRef}
+        className={`sticky top-0 z-40 overflow-visible transition-[background-color,box-shadow] duration-[350ms] ease-out ${
+          scrolled ? "bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "bg-bg shadow-none"
         }`}
       >
-        <div className="relative z-50 mx-auto grid max-w-[min(100%,82.5rem)] grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.65rem,1.2vw,0.875rem)] text-[#143028] md:gap-4">
+        <div className="relative z-50 mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
             <SearchBox locale={locale} value={q} onChange={setQ} />
           </div>
-          <div className="hidden items-center max-md:flex">
+          <div className="flex items-center md:hidden">
             <button
               type="button"
               aria-label={menu ? t.close : "Menu"}
               aria-expanded={menu}
               onClick={() => setMenu((v) => !v)}
-              className="flex h-8 w-8 items-center justify-center"
+              className="flex h-9 w-9 shrink-0 items-center justify-center"
             >
               {menu ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
@@ -105,19 +159,31 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
               )}
             </button>
           </div>
-          <div
-            className={`relative justify-self-center transition-[min-width] duration-500 ${
-              pinned ? "md:min-w-[min(72vw,36rem)]" : "md:min-w-0"
-            }`}
+
+          <Link
+            href={path(locale)}
+            aria-label={t.brand}
+            onClick={() => setMenu(false)}
+            className="justify-self-center md:hidden"
           >
+            <Image
+              src="/brand/scentoria-prive.png"
+              alt={t.brand}
+              width={220}
+              height={180}
+              priority
+              unoptimized
+              className="h-9 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] sm:h-10"
+            />
+          </Link>
+
+          <div className="relative hidden h-14 w-[min(70vw,36rem)] justify-self-center md:block">
             <Link
               href={path(locale)}
               aria-label={t.brand}
               onClick={() => setMenu(false)}
-              className={`mx-auto block w-fit transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-                pinned
-                  ? "pointer-events-none max-md:pointer-events-auto max-md:translate-y-0 max-md:scale-100 max-md:opacity-100 md:-translate-y-1 md:scale-95 md:opacity-0"
-                  : "translate-y-0 scale-100 opacity-100"
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-[350ms] ease-out ${
+                compact ? "pointer-events-none opacity-0" : "opacity-100"
               }`}
             >
               <Image
@@ -127,18 +193,19 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 height={180}
                 priority
                 unoptimized
-                className="h-10 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-12 xl:h-14"
+                className="h-12 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] xl:h-14"
               />
             </Link>
             <div
-              className={`absolute inset-x-0 top-1/2 hidden -translate-y-1/2 justify-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex ${
-                pinned ? "translate-y-[-50%] opacity-100" : "pointer-events-none translate-y-[calc(-50%+8px)] opacity-0"
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-[350ms] ease-out ${
+                compact ? "opacity-100" : "pointer-events-none opacity-0"
               }`}
             >
               <SiteNav locale={locale} variant="inline" hiddenNav={hiddenNav} />
             </div>
           </div>
-          <div className="flex items-center justify-end gap-2 text-[#143028] sm:gap-3 md:gap-4 xl:gap-5">
+
+          <div className="flex shrink-0 items-center justify-end gap-1.5 text-[#143028] sm:gap-3 md:gap-4 xl:gap-5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}
@@ -178,85 +245,84 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             <LanguageSwitcher locale={locale} />
           </div>
         </div>
-        {isHome ? null : (
-          <div
-            className={`hidden overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:block ${
-              pinned ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
-            }`}
-          >
-            <SiteNav locale={locale} hiddenNav={hiddenNav} />
-          </div>
-        )}
+
         <div
           data-open={menu ? "true" : undefined}
-          className="absolute inset-x-0 top-full z-50 hidden h-[calc(100dvh-90px)] overflow-y-auto border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] max-md:block max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0 max-md:transition-[opacity,transform] max-md:duration-300 max-md:ease-[cubic-bezier(0.22,1,0.36,1)] max-md:data-[open]:pointer-events-auto max-md:data-[open]:translate-y-0 max-md:data-[open]:opacity-100"
+          className="absolute inset-x-0 top-full z-50 hidden max-h-[min(100dvh-4.5rem,100%)] overflow-y-auto overscroll-contain border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] max-md:block max-md:pointer-events-none max-md:opacity-0 max-md:transition-opacity max-md:duration-200 max-md:data-[open]:pointer-events-auto max-md:data-[open]:opacity-100"
           aria-hidden={!menu}
         >
-            <div className="mx-auto flex min-h-full max-w-[min(100%,84.375rem)] flex-col px-8 pb-10 pt-6">
-              <div className="mx-2 mb-5">
-                <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
-              </div>
-              <nav className="flex flex-col">
-                {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
-                  const href = hrefFor(locale, key);
-                  const active =
-                    pathname === href || (key !== "home" && pathname.startsWith(href));
-                  const sales = key === "sales";
-                  return (
-                    <Link
-                      key={key}
-                      href={href}
-                      onClick={() => setMenu(false)}
-                      className={`border-b border-line py-3 text-center font-serif text-[18px] font-semibold uppercase tracking-[0.12em] ${
-                        sales
-                          ? "text-sale"
-                          : active
-                            ? "text-gold"
-                            : "text-fg"
-                      }`}
-                    >
-                      {t.nav[key]}
-                    </Link>
-                  );
-                })}
-              </nav>
-              <div className="mt-8 flex flex-col items-center gap-4 text-center">
-                <p className="font-serif text-base text-fg">{t.followUsShort}</p>
-                <div className="flex items-center gap-5">
-                  <a
-                    href="https://instagram.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="Instagram"
-                    className="text-fg hover:text-gold"
+          <div className="mx-auto flex min-h-full max-w-[min(100%,84.375rem)] flex-col px-8 pb-10 pt-6">
+            <div className="mx-2 mb-5">
+              <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+            </div>
+            <nav className="flex flex-col">
+              {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
+                const href = hrefFor(locale, key);
+                const active = pathname === href || (key !== "home" && pathname.startsWith(href));
+                const sales = key === "sales";
+                return (
+                  <Link
+                    key={key}
+                    href={href}
+                    onClick={() => setMenu(false)}
+                    className={`border-b border-line py-3 text-center font-serif text-[18px] font-semibold uppercase tracking-[0.12em] ${
+                      sales ? "text-sale" : active ? "text-gold" : "text-fg"
+                    }`}
                   >
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
-                      <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
-                      <circle cx="17.2" cy="6.8" r="1" fill="currentColor" />
-                    </svg>
-                  </a>
-                  <a
-                    href="https://youtube.com"
-                    target="_blank"
-                    rel="noreferrer"
-                    aria-label="YouTube"
-                    className="text-fg hover:text-gold"
-                  >
-                    <svg width="24" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                      <path
-                        d="M22 12.2s0-3.2-.4-4.6c-.2-.8-.9-1.5-1.7-1.7C18.4 5.5 12 5.5 12 5.5s-6.4 0-7.9.4c-.8.2-1.5.9-1.7 1.7C2 9 2 12.2 2 12.2s0 3.2.4 4.6c.2.8.9 1.5 1.7 1.7 1.5.4 7.9.4 7.9.4s6.4 0 7.9-.4c.8-.2 1.5-.9 1.7-1.7.4-1.4.4-4.6.4-4.6Z"
-                        stroke="currentColor"
-                        strokeWidth="1.5"
-                      />
-                      <path d="M10 15.2V9.2l5.2 3-5.2 3Z" fill="currentColor" />
-                    </svg>
-                  </a>
-                </div>
+                    {t.nav[key]}
+                  </Link>
+                );
+              })}
+            </nav>
+            <div className="mt-8 flex flex-col items-center gap-4 text-center">
+              <p className="font-serif text-base text-fg">{t.followUsShort}</p>
+              <div className="flex items-center gap-5">
+                <a
+                  href="https://instagram.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="Instagram"
+                  className="text-fg hover:text-gold"
+                >
+                  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
+                    <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
+                    <circle cx="17.2" cy="6.8" r="1" fill="currentColor" />
+                  </svg>
+                </a>
+                <a
+                  href="https://youtube.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  aria-label="YouTube"
+                  className="text-fg hover:text-gold"
+                >
+                  <svg width="24" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
+                    <path
+                      d="M22 12.2s0-3.2-.4-4.6c-.2-.8-.9-1.5-1.7-1.7C18.4 5.5 12 5.5 12 5.5s-6.4 0-7.9.4c-.8.2-1.5.9-1.7 1.7C2 9 2 12.2 2 12.2s0 3.2.4 4.6c.2.8.9 1.5 1.7 1.7 1.5.4 7.9.4 7.9.4s6.4 0 7.9-.4c.8-.2 1.5-.9 1.7-1.7.4-1.4.4-4.6.4-4.6Z"
+                      stroke="currentColor"
+                      strokeWidth="1.5"
+                    />
+                    <path d="M10 15.2V9.2l5.2 3-5.2 3Z" fill="currentColor" />
+                  </svg>
+                </a>
               </div>
             </div>
           </div>
+        </div>
       </header>
+
+      {/* Page nav scrolls away under the sticky bar; no height animation on sticky */}
+      {isHome ? null : (
+        <div
+          ref={navSentinelRef}
+          className={`relative z-30 hidden transition-colors duration-[350ms] ease-out md:block ${
+            scrolled ? "bg-white" : "bg-bg"
+          }`}
+        >
+          <SiteNav locale={locale} hiddenNav={hiddenNav} />
+        </div>
+      )}
     </>
   );
 }
