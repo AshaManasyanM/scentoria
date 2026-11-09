@@ -1,6 +1,7 @@
 import { CartProvider } from "@/components/cart-provider";
 import { Footer } from "@/components/footer";
 import { Header } from "@/components/header";
+import { SubscribeDiscountWidget } from "@/components/subscribe-discount-widget";
 import { WishlistProvider } from "@/components/wishlist-provider";
 import { isLocale, locales } from "@/lib/i18n";
 import { getSectionVisibility } from "@/lib/shopify/catalog";
@@ -32,6 +33,7 @@ export default async function LocaleLayout({
         <Header locale={locale} hiddenNav={hiddenNav} />
         <main className="flex-1">{children}</main>
         <Footer locale={locale} hiddenNav={hiddenNav} />
+        <SubscribeDiscountWidget locale={locale} />
       </WishlistProvider>
     </CartProvider>
   );

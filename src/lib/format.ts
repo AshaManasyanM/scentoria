@@ -9,9 +9,15 @@ export function discountPercent(price: Money, compare?: Money | null) {
 
 export function formatMoney(money: Money, _locale = "en") {
   const n = Number(money.amount);
-  const grouped = Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
-  if (money.currencyCode === "AMD") return `${grouped}֏`;
-  return `${grouped} ${money.currencyCode}`;
+  if (!Number.isFinite(n)) return "";
+  if (money.currencyCode === "AMD") {
+    const grouped = Math.round(n).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+    return `${grouped}֏`;
+  }
+  const [whole, cents = "00"] = (Math.round(n * 100) / 100).toFixed(2).split(".");
+  const grouped = whole.replace(/\B(?=(\d{3})+(?!\d))/g, " ");
+  const fraction = cents.replace(/0+$/, "");
+  return fraction ? `${grouped}.${fraction} ${money.currencyCode}` : `${grouped} ${money.currencyCode}`;
 }
 
 /** Shopify shipping amounts keep their cents so the summary matches checkout. */

@@ -1,49 +1,21 @@
 "use client";
 
-import { discountPercent, sizeWithOz } from "@/lib/format";
+import { discountPercent } from "@/lib/format";
 import { useProductSelection } from "./product-selection";
-import type { Product } from "@/lib/types";
 import Image from "next/image";
-import { useLayoutEffect, useRef, useState } from "react";
-
-type Frame = { src: string; alt: string };
-
-function picture(product: Product, index: number): Frame {
-  const variant = product.variants[index];
-  const image = variant?.image ?? product.images[0] ?? null;
-  return {
-    src: image?.url ?? "",
-    alt: image?.alt || variant?.title || product.title,
-  };
-}
+import { useState } from "react";
 
 function samePicture(a: string, b: string) {
   return a.split("?")[0] === b.split("?")[0];
 }
 
 export function ProductGallery() {
-  const { product, index, select } = useProductSelection();
+  const { product, index } = useProductSelection();
   const selected = product.variants[index];
   const percent = selected ? discountPercent(selected.price, selected.compareAtPrice) : null;
-  const initial = picture(product, 0);
-  const [current, setCurrent] = useState(initial);
-  const [outgoing, setOutgoing] = useState<Frame | null>(null);
-  const [dir, setDir] = useState<1 | -1>(1);
-  const indexRef = useRef(0);
-  const currentRef = useRef(initial);
-
-  useLayoutEffect(() => {
-    if (index === indexRef.current) return;
-    const next = picture(product, index);
-    const direction: 1 | -1 = index > indexRef.current ? 1 : -1;
-    indexRef.current = index;
-    if (!next.src || samePicture(next.src, currentRef.current.src)) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    setDir(direction);
-    if (!reduce) setOutgoing(currentRef.current);
-    setCurrent(next);
-    currentRef.current = next;
-  }, [index, product]);
+  const media = product.images;
+  const [active, setActive] = useState(0);
+  const current = media[Math.min(active, Math.max(media.length - 1, 0))] ?? null;
 
   return (
     <div className="w-full max-w-[741px]">
@@ -54,51 +26,33 @@ export function ProductGallery() {
               -{percent}%
             </span>
           ) : null}
-          {outgoing?.src ? (
-            <div
-              className="gallery-out absolute inset-0"
-              style={{ ["--dir" as string]: dir }}
-              onAnimationEnd={() => setOutgoing(null)}
-            >
-              <Image src={outgoing.src} alt="" fill className="object-contain p-6" sizes="741px" />
-            </div>
+          {current?.url ? (
+            <Image
+              src={current.url}
+              alt={current.alt || product.title}
+              fill
+              className="object-contain p-6"
+              sizes="741px"
+              priority
+            />
           ) : null}
-          <div
-            key={current.src}
-            className={outgoing ? "gallery-in absolute inset-0" : "absolute inset-0"}
-            style={outgoing ? { ["--dir" as string]: dir } : undefined}
-          >
-            {current.src ? (
-              <Image
-                src={current.src}
-                alt={current.alt}
-                fill
-                className="object-contain p-6"
-                sizes="741px"
-                priority
-              />
-            ) : null}
-          </div>
         </div>
       </div>
-      {product.variants.length > 1 ? (
+      {media.length > 1 ? (
         <div className="mt-5 flex justify-center gap-3">
-          {product.variants.map((variant, i) => {
-            const image = variant.image ?? product.images[0];
-            const active = i === index;
+          {media.map((image, i) => {
+            const isActive = current ? samePicture(image.url, current.url) : i === active;
             return (
               <button
-                key={variant.id}
+                key={`${image.url}-${i}`}
                 type="button"
-                aria-label={sizeWithOz(variant.title)}
-                onClick={() => select(i)}
+                aria-label={image.alt || `${product.title} ${i + 1}`}
+                onClick={() => setActive(i)}
                 className={`relative h-[92px] w-[92px] overflow-hidden rounded-xl border bg-white ${
-                  active ? "border-[#c5c5c5]" : "border-[#e6e6e6]"
+                  isActive ? "border-[#c5c5c5]" : "border-[#e6e6e6]"
                 }`}
               >
-                {image ? (
-                  <Image src={image.url} alt="" fill className="object-contain p-2" sizes="92px" />
-                ) : null}
+                <Image src={image.url} alt="" fill className="object-contain p-2" sizes="92px" />
               </button>
             );
           })}

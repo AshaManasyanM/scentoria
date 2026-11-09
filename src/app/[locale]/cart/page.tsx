@@ -6,6 +6,7 @@ import type { SavedAddress } from "@/lib/address-book";
 import { countryChoices, isCountryCode } from "@/lib/countries";
 import { isUsState, usStateChoices } from "@/lib/us-states";
 import { checkoutQuote, type CartCostQuote } from "@/lib/checkout-quote";
+import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
 import { discountPercent, formatExactMoney, formatMoney } from "@/lib/format";
 import { getDict, isLocale } from "@/lib/i18n";
 import {
@@ -21,7 +22,7 @@ import { path } from "@/lib/path";
 import type { CartLine, Money } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useEffect, useMemo, useRef, useState, type FormEvent } from "react";
 
 function Steps({ labels, active }: { labels: string[]; active: number }) {
@@ -66,15 +67,31 @@ function sizeLabel(title: string) {
   return cleaned.replace(/\s*\/\s*[\d.]+\s*oz$/i, "");
 }
 
+function withCheckoutDiscount(url: string | null | undefined, code: string) {
+  if (!url || !code.trim()) return url || null;
+  try {
+    const next = new URL(url);
+    next.searchParams.set("discount", code.trim());
+    return next.toString();
+  } catch {
+    return url;
+  }
+}
+
 export default function CartPage() {
   const params = useParams<{ locale: string }>();
   const locale = isLocale(params.locale) ? params.locale : "en";
   const t = getDict(locale);
+  const router = useRouter();
   const { cart, updateQty } = useCart();
+  const [authReady, setAuthReady] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
   const [code, setCode] = useState("");
+  const [appliedCode, setAppliedCode] = useState("");
   const [codeNote, setCodeNote] = useState("");
   const [step, setStep] = useState(0);
   const [payUrl, setPayUrl] = useState<string | null>(null);
+  const checkoutPayUrl = withCheckoutDiscount(payUrl, appliedCode);
   const [shippingOptions, setShippingOptions] = useState<ShippingChoice[]>([]);
   const [shippingSelection, setShippingSelection] = useState<ShippingSelection[]>([]);
   const [shippingNotice, setShippingNotice] = useState("");
@@ -101,6 +118,36 @@ export default function CartPage() {
     shipping: shippingAmount(shippingCost, currency),
     currency,
   });
+
+  useEffect(() => {
+    let alive = true;
+    const sync = () => {
+      if (!alive) return;
+      setLoggedIn(isLoggedIn());
+      setAuthReady(true);
+    };
+    void refreshSession().then(sync);
+    window.addEventListener(AUTH_EVENT, sync);
+    return () => {
+      alive = false;
+      window.removeEventListener(AUTH_EVENT, sync);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!authReady || loggedIn) return;
+    router.replace(path(locale, `/login?next=${encodeURIComponent(path(locale, "/cart"))}`));
+  }, [authReady, loggedIn, locale, router]);
+
+  if (!authReady || !loggedIn) {
+    return (
+      <section className="bg-white px-4 py-10 md:px-8 md:py-14">
+        <div className="mx-auto max-w-[1080px]">
+          <p className="text-sm text-[#6b635c]">{t.loginToOrder}</p>
+        </div>
+      </section>
+    );
+  }
 
   if (cart.lines.length === 0) {
     return (
@@ -189,10 +236,10 @@ export default function CartPage() {
             }}
           />
         ) : null}
-        {step === 3 && payUrl ? (
+        {step === 3 && checkoutPayUrl ? (
           <PaymentStep
             labels={t}
-            payUrl={payUrl}
+            payUrl={checkoutPayUrl}
             productsLabel={formatMoney(money(payable), locale)}
             shipping={shippingCost}
             quote={quote}
@@ -212,7 +259,14 @@ export default function CartPage() {
                 className="flex gap-2"
                 onSubmit={(event) => {
                   event.preventDefault();
-                  setCodeNote(code.trim() ? t.promoInvalid : "");
+                  const next = code.trim();
+                  if (!next) {
+                    setAppliedCode("");
+                    setCodeNote(t.promoInvalid);
+                    return;
+                  }
+                  setAppliedCode(next);
+                  setCodeNote(t.promoSaved);
                 }}
               >
                 <input
@@ -232,6 +286,7 @@ export default function CartPage() {
                 </button>
               </form>
               {codeNote ? <p className="mt-2 text-xs text-white/70">{codeNote}</p> : null}
+              {!codeNote ? <p className="mt-2 text-xs text-white/55">{t.promoHint}</p> : null}
 
               <dl className="mt-5 space-y-3 text-sm text-white/80">
                 <div className="flex items-center justify-between gap-4">
@@ -972,9 +1027,6 @@ function OrderLine({
         ) : null}
       </Link>
       <div className="min-w-0">
-        {line.brand ? (
-          <p className="text-[11px] font-medium uppercase tracking-[0.16em] text-white/55">{line.brand}</p>
-        ) : null}
         <Link href={path(locale, `/products/${line.handle}`)} className="block text-lg font-medium leading-6">
           {line.title}
         </Link>

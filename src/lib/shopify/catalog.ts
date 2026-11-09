@@ -477,8 +477,8 @@ export const getBottleColors = cache(async (): Promise<BottleColorOption[]> => {
       const orderRaw = metaValue(entry.fields, ["order", "position", "sort"]);
       const order = orderRaw && Number.isFinite(Number(orderRaw)) ? Number(orderRaw) : index;
       const sizes = metaValue(entry.fields, ["sizes", "size", "variants"])
-        .split(",")
-        .map((item) => item.trim().toLowerCase())
+        .split(/[,|/]/)
+        .map((item) => item.trim().toLowerCase().replace(/\s+/g, ""))
         .filter(Boolean);
       return { key, label, image, sizes, order };
     })
@@ -487,11 +487,18 @@ export const getBottleColors = cache(async (): Promise<BottleColorOption[]> => {
     .map(({ key, label, image, sizes }) => ({ key, label, image, sizes }));
 });
 
+function normalizeBottleSize(value: string) {
+  const compact = value.toLowerCase().replace(/\s+/g, "");
+  const ml = compact.match(/(\d+(?:\.\d+)?)ml/);
+  return ml ? `${ml[1]}ml` : compact;
+}
+
 export function bottleColorsForSize(colors: BottleColorOption[], variantTitle: string) {
-  const title = variantTitle.toLowerCase();
+  const title = normalizeBottleSize(variantTitle);
+  if (!title) return [];
   return colors.filter((color) => {
-    if (!color.sizes.length) return true;
-    return color.sizes.some((size) => title.includes(size));
+    if (!color.sizes.length) return false;
+    return color.sizes.some((size) => normalizeBottleSize(size) === title);
   });
 }
 

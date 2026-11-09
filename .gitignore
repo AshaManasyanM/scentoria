@@ -46,4 +46,5 @@ next-env.d.ts
 /data/*.sqlite-wal
 /data/*.sqlite-shm
 /data/cookies.txt
+/data/subscribers.json
 .idea/

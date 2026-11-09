@@ -140,11 +140,11 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             <Image
               src="/brand/scentoria-prive.png"
               alt={t.brand}
-              width={112}
-              height={112}
+              width={220}
+              height={180}
               priority
               unoptimized
-              className="h-12 w-12 object-contain md:h-14 md:w-14"
+              className="h-12 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-14"
             />
           </Link>
           <div className="flex items-center justify-end gap-3 text-[#143028] md:gap-5">

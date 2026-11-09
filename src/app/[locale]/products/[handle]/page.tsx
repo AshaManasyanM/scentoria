@@ -11,13 +11,11 @@ import { StatBars } from "@/components/stat-bars";
 import { TrustRow } from "@/components/trust-row";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { path } from "@/lib/path";
 import { getBottleColors, getCatalog, getProduct } from "@/lib/shopify/catalog";
 import { publishedProductReviews } from "@/lib/shopify/reviews";
 import { findUserBySession, statVoteCounts } from "@/lib/users-db";
 import { cookies } from "next/headers";
 import { notFound } from "next/navigation";
-import Link from "next/link";
 
 export default async function ProductPage({
   params,
@@ -44,18 +42,7 @@ export default async function ProductPage({
       <div className="mx-auto grid max-w-[1350px] gap-12 px-4 py-16 md:grid-cols-[minmax(0,741px)_minmax(0,1fr)]">
         <ProductGallery />
         <div>
-          {product.brand ? (
-            <p className="text-2xl font-bold uppercase tracking-wide md:text-3xl">{product.brand}</p>
-          ) : null}
-          <h1 className={`font-serif text-3xl md:text-4xl ${product.brand ? "mt-1" : ""}`}>{product.title}</h1>
-          {product.brand ? (
-            <Link
-              href={path(locale, `/products?brand=${encodeURIComponent(product.brand)}`)}
-              className="mt-2 inline-block text-sm text-gold underline"
-            >
-              {t.allBrand.replace("{brand}", product.brand)}
-            </Link>
-          ) : null}
+          <h1 className="font-serif text-3xl md:text-4xl">{product.title}</h1>
           <p className="mt-3 text-sm text-muted">
             ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
           </p>
