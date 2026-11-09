@@ -14,7 +14,7 @@ export function Faq({
   const t = getDict(locale);
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section className="mx-auto max-w-6xl px-4 py-12 md:py-20">
+    <section className="mx-auto max-w-6xl px-4 section-pad-y">
       <h2 className="font-serif text-[clamp(28px,6vw,48px)] text-center leading-snug">{t.faq}</h2>
       <p className="text-center text-[clamp(14px,3.4vw,22px)] text-muted mt-3 mb-8 md:mb-10">{t.faqSub}</p>
       <div className="divide-y divide-line border-y border-line">

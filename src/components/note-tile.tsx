@@ -35,7 +35,7 @@ export function NoteTile({
   return (
     <Link
       href={href}
-      className={`relative flex h-[140px] items-center justify-center overflow-hidden rounded-[10px] bg-black transition duration-200 ease-in-out hover:scale-105 hover:shadow-[0_0_12px_rgba(0,0,0,0.376)] md:h-[270px] md:rounded-[20px] ${className}`}
+      className={`relative flex h-[clamp(8.75rem,18vw,16.875rem)] items-center justify-center overflow-hidden rounded-[10px] bg-black transition duration-200 ease-in-out hover:scale-105 hover:shadow-[0_0_12px_rgba(0,0,0,0.376)] md:rounded-[20px] ${className}`}
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img

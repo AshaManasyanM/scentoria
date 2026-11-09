@@ -7,7 +7,7 @@ export function Testimonials({
   eyebrow,
   heading,
   items,
-  width = "max-w-[1320px]",
+  width = "max-w-[min(100%,82.5rem)]",
 }: {
   eyebrow: string;
   heading?: string;
@@ -37,10 +37,10 @@ export function Testimonials({
   }
 
   return (
-    <section className={`mx-auto w-full px-4 py-10 md:py-20 ${width}`}>
+    <section className={`mx-auto w-full px-4 section-pad-y ${width}`}>
       <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{eyebrow}</p>
       {heading ? (
-        <h2 className="mt-4 max-w-[1280px] font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+        <h2 className="mt-4 max-w-[min(100%,80rem)] heading-section font-serif font-medium text-[#083534]">
           {heading}
         </h2>
       ) : null}

@@ -29,7 +29,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${sans.variable} ${display.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="min-h-full flex flex-col bg-bg text-fg" suppressHydrationWarning>
+      <body className="flex min-h-full min-w-0 flex-col overflow-x-clip bg-bg text-fg" suppressHydrationWarning>
         {children}
       </body>
     </html>

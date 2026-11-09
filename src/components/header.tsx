@@ -80,7 +80,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           pinned ? "shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "shadow-none"
         }`}
       >
-        <div className="relative z-50 mx-auto grid max-w-[1350px] grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-visible px-3 py-3 text-[#143028] md:gap-4 md:px-4 md:py-3.5">
+        <div className="relative z-50 mx-auto grid max-w-[min(100%,82.5rem)] grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.65rem,1.2vw,0.875rem)] text-[#143028] md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
             <SearchBox locale={locale} value={q} onChange={setQ} />
           </div>
@@ -116,10 +116,10 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
               height={180}
               priority
               unoptimized
-              className="h-12 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-14"
+              className="h-10 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-12 xl:h-14"
             />
           </Link>
-          <div className="flex items-center justify-end gap-3 text-[#143028] md:gap-5">
+          <div className="flex items-center justify-end gap-2 text-[#143028] sm:gap-3 md:gap-4 xl:gap-5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}
@@ -169,7 +169,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           className="absolute inset-x-0 top-full z-50 hidden h-[calc(100dvh-90px)] overflow-y-auto border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] max-md:block max-md:pointer-events-none max-md:-translate-y-3 max-md:opacity-0 max-md:transition-[opacity,transform] max-md:duration-300 max-md:ease-[cubic-bezier(0.22,1,0.36,1)] max-md:data-[open]:pointer-events-auto max-md:data-[open]:translate-y-0 max-md:data-[open]:opacity-100"
           aria-hidden={!menu}
         >
-            <div className="mx-auto flex min-h-full max-w-[1350px] flex-col px-8 pb-10 pt-6">
+            <div className="mx-auto flex min-h-full max-w-[min(100%,84.375rem)] flex-col px-8 pb-10 pt-6">
               <div className="mx-2 mb-5">
                 <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
               </div>

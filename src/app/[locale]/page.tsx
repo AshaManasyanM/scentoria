@@ -92,12 +92,12 @@ export default async function HomePage({
       <CatalogBanner locale={locale} source={source} />
 
       {sections.types ? (
-      <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto max-w-[1320px]">
+      <section className="bg-[#f7f2ea] section-pad">
+        <div className="mx-auto max-w-[min(100%,82.5rem)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
             {t.shopByType}
           </p>
-          <h2 className="mt-4 max-w-4xl font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4.2vw,48px)] md:leading-[1.15]">
+          <h2 className="mt-4 max-w-4xl heading-section font-serif font-medium text-[#083534]">
             {t.shopByTypeSub}
           </h2>
           <div className="mt-10 grid gap-6 md:grid-cols-2">
@@ -105,7 +105,7 @@ export default async function HomePage({
               <Link
                 key={tile.key}
                 href={path(locale, `/products${tile.query}`)}
-                className="group relative flex min-h-[220px] flex-col justify-between overflow-hidden rounded-md p-5 text-[#f7f2ea] md:min-h-[300px] md:p-8"
+                className="group relative flex min-h-[clamp(12.5rem,28vw,18.75rem)] flex-col justify-between overflow-hidden rounded-md p-5 text-[#f7f2ea] md:p-[clamp(1.25rem,2vw,2rem)]"
                 style={{
                   backgroundColor: "#083534",
                   backgroundImage: `linear-gradient(180deg, rgba(8,53,52,0.72), rgba(8,53,52,0.82)), url("${tile.image}")`,
@@ -135,12 +135,12 @@ export default async function HomePage({
       ) : null}
 
       {sections.bestsellers ? (
-      <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto max-w-[1180px]">
+      <section className="bg-[#083534] section-pad">
+        <div className="mx-auto max-w-[min(100%,73.75rem)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
             {t.bestSellers}
           </p>
-          <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+          <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
             {t.bestSellersSub}
           </h2>
           <div className="mt-10">
@@ -157,11 +157,11 @@ export default async function HomePage({
       ) : null}
 
       {sections.brands ? (
-      <section className="mx-auto w-full max-w-[1320px] px-4 py-10 min-[1352px]:px-0 md:py-20">
+      <section className="mx-auto w-full max-w-[min(100%,82.5rem)] px-4 py-10 min-[1352px]:px-0 md:py-20">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
           {t.popularBrands}
         </p>
-        <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+        <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#083534]">
           {t.popularBrandsSub}
         </h2>
         <div className="mt-8 grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 min-[1352px]:grid-cols-[repeat(4,312px)] min-[1352px]:justify-start min-[1352px]:gap-6">
@@ -169,7 +169,7 @@ export default async function HomePage({
             <Link
               key={brand.handle}
               href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
-              className="flex h-[140px] w-full items-center justify-center rounded-lg border border-[#D8D0C4] bg-[#F7F2EA] px-6 min-[1352px]:h-[180px] min-[1352px]:w-[312px]"
+              className="flex h-[clamp(7.5rem,12vw,11.25rem)] w-full items-center justify-center rounded-lg border border-[#D8D0C4] bg-[#F7F2EA] px-6 xl:max-w-[19.5rem]"
             >
               {brand.logo ? (
                 // eslint-disable-next-line @next/next/no-img-element
@@ -195,12 +195,12 @@ export default async function HomePage({
       ) : null}
 
       {sections.arrivals ? (
-      <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto max-w-[1180px]">
+      <section className="bg-[#083534] section-pad">
+        <div className="mx-auto max-w-[min(100%,73.75rem)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
             {t.newArrivals}
           </p>
-          <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+          <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
             {t.newArrivalsSub}
           </h2>
           <div className="mt-10">
@@ -217,11 +217,11 @@ export default async function HomePage({
       ) : null}
 
       {sections.notes ? (
-      <section id="shop-by-note" className="mx-auto w-full max-w-[1320px] px-4 py-10 min-[1352px]:px-0 md:py-20">
+      <section id="shop-by-note" className="mx-auto w-full max-w-[min(100%,82.5rem)] px-4 py-10 min-[1352px]:px-0 md:py-20">
         <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
           {t.shopByNote}
         </p>
-        <h2 className="mt-4 font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+        <h2 className="mt-4 heading-section font-serif font-medium text-[#083534]">
           {t.shopByNoteSub}
         </h2>
         <NoteGrid notes={notes} viewAllLabel={t.viewAllNotes} showLessLabel={t.showLess} />
@@ -229,12 +229,12 @@ export default async function HomePage({
       ) : null}
 
       {sections.sale ? (
-        <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
-          <div className="mx-auto max-w-[1180px]">
+        <section className="bg-[#083534] section-pad">
+          <div className="mx-auto max-w-[min(100%,73.75rem)]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
               {t.onSale}
             </p>
-            <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+            <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
               {t.onSaleSub}
             </h2>
             <div className="mt-10">

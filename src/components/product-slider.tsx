@@ -34,7 +34,7 @@ export function ProductSlider({
 
   return (
     <div className={`product-slider-nav relative w-full ${variant === "feature" ? "product-slider-nav--feature" : ""}`}>
-      <div className={`product-slider mx-auto w-full max-w-[1350px] ${variant === "feature" ? "product-slider--feature" : ""}`}>
+      <div className={`product-slider mx-auto w-full max-w-[min(100%,84.375rem)] ${variant === "feature" ? "product-slider--feature" : ""}`}>
         <Swiper
           modules={[Navigation, Pagination]}
           navigation={{

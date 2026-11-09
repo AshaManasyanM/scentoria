@@ -35,15 +35,15 @@ export default async function PolicyPage({
   return (
     <>
       <section className="bg-[#083534] px-4 py-12 md:px-8 md:py-16">
-        <div className="mx-auto w-full max-w-[1320px]">
+        <div className="mx-auto w-full max-w-[min(100%,82.5rem)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.policies}</p>
-          <h1 className="mt-3 max-w-3xl font-serif text-[32px] font-medium leading-[1.15] text-[#f7f2ea] md:text-[clamp(40px,4.5vw,56px)]">
+          <h1 className="mt-3 max-w-3xl heading-display font-serif font-medium text-[#f7f2ea]">
             {policy?.title || fallbackTitle}
           </h1>
         </div>
       </section>
 
-      <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-20">
+      <section className="bg-[#f7f2ea] section-pad">
         <div className="mx-auto max-w-[820px]">
           {policy?.body ? (
             <div

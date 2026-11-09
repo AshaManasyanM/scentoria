@@ -3,6 +3,7 @@ import { AddToCart } from "@/components/add-to-cart";
 import { AuthenticityBadge } from "@/components/authenticity-badge";
 import { ProductGallery } from "@/components/product-gallery";
 import { ProductReviews } from "@/components/product-reviews";
+import { ProductWishlistButton } from "@/components/product-wishlist-button";
 import { Testimonials } from "@/components/testimonials";
 import { ProductGrid } from "@/components/product-grid";
 import { ProductSelection } from "@/components/product-selection";
@@ -39,10 +40,13 @@ export default async function ProductPage({
   return (
     <>
       <ProductSelection product={product}>
-      <div className="mx-auto grid max-w-[1350px] gap-12 px-4 py-16 md:grid-cols-[minmax(0,741px)_minmax(0,1fr)]">
+      <div className="mx-auto grid max-w-[min(100%,84.375rem)] gap-8 px-[clamp(1rem,2.5vw,1.25rem)] py-[clamp(2rem,4vw,4rem)] md:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] md:gap-10 xl:gap-12">
         <ProductGallery />
-        <div>
-          <h1 className="font-serif text-3xl md:text-4xl">{product.title}</h1>
+        <div className="min-w-0">
+          <div className="flex flex-wrap items-start justify-between gap-3">
+            <h1 className="heading-display min-w-0 flex-1 font-serif font-medium">{product.title}</h1>
+            <ProductWishlistButton locale={locale} />
+          </div>
           <p className="mt-3 text-sm text-muted">
             ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
           </p>
@@ -54,7 +58,7 @@ export default async function ProductPage({
       </div>
       </ProductSelection>
 
-      <div className="mx-auto grid max-w-[1350px] items-start gap-4 px-4 pb-16 md:grid-cols-2">
+      <div className="mx-auto grid max-w-[min(100%,84.375rem)] items-start gap-4 px-[clamp(1rem,2.5vw,1.25rem)] pb-[clamp(2rem,4vw,4rem)] md:grid-cols-2">
         <div className="space-y-4">
           <TrustRow locale={locale} />
           <div className="rounded-xl border border-[#e6e6e6] bg-white px-6 py-5">
@@ -82,7 +86,7 @@ export default async function ProductPage({
       {comments.length ? (
         <Testimonials
           eyebrow={t.reviews}
-          width="max-w-[1350px]"
+          width="max-w-[min(100%,84.375rem)]"
           items={comments.map((comment) => ({
             name: comment.name,
             product: product.title,
@@ -92,7 +96,7 @@ export default async function ProductPage({
         />
       ) : null}
       {related.length ? (
-        <div className="mx-auto max-w-[1350px] px-4 pb-10">
+        <div className="mx-auto max-w-[min(100%,84.375rem)] px-[clamp(1rem,2.5vw,1.25rem)] pb-10">
           <SectionHeading title={t.related} />
           <ProductGrid products={related} locale={locale} />
         </div>

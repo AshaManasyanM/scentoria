@@ -26,7 +26,7 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
 
   return (
     <footer className="mt-auto bg-[#083534] text-[#f7f2ea]">
-      <div className="mx-auto grid max-w-[1280px] gap-12 px-4 py-14 md:grid-cols-[1.1fr_0.8fr_0.8fr_1fr] md:px-8">
+      <div className="mx-auto grid max-w-[min(100%,80rem)] gap-8 px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2.5rem,4vw,3.5rem)] md:grid-cols-[1.1fr_0.8fr_0.8fr_1fr] md:gap-10 xl:gap-12">
         <div>
           <Link href={path(locale)} className="inline-block">
             <Image
@@ -109,7 +109,7 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
           </a>
         </div>
       </div>
-      <div className="mx-auto max-w-[1280px] px-4 md:px-8">
+      <div className="mx-auto max-w-[min(100%,80rem)] px-[clamp(1rem,2.5vw,2rem)]">
         <div className="border-t border-[#f7f2ea]/30" />
         <p className="py-6 text-center text-xs text-[#f7f2ea]/80">{t.copyright}</p>
       </div>

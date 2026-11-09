@@ -169,7 +169,7 @@ export default function CartPage() {
   if (!authReady) {
     return (
       <section className="bg-white px-4 py-10 md:px-8 md:py-14">
-        <div className="mx-auto max-w-[1080px]">
+        <div className="mx-auto max-w-[min(100%,67.5rem)]">
           <p className="text-sm text-[#6b635c]">…</p>
         </div>
       </section>
@@ -179,7 +179,7 @@ export default function CartPage() {
   if (cart.lines.length === 0) {
     return (
       <section className="bg-white px-4 py-10 md:px-8 md:py-14">
-        <div className="mx-auto max-w-[1080px]">
+        <div className="mx-auto max-w-[min(100%,67.5rem)]">
           <Steps labels={checkoutSteps(t)} active={0} />
           <h1 className="mt-8 font-serif text-4xl text-[#161616] md:text-5xl">{t.yourOrder}</h1>
           <div className="flex min-h-[280px] flex-col items-center justify-center text-center">
@@ -199,11 +199,11 @@ export default function CartPage() {
   }
 
   return (
-    <section className="bg-white px-4 py-8 md:px-8 md:py-12">
-      <div className="mx-auto max-w-[1080px]">
+    <section className="bg-white px-[clamp(1rem,2.5vw,2rem)] py-[clamp(1.75rem,3vw,3rem)]">
+      <div className="mx-auto max-w-[min(100%,67.5rem)]">
         <Steps labels={checkoutSteps(t)} active={step} />
-        <div className="mt-8 flex items-baseline gap-3">
-          <h1 className="font-serif text-4xl text-[#161616] md:text-[52px] md:leading-none">
+        <div className="mt-6 flex flex-wrap items-baseline gap-2 sm:mt-8 sm:gap-3">
+          <h1 className="heading-display font-serif text-[#161616]">
             {step === 0 ? t.yourOrder : step === 1 ? t.addressTitle : step === 2 ? t.deliveryTitle : t.paymentTitle}
           </h1>
           {step === 0 ? (

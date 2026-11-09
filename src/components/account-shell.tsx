@@ -25,8 +25,8 @@ export function AccountShell({
   const pathname = usePathname();
 
   return (
-    <div className="bg-white py-10 md:py-14">
-      <div className="mx-auto flex max-w-[1320px] flex-col gap-8 px-4 md:flex-row md:gap-16 md:px-8">
+    <div className="section-pad-y bg-white">
+      <div className="mx-auto flex max-w-[min(100%,82.5rem)] flex-col gap-8 px-[clamp(1rem,2.5vw,2rem)] md:flex-row md:gap-10 xl:gap-16">
         <aside className="w-full shrink-0 md:w-44">
           <nav className="flex flex-col items-start gap-1">
             {ITEMS.map((item) => {

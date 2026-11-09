@@ -74,11 +74,11 @@ export function AuthForm({
   }
 
   return (
-    <section className="bg-[#f7f2ea] px-4 py-12 md:px-8 md:py-20">
-      <div className="mx-auto grid max-w-[1080px] items-start gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
+    <section className="bg-[#f7f2ea] section-pad">
+      <div className="mx-auto grid max-w-[min(100%,67.5rem)] items-start gap-10 md:grid-cols-[0.9fr_1.1fr] md:gap-16">
         <div className="md:pt-8">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.account}</p>
-          <h1 className="mt-4 font-serif text-[32px] font-medium leading-[1.15] text-[#083534] md:text-[clamp(40px,4vw,52px)]">
+          <h1 className="mt-4 heading-display font-serif font-medium text-[#083534]">
             {isSignup ? t.createAnAccount : t.loginTitle}
           </h1>
           <p className="mt-4 max-w-md text-[15px] leading-7 text-[#083534]/80">{t.accountDashboardHint}</p>

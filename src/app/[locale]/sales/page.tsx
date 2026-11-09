@@ -53,9 +53,9 @@ export default async function SalesPage({
         <img src="/hero/amber.jpg" alt="" className="h-full w-full object-cover object-center" />
         <div className="absolute inset-0 bg-[#083534]/60" />
         <div className="absolute inset-0 flex items-end px-4 pb-8 md:px-8 md:pb-14">
-          <div className="mx-auto w-full max-w-[1320px]">
+          <div className="mx-auto w-full max-w-[min(100%,82.5rem)]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.sales}</p>
-            <h1 className="mt-3 max-w-3xl font-serif text-[32px] font-medium leading-[1.15] text-[#f7f2ea] md:text-[clamp(40px,4.5vw,56px)]">
+            <h1 className="mt-3 max-w-3xl heading-display font-serif font-medium text-[#f7f2ea]">
               {t.salesHero}
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-[#f7f2ea]/90">{t.salesSub}</p>
@@ -65,7 +65,7 @@ export default async function SalesPage({
       <CatalogBanner locale={locale} source={source} />
 
       <section id="catalog" className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
-        <div className="mx-auto flex max-w-[1320px] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
+        <div className="mx-auto flex max-w-[min(100%,82.5rem)] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <Suspense fallback={null}>
             <ProductFilters locale={locale} groups={groups} basePath="/sales" />
           </Suspense>

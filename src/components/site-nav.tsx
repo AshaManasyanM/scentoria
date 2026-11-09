@@ -30,8 +30,8 @@ export function SiteNav({
       }
     >
       <div
-        className={`mx-auto flex max-w-[1350px] items-center justify-center gap-3 overflow-x-auto px-3 text-[15px] font-serif font-bold uppercase tracking-wide md:gap-[70px] md:px-8 md:text-[18px] ${
-          overlay ? "bg-transparent py-6 text-white" : "bg-white py-4 text-black md:py-7"
+        className={`mx-auto flex max-w-[min(100%,82.5rem)] items-center justify-center gap-[clamp(0.75rem,3vw,4.375rem)] overflow-x-auto px-[clamp(0.75rem,2vw,2rem)] text-[clamp(0.8125rem,0.7rem+0.45vw,1.125rem)] font-serif font-bold uppercase tracking-wide ${
+          overlay ? "bg-transparent py-[clamp(1rem,2vw,1.5rem)] text-white" : "bg-white py-[clamp(0.75rem,1.5vw,1.75rem)] text-black"
         }`}
       >
         {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {

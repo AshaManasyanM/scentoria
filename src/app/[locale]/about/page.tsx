@@ -25,9 +25,9 @@ export default async function AboutPage({
         />
         <div className="absolute inset-0 bg-[#083534]/60" />
         <div className="absolute inset-0 flex items-end px-4 pb-8 md:px-8 md:pb-14">
-          <div className="mx-auto w-full max-w-[1320px]">
+          <div className="mx-auto w-full max-w-[min(100%,82.5rem)]">
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.about}</p>
-            <h1 className="mt-3 max-w-3xl font-serif text-[32px] font-medium leading-[1.15] text-[#f7f2ea] md:text-[clamp(40px,4.5vw,56px)]">
+            <h1 className="mt-3 max-w-3xl heading-display font-serif font-medium text-[#f7f2ea]">
               {t.aboutHero}
             </h1>
             <p className="mt-4 max-w-xl text-[15px] leading-7 text-[#f7f2ea]/90">{t.aboutIntro}</p>
@@ -35,11 +35,11 @@ export default async function AboutPage({
         </div>
       </section>
 
-      <section className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto grid max-w-[1320px] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-16">
+      <section className="bg-[#f7f2ea] section-pad">
+        <div className="mx-auto grid max-w-[min(100%,82.5rem)] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-16">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.about}</p>
-            <h2 className="mt-4 font-serif text-[28px] font-medium leading-[1.2] text-[#083534] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+            <h2 className="mt-4 heading-section font-serif font-medium text-[#083534]">
               {t.ourStory}
             </h2>
           </div>
@@ -55,10 +55,10 @@ export default async function AboutPage({
         </div>
       </section>
 
-      <section className="bg-[#083534] px-4 py-10 md:px-8 md:py-20">
-        <div className="mx-auto max-w-[1320px]">
+      <section className="bg-[#083534] section-pad">
+        <div className="mx-auto max-w-[min(100%,82.5rem)]">
           <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.coreValues}</p>
-          <h2 className="mt-4 max-w-3xl font-serif text-[28px] font-medium leading-[1.2] text-[#f7f2ea] md:text-[clamp(32px,4vw,44px)] md:leading-[1.15]">
+          <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
             {t.coreValuesTitle}
           </h2>
           <p className="mt-4 max-w-2xl text-[15px] leading-7 text-[#f7f2ea]/80">{t.coreValuesSub}</p>

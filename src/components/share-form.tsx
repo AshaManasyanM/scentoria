@@ -18,11 +18,11 @@ export function ShareForm({ locale }: { locale: Locale }) {
   }, [state]);
 
   return (
-    <section className="bg-[#c5a059] px-4 py-10 text-[#083534] md:px-8 md:py-20">
-      <div className="mx-auto grid max-w-[1280px] items-start gap-12 md:grid-cols-[0.85fr_1.15fr] md:gap-16">
+    <section className="section-pad bg-[#c5a059] text-[#083534]">
+      <div className="mx-auto grid max-w-[min(100%,80rem)] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-12 xl:gap-16">
         <div>
           <p className="text-xs font-semibold uppercase tracking-[0.18em]">• {t.contact}</p>
-          <h2 className="mt-6 font-serif text-[32px] font-medium leading-[1.1] sm:text-[clamp(40px,4.5vw,56px)]">
+          <h2 className="heading-display mt-6 font-serif font-medium">
             {t.shareTitle.split("\n").map((line, index) => (
               <span key={line} className={index === 0 ? "block sm:whitespace-nowrap" : "block"}>
                 {line}
