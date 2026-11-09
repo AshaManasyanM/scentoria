@@ -44,6 +44,7 @@ export function useProductSelection() {
 export function ProductPrice({ locale }: { locale: Locale }) {
   const { product, index } = useProductSelection();
   const variant = product.variants[index];
+  if (variant && !variant.available) return null;
   const price = variant?.price ?? product.minPrice;
   const compare = variant?.compareAtPrice;
   const percent = discountPercent(price, compare);

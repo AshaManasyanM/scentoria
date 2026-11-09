@@ -173,9 +173,9 @@ export function AddToCart({
         </div>
       ) : null}
 
-      <ProductPrice locale={locale} />
+      {selected.available ? <ProductPrice locale={locale} /> : null}
       {selected.available ? null : (
-        <p className="rounded-md bg-[#f3efe8] px-4 py-3 text-sm text-muted">{t.deliveryStock}</p>
+        <p className="rounded-md bg-[#f3efe8] px-4 py-3 text-sm text-muted">{t.outOfStock}</p>
       )}
       <div className="space-y-3">
         <div className={inCart ? "flex gap-3" : ""}>

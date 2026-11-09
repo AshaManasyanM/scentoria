@@ -18,11 +18,11 @@ export function ProductGallery() {
   const current = media[Math.min(active, Math.max(media.length - 1, 0))] ?? null;
 
   return (
-    <div className="w-full max-w-[741px]">
+    <div className="mx-auto w-full max-w-[520px] md:mx-0">
       <div className="relative">
-        <div className="relative aspect-[741/650] w-full overflow-hidden rounded-xl border border-[#e6e6e6] bg-white">
+        <div className="relative aspect-square w-full overflow-hidden rounded-[28px] border border-[#e6e6e6] bg-white">
           {percent ? (
-            <span className="absolute left-4 top-4 z-10 bg-[#e10600] px-2.5 py-1 text-sm font-semibold text-white">
+            <span className="absolute left-4 top-4 z-10 rounded-full bg-[#e10600] px-2.5 py-1 text-sm font-semibold text-white">
               -{percent}%
             </span>
           ) : null}
@@ -31,15 +31,15 @@ export function ProductGallery() {
               src={current.url}
               alt={current.alt || product.title}
               fill
-              className="object-contain p-6"
-              sizes="741px"
+              className="object-contain p-3 sm:p-4"
+              sizes="(max-width: 768px) 100vw, 520px"
               priority
             />
           ) : null}
         </div>
       </div>
       {media.length > 1 ? (
-        <div className="mt-5 flex justify-center gap-3">
+        <div className="mt-4 flex justify-center gap-2.5">
           {media.map((image, i) => {
             const isActive = current ? samePicture(image.url, current.url) : i === active;
             return (
@@ -48,11 +48,11 @@ export function ProductGallery() {
                 type="button"
                 aria-label={image.alt || `${product.title} ${i + 1}`}
                 onClick={() => setActive(i)}
-                className={`relative h-[92px] w-[92px] overflow-hidden rounded-xl border bg-white ${
+                className={`relative h-[72px] w-[72px] overflow-hidden rounded-2xl border bg-white ${
                   isActive ? "border-[#c5c5c5]" : "border-[#e6e6e6]"
                 }`}
               >
-                <Image src={image.url} alt="" fill className="object-contain p-2" sizes="92px" />
+                <Image src={image.url} alt="" fill className="object-contain p-1.5" sizes="72px" />
               </button>
             );
           })}

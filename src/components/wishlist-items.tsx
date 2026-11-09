@@ -66,8 +66,12 @@ export function WishlistItems({
                   </p>
                 ) : null}
                 <div className="mt-2 flex items-center justify-between gap-2">
-                  <p className="text-sm">
-                    {product ? formatPriceRange(product.minPrice, product.maxPrice, locale) : null}
+                  <p className={`text-sm ${product && !product.variants.some((item) => item.available) ? "text-[#9a6b6b]" : ""}`}>
+                    {product
+                      ? product.variants.some((item) => item.available)
+                        ? formatPriceRange(product.minPrice, product.maxPrice, locale)
+                        : t.outOfStock
+                      : null}
                   </p>
                   <button
                     type="button"

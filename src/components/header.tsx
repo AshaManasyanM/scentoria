@@ -76,8 +76,10 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
         <QuoteBar />
       </div>
       <header
-        className={`sticky top-0 z-40 overflow-visible bg-bg transition-shadow duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] ${
-          pinned ? "shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "shadow-none"
+        className={`sticky top-0 z-40 overflow-visible transition-[background-color,box-shadow,backdrop-filter] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+          pinned
+            ? "bg-white/95 shadow-[0_8px_24px_rgba(8,53,52,0.12)] backdrop-blur-md"
+            : "bg-bg shadow-none"
         }`}
       >
         <div className="relative z-50 mx-auto grid max-w-[min(100%,82.5rem)] grid-cols-[1fr_auto_1fr] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] py-[clamp(0.65rem,1.2vw,0.875rem)] text-[#143028] md:gap-4">
@@ -103,22 +105,39 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
               )}
             </button>
           </div>
-          <Link
-            href={path(locale)}
-            className="justify-self-center"
-            aria-label={t.brand}
-            onClick={() => setMenu(false)}
+          <div
+            className={`relative justify-self-center transition-[min-width] duration-500 ${
+              pinned ? "md:min-w-[min(72vw,36rem)]" : "md:min-w-0"
+            }`}
           >
-            <Image
-              src="/brand/scentoria-prive.png"
-              alt={t.brand}
-              width={220}
-              height={180}
-              priority
-              unoptimized
-              className="h-10 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-12 xl:h-14"
-            />
-          </Link>
+            <Link
+              href={path(locale)}
+              aria-label={t.brand}
+              onClick={() => setMenu(false)}
+              className={`mx-auto block w-fit transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] ${
+                pinned
+                  ? "pointer-events-none max-md:pointer-events-auto max-md:translate-y-0 max-md:scale-100 max-md:opacity-100 md:-translate-y-1 md:scale-95 md:opacity-0"
+                  : "translate-y-0 scale-100 opacity-100"
+              }`}
+            >
+              <Image
+                src="/brand/scentoria-prive.png"
+                alt={t.brand}
+                width={220}
+                height={180}
+                priority
+                unoptimized
+                className="h-10 w-auto object-contain drop-shadow-[0_1px_1px_rgba(8,53,52,0.25)] md:h-12 xl:h-14"
+              />
+            </Link>
+            <div
+              className={`absolute inset-x-0 top-1/2 hidden -translate-y-1/2 justify-center transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:flex ${
+                pinned ? "translate-y-[-50%] opacity-100" : "pointer-events-none translate-y-[calc(-50%+8px)] opacity-0"
+              }`}
+            >
+              <SiteNav locale={locale} variant="inline" hiddenNav={hiddenNav} />
+            </div>
+          </div>
           <div className="flex items-center justify-end gap-2 text-[#143028] sm:gap-3 md:gap-4 xl:gap-5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
@@ -160,7 +179,11 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           </div>
         </div>
         {isHome ? null : (
-          <div className="hidden md:block">
+          <div
+            className={`hidden overflow-hidden transition-all duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] md:block ${
+              pinned ? "max-h-0 opacity-0" : "max-h-24 opacity-100"
+            }`}
+          >
             <SiteNav locale={locale} hiddenNav={hiddenNav} />
           </div>
         )}

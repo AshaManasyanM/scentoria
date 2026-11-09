@@ -31,6 +31,8 @@ export function ProductCard({
   const slider = variant === "slider";
   const feature = variant === "feature";
   const catalog = variant === "catalog";
+  const inStock = product.variants.some((item) => item.available);
+  const priceLabel = inStock ? formatPriceRange(product.minPrice, product.maxPrice, locale) : t.outOfStock;
 
   function onHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -124,7 +126,7 @@ export function ProductCard({
               ★★★★★ <span className="tracking-normal text-[#083534]/70">({product.reviewCount})</span>
             </p>
             <div className="mt-1 flex items-center justify-between gap-2">
-              <p className="text-sm">{formatPriceRange(product.minPrice, product.maxPrice, locale)}</p>
+              <p className={`text-sm ${inStock ? "" : "text-[#9a6b6b]"}`}>{priceLabel}</p>
               <button
                 type="button"
                 aria-label={t.wishlist}
@@ -184,8 +186,8 @@ export function ProductCard({
                 ★★★★★{" "}
                 <span className="tracking-normal text-[#f7f2ea]/80">({product.reviewCount})</span>
               </p>
-              <p className="mt-1 text-sm text-[#f7f2ea] md:text-[15px]">
-                {formatPriceRange(product.minPrice, product.maxPrice, locale)}
+              <p className={`mt-1 text-sm md:text-[15px] ${inStock ? "text-[#f7f2ea]" : "text-[#f7f2ea]/70"}`}>
+                {priceLabel}
               </p>
             </div>
             <button
@@ -245,8 +247,8 @@ export function ProductCard({
           <p className="mt-1.5 text-sm tracking-[0.12em] text-[#c5a059]">
             ★★★★★ <span className="tracking-normal text-[#f7f2ea]/70">({product.reviewCount})</span>
           </p>
-          <p className="mt-2 text-lg font-semibold text-[#c5a059]">
-            {formatPriceRange(product.minPrice, product.maxPrice, locale)}
+          <p className={`mt-2 text-lg font-semibold ${inStock ? "text-[#c5a059]" : "text-[#f7f2ea]/70"}`}>
+            {priceLabel}
           </p>
           <Link
             href={path(locale, `/products/${product.handle}`)}
@@ -301,8 +303,8 @@ export function ProductCard({
           <p className="mt-1 text-sm text-star">
             ★★★★★ <span className="text-muted">({product.reviewCount})</span>
           </p>
-          <p className="mt-1 text-sm font-medium">
-            {formatPriceRange(product.minPrice, product.maxPrice, locale)}
+          <p className={`mt-1 text-sm font-medium ${inStock ? "" : "text-[#9a6b6b]"}`}>
+            {priceLabel}
           </p>
           <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-gold group-hover:underline">
             {t.viewPerfume}
