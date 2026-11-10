@@ -393,13 +393,29 @@ function noteImage(fields: NoteField[]) {
   return field?.reference?.image?.url || field?.reference?.url || (field?.value?.startsWith("http") ? field.value : "");
 }
 
-const fallbackHeroSlides = [
-  { url: "/hero/citrus.jpg", alt: "Solune Citrus Mist" },
+export type HeroSlide = {
+  url: string;
+  alt: string;
+  title?: string;
+  description?: string;
+  buttonText?: string;
+  buttonHref?: string;
+};
+
+const fallbackHeroSlides: HeroSlide[] = [
+  {
+    url: "/hero/citrus.jpg",
+    alt: "Solune Citrus Mist",
+    title: "Your Favorite Scent, Wherever You Go",
+    description: "Luxury fragrances in elegant travel atomizers.",
+    buttonText: "Explore the Collection",
+    buttonHref: "/products",
+  },
   { url: "/hero/amber.jpg", alt: "Noirvale Amber Wood" },
   { url: "/hero/rose.jpg", alt: "Aurelia Rose Velour" },
 ];
 
-export async function getHeroSlides(): Promise<{ url: string; alt: string }[]> {
+export async function getHeroSlides(): Promise<HeroSlide[]> {
   if (!hasStorefrontToken()) return fallbackHeroSlides;
 
   const data = await storefrontFetch<{
@@ -414,15 +430,37 @@ export async function getHeroSlides(): Promise<{ url: string; alt: string }[]> {
     .map((entry, index) => {
       const orderRaw = metaValue(entry.fields, ["order", "position", "sort"]);
       const order = Number(orderRaw);
+      const title = metaValue(entry.fields, ["title", "headline", "heading"]);
+      const description = metaValue(entry.fields, ["description", "body", "subtitle", "text"]);
+      const buttonText = metaValue(entry.fields, [
+        "button text",
+        "button_text",
+        "buttontext",
+        "cta",
+        "cta_text",
+        "button",
+      ]);
+      const buttonHref = metaValue(entry.fields, [
+        "button_link",
+        "button link",
+        "link",
+        "url",
+        "href",
+        "cta_link",
+      ]);
       return {
         url: noteImage(entry.fields),
-        alt: metaValue(entry.fields, ["alt", "title", "name", "caption"]) || "Scentoria Prive",
+        alt: metaValue(entry.fields, ["alt", "name", "caption"]) || title || "Scentoria Prive",
+        title: title || undefined,
+        description: description || undefined,
+        buttonText: buttonText || undefined,
+        buttonHref: buttonHref || undefined,
         order: orderRaw && Number.isFinite(order) ? order : index,
       };
     })
     .filter((slide) => slide.url)
     .sort((a, b) => a.order - b.order)
-    .map(({ url, alt }) => ({ url, alt }));
+    .map(({ order: _order, ...slide }) => slide);
 }
 
 const filterGroupIds = ["note", "gender", "size"] as const;
