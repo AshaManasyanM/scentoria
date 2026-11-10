@@ -19,12 +19,14 @@ export function SearchBox({
   onChange,
   onNavigate,
   compact = false,
+  bordered = false,
 }: {
   locale: Locale;
   value: string;
   onChange: (value: string) => void;
   onNavigate?: () => void;
   compact?: boolean;
+  bordered?: boolean;
 }) {
   const t = getDict(locale);
   const router = useRouter();
@@ -255,7 +257,9 @@ export function SearchBox({
             className={
               compact
                 ? "h-9 w-full rounded-full border border-line bg-white px-4 text-sm text-fg outline-none placeholder:text-muted focus:border-gold"
-                : "h-10 w-full rounded-full border border-white bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#d9d0c6]"
+                : bordered
+                  ? "h-10 w-full rounded-full border border-[#C9BEB0] bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#083534]/35"
+                  : "h-10 w-full rounded-full border border-white bg-white pl-10 pr-4 text-sm text-fg shadow-[0_1px_2px_rgba(26,20,24,0.06)] outline-none placeholder:text-[#9a9188] focus:border-[#d9d0c6]"
             }
           />
         </div>

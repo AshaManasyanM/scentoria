@@ -163,17 +163,17 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           control stays reachable after body scroll-lock shifts the document. */}
       <header
         ref={stickyRef}
-        className={`overflow-visible transition-[background-color,box-shadow] duration-[350ms] ease-out ${
+        className={`overflow-visible transition-[background-color,box-shadow,border-color] duration-[350ms] ease-out ${
           menu
-            ? "fixed inset-x-0 top-0 z-[70] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
+            ? "fixed inset-x-0 top-0 z-[70] border-b-2 border-[#C9BEB0] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
             : scrolled
-              ? "sticky top-0 z-50 bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
-              : "sticky top-0 z-50 bg-bg shadow-none"
+              ? "sticky top-0 z-50 border-b-2 border-[#C9BEB0] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
+              : "sticky top-0 z-50 border-b-2 border-transparent bg-bg shadow-none"
         }`}
       >
         <div className="relative z-[60] mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
-            {desktop ? <SearchBox locale={locale} value={q} onChange={setQ} /> : null}
+            {desktop ? <SearchBox locale={locale} value={q} onChange={setQ} bordered={scrolled || menu} /> : null}
           </div>
           <div className="flex items-center md:hidden">
             <button
