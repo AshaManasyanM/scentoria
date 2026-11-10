@@ -13,6 +13,25 @@ function slideHref(locale: Locale, href?: string) {
   return path(locale, raw.startsWith("/") ? raw : `/${raw}`);
 }
 
+function slideColors(theme: HeroSlide["theme"]) {
+  if (theme === "light") {
+    return {
+      eyebrow: "#c5a059",
+      title: "#f7f2ea",
+      description: "rgba(247,242,234,0.9)",
+      buttonBg: "#f7f2ea",
+      buttonText: "#083534",
+    };
+  }
+  return {
+    eyebrow: "#c5a059",
+    title: "#083534",
+    description: "rgba(8,53,52,0.9)",
+    buttonBg: "#083534",
+    buttonText: "#f7f2ea",
+  };
+}
+
 export function HeroSlider({
   images,
   locale,
@@ -27,6 +46,7 @@ export function HeroSlider({
   const slider = slides.length > 1;
   const active = slides[index];
   const showCopy = Boolean(active?.title || active?.description || active?.buttonText);
+  const colors = active ? slideColors(active.theme) : null;
 
   useEffect(() => {
     if (!slider) return;
@@ -55,27 +75,37 @@ export function HeroSlider({
         </picture>
       ))}
 
-      {showCopy && active ? (
+      {showCopy && active && colors ? (
         <div className="pointer-events-none absolute inset-0 z-20 flex items-center">
           <div className="pointer-events-auto mx-auto w-full max-w-[min(100%,82.5rem)] px-[clamp(1rem,4vw,3rem)]">
             <div className="max-w-[min(100%,28rem)] md:max-w-[min(42%,34rem)]">
-              <p className="font-serif text-[10px] font-medium uppercase tracking-[0.28em] text-[#c5a059] sm:text-[11px] md:tracking-[0.32em]">
+              <p
+                className="font-serif text-[10px] font-medium uppercase tracking-[0.28em] sm:text-[11px] md:tracking-[0.32em]"
+                style={{ color: colors.eyebrow }}
+              >
                 SCENTORIA PRIVÉ
               </p>
               {active.title ? (
-                <h1 className="mt-3 font-serif text-[clamp(1.35rem,1rem+2.2vw,3.15rem)] font-medium leading-[1.15] text-[#083534] sm:mt-4">
+                <h1
+                  className="mt-3 font-serif text-[clamp(1.35rem,1rem+2.2vw,3.15rem)] font-medium leading-[1.15] sm:mt-4"
+                  style={{ color: colors.title }}
+                >
                   {active.title}
                 </h1>
               ) : null}
               {active.description ? (
-                <p className="mt-3 max-w-[28rem] font-serif text-[clamp(0.85rem,0.75rem+0.55vw,1.2rem)] leading-snug text-[#083534]/90 sm:mt-4">
+                <p
+                  className="mt-3 max-w-[28rem] font-serif text-[clamp(0.85rem,0.75rem+0.55vw,1.2rem)] leading-snug sm:mt-4"
+                  style={{ color: colors.description }}
+                >
                   {active.description}
                 </p>
               ) : null}
               {active.buttonText ? (
                 <Link
                   href={slideHref(locale, active.buttonHref)}
-                  className="mt-5 inline-flex items-center justify-center bg-[#083534] px-5 py-2.5 font-serif text-[clamp(0.75rem,0.7rem+0.25vw,0.95rem)] text-[#f7f2ea] transition hover:bg-[#0e4544] sm:mt-6 sm:px-6 sm:py-3"
+                  className="mt-5 inline-flex items-center justify-center px-5 py-2.5 font-serif text-[clamp(0.75rem,0.7rem+0.25vw,0.95rem)] transition hover:opacity-90 sm:mt-6 sm:px-6 sm:py-3"
+                  style={{ backgroundColor: colors.buttonBg, color: colors.buttonText }}
                 >
                   {active.buttonText}
                 </Link>

@@ -393,6 +393,8 @@ function noteImage(fields: NoteField[]) {
   return field?.reference?.image?.url || field?.reference?.url || (field?.value?.startsWith("http") ? field.value : "");
 }
 
+export type HeroSlideTheme = "dark" | "light";
+
 export type HeroSlide = {
   url: string;
   alt: string;
@@ -400,7 +402,15 @@ export type HeroSlide = {
   description?: string;
   buttonText?: string;
   buttonHref?: string;
+  /** dark = green text (light images); light = cream text (dark images) */
+  theme: HeroSlideTheme;
 };
+
+function parseHeroTheme(value: string): HeroSlideTheme {
+  const theme = value.trim().toLowerCase().replace(/['"]/g, "");
+  if (["light", "white", "cream"].includes(theme)) return "light";
+  return "dark";
+}
 
 const fallbackHeroSlides: HeroSlide[] = [
   {
@@ -410,9 +420,10 @@ const fallbackHeroSlides: HeroSlide[] = [
     description: "Luxury fragrances in elegant travel atomizers.",
     buttonText: "Explore the Collection",
     buttonHref: "/products",
+    theme: "dark",
   },
-  { url: "/hero/amber.jpg", alt: "Noirvale Amber Wood" },
-  { url: "/hero/rose.jpg", alt: "Aurelia Rose Velour" },
+  { url: "/hero/amber.jpg", alt: "Noirvale Amber Wood", theme: "dark" },
+  { url: "/hero/rose.jpg", alt: "Aurelia Rose Velour", theme: "dark" },
 ];
 
 export async function getHeroSlides(): Promise<HeroSlide[]> {
@@ -455,6 +466,7 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
         description: description || undefined,
         buttonText: buttonText || undefined,
         buttonHref: buttonHref || undefined,
+        theme: parseHeroTheme(metaValue(entry.fields, ["theme", "text_theme", "text theme", "tone"])),
         order: orderRaw && Number.isFinite(order) ? order : index,
       };
     })
