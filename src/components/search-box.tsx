@@ -40,14 +40,27 @@ export function SearchBox({
 
   useEffect(() => setMounted(true), []);
 
+  const inputVisible = () => {
+    const el = inputWrapRef.current;
+    if (!el || typeof window === "undefined") return false;
+    const style = window.getComputedStyle(el);
+    if (style.display === "none" || style.visibility === "hidden") return false;
+    const rect = el.getBoundingClientRect();
+    return rect.width > 2 && rect.height > 2;
+  };
+
   const placePanel = () => {
     const el = inputWrapRef.current;
-    if (!el) return;
+    if (!el || !inputVisible()) {
+      setPanel(null);
+      setOpen(false);
+      return;
+    }
     const rect = el.getBoundingClientRect();
     setPanel({
       top: rect.bottom + 8,
-      left: rect.left,
-      width: Math.max(rect.width, compact ? rect.width : 320),
+      left: Math.max(8, Math.min(rect.left, window.innerWidth - Math.max(rect.width, 280) - 8)),
+      width: Math.min(Math.max(rect.width, compact ? rect.width : 320), window.innerWidth - 16),
     });
   };
 
@@ -70,6 +83,12 @@ export function SearchBox({
       setOpen(false);
       setActive(-1);
       setLoading(false);
+      return;
+    }
+
+    if (!inputVisible()) {
+      setOpen(false);
+      setPanel(null);
       return;
     }
 

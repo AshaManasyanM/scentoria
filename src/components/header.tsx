@@ -27,6 +27,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const [loggedIn, setLoggedIn] = useState(false);
   const [scrolled, setScrolled] = useState(false);
   const [compact, setCompact] = useState(false);
+  const [desktop, setDesktop] = useState(false);
   const quoteRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLElement>(null);
   const navSentinelRef = useRef<HTMLDivElement>(null);
@@ -37,6 +38,14 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   useEffect(() => {
     setMenu(false);
   }, [pathname]);
+
+  useEffect(() => {
+    const query = window.matchMedia("(min-width: 768px)");
+    const apply = () => setDesktop(query.matches);
+    apply();
+    query.addEventListener("change", apply);
+    return () => query.removeEventListener("change", apply);
+  }, []);
 
   useEffect(() => {
     const sync = () => setLoggedIn(isLoggedIn());
@@ -164,7 +173,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
       >
         <div className="relative z-[60] mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
-            <SearchBox locale={locale} value={q} onChange={setQ} />
+            {desktop ? <SearchBox locale={locale} value={q} onChange={setQ} /> : null}
           </div>
           <div className="flex items-center md:hidden">
             <button
@@ -280,7 +289,9 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           <div className="mx-auto flex min-h-full w-full max-w-[min(100%,84.375rem)] flex-col px-5 pb-10 pt-5 sm:px-8 sm:pt-6">
             <div className="mb-6 flex items-center gap-3">
               <div className="min-w-0 flex-1">
-                <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+                {!desktop && menu ? (
+                  <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+                ) : null}
               </div>
               <button
                 type="button"

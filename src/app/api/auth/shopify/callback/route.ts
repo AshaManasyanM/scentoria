@@ -6,6 +6,7 @@ import {
   fetchShopifyCustomer,
   shopifyAuthConfigured,
 } from "@/lib/shopify/customer-auth";
+import { absoluteUrl, publicOrigin } from "@/lib/site-url";
 import {
   attachShopifySub,
   createSession,
@@ -22,11 +23,11 @@ const VERIFIER = "shopify_oauth_verifier";
 const NEXT = "shopify_oauth_next";
 
 export async function GET(request: Request) {
-  const url = new URL(request.url);
+  const origin = publicOrigin(request);
   const jar = await cookies();
   const next = jar.get(NEXT)?.value || path("en", "/account");
   const failLocale = next.startsWith("/hy") ? "hy" : "en";
-  const fail = new URL(path(failLocale, "/login?error=shopify"), url.origin);
+  const fail = new URL(path(failLocale, "/login?error=shopify"), origin);
 
   const clearOauth = () => {
     jar.delete(STATE);
@@ -39,6 +40,7 @@ export async function GET(request: Request) {
     return NextResponse.redirect(fail);
   }
 
+  const url = new URL(request.url);
   const code = url.searchParams.get("code")?.trim() || "";
   const state = url.searchParams.get("state")?.trim() || "";
   const expectedState = jar.get(STATE)?.value || "";
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
 
   try {
     const discovery = await discoverCustomerAccount();
-    const redirectUri = `${url.origin}/api/auth/shopify/callback`;
+    const redirectUri = absoluteUrl(request, "/api/auth/shopify/callback");
     const tokens = await exchangeAuthorizationCode({
       discovery,
       code,
@@ -78,7 +80,7 @@ export async function GET(request: Request) {
     const token = await createSession(user.id, sessionLifetime(true));
     jar.set(SESSION, token, sessionCookieOptions(true));
     clearOauth();
-    return NextResponse.redirect(new URL(next, url.origin));
+    return NextResponse.redirect(new URL(next, origin));
   } catch {
     clearOauth();
     return NextResponse.redirect(fail);

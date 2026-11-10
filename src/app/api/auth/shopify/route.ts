@@ -6,6 +6,7 @@ import {
   discoverCustomerAccount,
   shopifyAuthConfigured,
 } from "@/lib/shopify/customer-auth";
+import { absoluteUrl, publicOrigin } from "@/lib/site-url";
 import { cookies } from "next/headers";
 import { NextResponse } from "next/server";
 
@@ -15,18 +16,19 @@ const NEXT = "shopify_oauth_next";
 
 export async function GET(request: Request) {
   const url = new URL(request.url);
+  const origin = publicOrigin(request);
   const locale = url.searchParams.get("locale") === "hy" ? "hy" : "en";
   const next = url.searchParams.get("next") || path(locale, "/account");
   const loginPath = path(locale, `/login?error=shopify`);
 
   if (!shopifyAuthConfigured()) {
-    return NextResponse.redirect(new URL(loginPath, url.origin));
+    return NextResponse.redirect(new URL(loginPath, origin));
   }
 
   try {
     const discovery = await discoverCustomerAccount();
     const { verifier, challenge, state } = createPkcePair();
-    const redirectUri = `${url.origin}/api/auth/shopify/callback`;
+    const redirectUri = absoluteUrl(request, "/api/auth/shopify/callback");
     const authorize = buildAuthorizeUrl({
       discovery,
       redirectUri,
@@ -43,6 +45,6 @@ export async function GET(request: Request) {
 
     return NextResponse.redirect(authorize);
   } catch {
-    return NextResponse.redirect(new URL(loginPath, url.origin));
+    return NextResponse.redirect(new URL(loginPath, origin));
   }
 }

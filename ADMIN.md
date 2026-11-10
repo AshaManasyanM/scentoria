@@ -29,12 +29,15 @@ Restart `npm run dev`.
 1. Shopify Admin → Sales channels → **Headless** (or Hydrogen) → Customer Account API
 2. Copy the client ID (and secret if confidential)
 3. Add callback URL: `https://YOUR_DOMAIN/api/auth/shopify/callback` (local: `http://localhost:3000/api/auth/shopify/callback`)
-4. In `.env.local`:
+4. In `.env.local` / production env:
 
 ```
+NEXT_PUBLIC_SITE_URL=https://scentoriaprive.com
 SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID=your_client_id
 SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_SECRET=your_secret
 NEXT_PUBLIC_SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID=your_client_id
 ```
+
+`NEXT_PUBLIC_SITE_URL` (or `SITE_URL`) sets the OAuth `redirect_uri` when Next runs behind a reverse proxy that would otherwise report `localhost`. Locally you can omit it and the app uses `http://localhost:3000`.
 
 Restart `npm run dev`. The login page shows **Continue with Shopify**.
