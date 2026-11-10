@@ -38,7 +38,8 @@ const en = {
   accountExists: "An account with this email already exists.",
   or: "or",
   continueWithShopify: "Continue with Shopify",
-  shopifySignInFailed: "Shopify sign-in did not finish. Check Customer Account API settings and try again.",
+  shopifySignInFailed:
+    "Shopify sign-in did not finish. If you already use Google with this email, try again — we will link your Shopify login to that account.",
   googleSignInFailed: "Google sign-in did not finish. Try again.",
   googleLinkRequired: "This email already has a password. Sign in, then connect Google from your account.",
   connectGoogleHint: "Connect the Google account for this email. Your password stays the same.",
@@ -436,7 +437,8 @@ const hy: typeof en = {
   accountExists: "Այս էլ․ փոստով հաշիվ արդեն կա։",
   or: "կամ",
   continueWithShopify: "Շարունակել Shopify-ով",
-  shopifySignInFailed: "Shopify մուտքը չավարտվեց։ Ստուգեք Customer Account API կարգավորումները և կրկին փորձեք։",
+  shopifySignInFailed:
+    "Shopify մուտքը չավարտվեց։ Եթե այս էլ. փոստով արդեն մուտք եք գործել Google-ով, կրկին փորձեք՝ Shopify մուտքը կկապվի նույն հաշվին։",
   googleSignInFailed: "Google մուտքը չավարտվեց։ Կրկին փորձեք։",
   googleLinkRequired: "Այս էլ․ փոստն արդեն գաղտնաբառ ունի։ Մուտք գործեք, ապա միացրեք Google-ը հաշվից։",
   connectGoogleHint: "Միացրեք այս էլ․ փոստի Google հաշիվը։ Գաղտնաբառը կմնա նույնը։",

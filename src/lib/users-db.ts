@@ -254,11 +254,14 @@ export async function findUserByShopifySub(sub: string) {
 export async function attachShopifySub(id: number, sub: string) {
   const current = await first<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?`, [id]);
   if (!current) return undefined;
+  // Already linked to this Shopify customer.
+  if (current.shopify_sub === sub) return mapUser(current);
+  // Linked to a different Shopify customer — do not overwrite.
   if (current.shopify_sub && current.shopify_sub !== sub) return undefined;
   const taken = await findUserByShopifySub(sub);
   if (taken && taken.id !== id) return undefined;
   await run("UPDATE users SET shopify_sub = ? WHERE id = ?", [sub, id]);
-  return findUserByEmail(current.email);
+  return (await findUserByEmail(current.email)) ?? mapUser(current);
 }
 
 export async function createUser(input: {
