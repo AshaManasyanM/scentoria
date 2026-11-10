@@ -17,6 +17,7 @@ export default async function SalesPage({
   searchParams: Promise<{
     gender?: string | string[];
     note?: string | string[];
+    season?: string | string[];
     brand?: string | string[];
     size?: string | string[];
     sort?: string;
@@ -30,14 +31,27 @@ export default async function SalesPage({
   const t = getDict(locale);
   const { products, source } = await getCatalog();
   const shopFilters = await getShopFilters();
-  const groups = catalogFilterGroups(shopFilters, {
-    note: t.filterNote,
-    gender: t.filterGender,
-    size: t.size,
-  });
+  const groups = catalogFilterGroups(
+    shopFilters,
+    {
+      note: t.filterNote,
+      gender: t.filterGender,
+      season: t.filterSeason,
+      size: t.size,
+    },
+    {
+      season: [
+        { value: "winter", label: t.seasons.winter },
+        { value: "spring", label: t.seasons.spring },
+        { value: "summer", label: t.seasons.summer },
+        { value: "autumn", label: t.seasons.autumn },
+      ],
+    },
+  );
   const list = filterProducts(products, {
     gender: query.gender,
     note: query.note,
+    season: query.season,
     brand: query.brand,
     size: query.size,
     isNew: query.new === "1",

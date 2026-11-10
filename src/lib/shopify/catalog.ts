@@ -475,7 +475,7 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
     .map(({ order: _order, ...slide }) => slide);
 }
 
-const filterGroupIds = ["note", "gender", "size"] as const;
+const filterGroupIds = ["note", "gender", "season", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
 export type CatalogFilterGroup = { id: FilterGroupId; title: string; items: FilterChoice[] };
@@ -489,6 +489,10 @@ const filterGroupAliases: Record<string, FilterGroupId> = {
   gender: "gender",
   genders: "gender",
   "սեռ": "gender",
+  season: "season",
+  seasons: "season",
+  "սեզոն": "season",
+  "սեզոններ": "season",
   size: "size",
   sizes: "size",
   "չափս": "size",
@@ -516,8 +520,25 @@ function filterValue(group: FilterGroupId, value: string) {
     if (size === "large" || /100\s*ml\s*\+/.test(size)) return "large";
     return size;
   }
+  if (group === "season") {
+    const season = text.toLowerCase().replace(/-/g, " ").trim();
+    if (["winter", "ձմեռ"].includes(season)) return "winter";
+    if (["spring", "գարուն"].includes(season)) return "spring";
+    if (["summer", "ամառ"].includes(season)) return "summer";
+    if (["autumn", "fall", "աշուն"].includes(season)) return "autumn";
+    return season;
+  }
   if (group === "note") return text.toLowerCase();
   return text;
+}
+
+function productMatchesTagFilter(product: Product, values: string[], kind: "note" | "season" = "note") {
+  if (!values.length) return true;
+  if (kind === "season") {
+    return values.some((value) => product.seasons.includes(value));
+  }
+  const tags = product.tags.map((tag) => tag.toLowerCase());
+  return values.some((value) => product.notes.includes(value) || tags.includes(value));
 }
 
 export function shopFiltersFromEntries(
@@ -576,11 +597,13 @@ export const getShopFilters = cache(async (): Promise<ShopFilterConfig> => {
 export function catalogFilterGroups(
   shop: ShopFilterConfig,
   titles: Record<FilterGroupId, string>,
+  defaults: Partial<Record<FilterGroupId, FilterChoice[]>> = {},
 ): CatalogFilterGroup[] {
   return filterGroupIds.flatMap((id) => {
     const custom = shop[id];
-    if (!custom?.items.length) return [];
-    return [{ id, title: custom.title || titles[id], items: custom.items }];
+    const items = custom?.items.length ? custom.items : (defaults[id] ?? []);
+    if (!items.length) return [];
+    return [{ id, title: custom?.title || titles[id], items }];
   });
 }
 
@@ -693,6 +716,7 @@ export function filterProducts(
     gender?: string | string[];
     brand?: string | string[];
     note?: string | string[];
+    season?: string | string[];
     size?: string | string[];
     discount?: string | string[];
     sale?: boolean;
@@ -704,7 +728,8 @@ export function filterProducts(
 ) {
   const genders = asList(opts.gender).filter((g) => g !== "all");
   const brands = asList(opts.brand);
-  const notes = asList(opts.note);
+  const notes = asList(opts.note).map((value) => value.toLowerCase());
+  const seasons = asList(opts.season).map((value) => filterValue("season", value));
   const sizes = asList(opts.size);
   const discounts = asList(opts.discount);
 
@@ -718,14 +743,8 @@ export function filterProducts(
     if (brands.length && !brands.some((b) => p.brand.toLowerCase() === b.toLowerCase())) {
       return false;
     }
-    if (
-      notes.length &&
-      !notes.some(
-        (note) => p.notes.includes(note) || p.tags.map((tag) => tag.toLowerCase()).includes(note),
-      )
-    ) {
-      return false;
-    }
+    if (!productMatchesTagFilter(p, notes, "note")) return false;
+    if (!productMatchesTagFilter(p, seasons, "season")) return false;
     if (sizes.length && !sizes.some((size) => productSizeKeys(p).has(size))) return false;
     if (discounts.length) {
       const bucket = productDiscountBucket(p);

@@ -59,6 +59,44 @@ function notesFromTags(tags: string[]): string[] {
   return noteKeys.filter((note) => lower.includes(note));
 }
 
+const seasonKeys = ["winter", "spring", "summer", "autumn"] as const;
+
+function normalizeSeasonKey(value: string) {
+  const season = value.toLowerCase().replace(/-/g, " ").trim();
+  if (season === "fall") return "autumn";
+  return seasonKeys.find((key) => key === season) ?? "";
+}
+
+function weightedSeasonTags(tags: string[]) {
+  const values = new Map<string, number>();
+  for (const tag of tags) {
+    const parts = tag.split(":").map((part) => part.trim());
+    if (parts.length < 3 || parts[0].toLowerCase() !== "season") continue;
+    const key = normalizeSeasonKey(parts.slice(1, -1).join(" "));
+    const level = Number(parts[parts.length - 1]);
+    if (!key || !Number.isFinite(level)) continue;
+    values.set(key, Math.min(100, Math.max(0, Math.round(level))));
+  }
+  return values;
+}
+
+function seasonsFromTags(tags: string[]): string[] {
+  const found = new Set<string>();
+  for (const tag of tags) {
+    const key = normalizeSeasonKey(bareTag(tag));
+    if (key) found.add(key);
+  }
+  const weighted = weightedSeasonTags(tags);
+  if (weighted.size) {
+    const max = Math.max(...weighted.values());
+    const floor = Math.max(25, Math.round(max * 0.55));
+    for (const [key, level] of weighted) {
+      if (level >= floor) found.add(key);
+    }
+  }
+  return seasonKeys.filter((key) => found.has(key));
+}
+
 const systemTags = new Set(["men", "male", "women", "female", "unisex", "bestseller", "best-seller", "new", "sale"]);
 const accordNames = new Set<string>([...noteKeys, "amber", "balsamic", "smoky", "warm spicy", "oud"]);
 
@@ -90,12 +128,19 @@ function statsFromTags(tags: string[], prefix: string, defaults: StatBar[]): Sta
     const name = parts.slice(1, -1).join(" ").toLowerCase().replace(/-/g, " ");
     const level = Number(parts[parts.length - 1]);
     if (!name || !Number.isFinite(level)) continue;
-    values.set(name, Math.min(100, Math.max(0, Math.round(level))));
+    const key = prefix === "season" ? normalizeSeasonKey(name) || name : name;
+    values.set(key, Math.min(100, Math.max(0, Math.round(level))));
+  }
+  if (prefix === "season" && !values.size) {
+    const plain = seasonsFromTags(tags);
+    if (plain.length) {
+      for (const key of seasonKeys) values.set(key, plain.includes(key) ? 70 : 10);
+    }
   }
   if (!values.size) return defaults;
   return defaults.map((item) => ({
     ...item,
-    value: values.get(item.label.toLowerCase()) ?? item.value,
+    value: values.get(normalizeSeasonKey(item.label) || item.label.toLowerCase()) ?? item.value,
   }));
 }
 
@@ -123,6 +168,7 @@ export function mapProduct(p: ShopifyProduct): Product {
     tags,
     gender: genderFromTags(tags),
     notes: notesFromTags(tags),
+    seasons: seasonsFromTags(tags),
     accords: accordsFromTags(tags),
     images,
     variants: p.variants.nodes.map((v) => ({

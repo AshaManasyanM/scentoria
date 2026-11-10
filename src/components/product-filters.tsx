@@ -171,9 +171,12 @@ export function ProductFilters({
   const router = useRouter();
   const searchParams = useSearchParams();
   const [sort, setSort] = useState(searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? ""));
-  const [selectedNotes, setSelectedNotes] = useState(searchParams.getAll("note"));
-  const [selectedGenders, setSelectedGenders] = useState(searchParams.getAll("gender"));
-  const [selectedSizes, setSelectedSizes] = useState(searchParams.getAll("size"));
+  const [selected, setSelected] = useState<Record<string, string[]>>({
+    note: searchParams.getAll("note"),
+    gender: searchParams.getAll("gender"),
+    season: searchParams.getAll("season"),
+    size: searchParams.getAll("size"),
+  });
   const [open, setOpen] = useState<Record<string, boolean>>({});
 
   function toggle(list: string[], value: string, checked: boolean) {
@@ -187,9 +190,9 @@ export function ProductFilters({
     if (searchText) params.set("q", searchText);
     if (sort === "new") params.set("new", "1");
     else if (sort) params.set("sort", sort);
-    selectedGenders.forEach((value) => params.append("gender", value));
-    selectedNotes.forEach((value) => params.append("note", value));
-    selectedSizes.forEach((value) => params.append("size", value));
+    (["gender", "note", "season", "size"] as const).forEach((key) => {
+      (selected[key] ?? []).forEach((value) => params.append(key, value));
+    });
     const brand = searchParams.getAll("brand");
     brand.forEach((value) => params.append("brand", value));
     const qs = params.toString();
@@ -199,9 +202,7 @@ export function ProductFilters({
 
   function reset() {
     setSort("");
-    setSelectedNotes([]);
-    setSelectedGenders([]);
-    setSelectedSizes([]);
+    setSelected({ note: [], gender: [], season: [], size: [] });
     router.push(path(locale, basePath), { scroll: false });
     scrollToCatalog();
   }
@@ -225,10 +226,7 @@ export function ProductFilters({
 
       <div className="mt-4">
         {groups.map((group) => {
-          const selected =
-            group.id === "note" ? selectedNotes : group.id === "gender" ? selectedGenders : selectedSizes;
-          const setSelected =
-            group.id === "note" ? setSelectedNotes : group.id === "gender" ? setSelectedGenders : setSelectedSizes;
+          const values = selected[group.id] ?? [];
           return (
             <Group
               key={group.id}
@@ -241,8 +239,13 @@ export function ProductFilters({
                   <CheckboxRow
                     key={item.value}
                     label={item.label}
-                    checked={selected.includes(item.value)}
-                    onChange={(checked) => setSelected((current) => toggle(current, item.value, checked))}
+                    checked={values.includes(item.value)}
+                    onChange={(checked) =>
+                      setSelected((current) => ({
+                        ...current,
+                        [group.id]: toggle(current[group.id] ?? [], item.value, checked),
+                      }))
+                    }
                   />
                 ))}
               </div>

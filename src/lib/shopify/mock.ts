@@ -47,9 +47,10 @@ function variant(
   };
 }
 
-function profile(notes: string[], accords?: string[]) {
+function profile(notes: string[], accords?: string[], seasons: string[] = []) {
   return {
     notes,
+    seasons,
     accords: (accords ?? notes).map((name) => ({ name, level: null })),
     longevity: defaultLongevity,
     season: defaultSeason,

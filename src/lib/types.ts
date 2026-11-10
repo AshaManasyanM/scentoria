@@ -36,6 +36,7 @@ export type Product = {
   tags: string[];
   gender: "men" | "women" | "unisex" | "all";
   notes: string[];
+  seasons: string[];
   accords: { name: string; level: number | null }[];
   images: { url: string; alt: string }[];
   variants: ProductVariant[];

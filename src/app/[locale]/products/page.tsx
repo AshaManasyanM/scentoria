@@ -17,6 +17,7 @@ export default async function ProductsPage({
   searchParams: Promise<{
     gender?: string | string[];
     note?: string | string[];
+    season?: string | string[];
     brand?: string | string[];
     size?: string | string[];
     sort?: string;
@@ -60,14 +61,27 @@ export default async function ProductsPage({
   if (facet?.note) redirect(catalogHref(locale, "/products", { ...query, q: undefined, note: facet.note }, 1));
   if (facet?.gender) redirect(catalogHref(locale, "/products", { ...query, q: undefined, gender: facet.gender }, 1));
   const shopFilters = await getShopFilters();
-  const groups = catalogFilterGroups(shopFilters, {
-    note: t.filterNote,
-    gender: t.filterGender,
-    size: t.size,
-  });
+  const groups = catalogFilterGroups(
+    shopFilters,
+    {
+      note: t.filterNote,
+      gender: t.filterGender,
+      season: t.filterSeason,
+      size: t.size,
+    },
+    {
+      season: [
+        { value: "winter", label: t.seasons.winter },
+        { value: "spring", label: t.seasons.spring },
+        { value: "summer", label: t.seasons.summer },
+        { value: "autumn", label: t.seasons.autumn },
+      ],
+    },
+  );
   const list = filterProducts(products, {
     gender: query.gender,
     note: query.note,
+    season: query.season,
     brand: query.brand,
     size: query.size,
     isNew: query.new === "1",
