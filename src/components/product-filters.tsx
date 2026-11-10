@@ -1,5 +1,6 @@
 "use client";
 
+import { formatMoney } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import { scrollToCatalog } from "@/lib/scroll-catalog";
@@ -158,62 +159,187 @@ function Group({
   );
 }
 
+function PriceRangeField({
+  label,
+  locale,
+  bounds,
+  valueMin,
+  valueMax,
+  onCommit,
+}: {
+  label: string;
+  locale: Locale;
+  bounds: { min: number; max: number; currencyCode: string };
+  valueMin: number;
+  valueMax: number;
+  onCommit: (min: number, max: number) => void;
+}) {
+  const [min, setMin] = useState(valueMin);
+  const [max, setMax] = useState(valueMax);
+  const live = useRef({ min: valueMin, max: valueMax });
+  const span = Math.max(bounds.max - bounds.min, 1);
+  const step = Math.max(1, Math.round(span / 100));
+
+  useEffect(() => {
+    setMin(valueMin);
+    setMax(valueMax);
+    live.current = { min: valueMin, max: valueMax };
+  }, [valueMin, valueMax]);
+
+  function money(amount: number) {
+    return formatMoney({ amount: String(amount), currencyCode: bounds.currencyCode }, locale);
+  }
+
+  function commit(nextMin = live.current.min, nextMax = live.current.max) {
+    const low = Math.min(nextMin, nextMax);
+    const high = Math.max(nextMin, nextMax);
+    live.current = { min: low, max: high };
+    setMin(low);
+    setMax(high);
+    if (low === valueMin && high === valueMax) return;
+    onCommit(low, high);
+  }
+
+  const lowPct = ((min - bounds.min) / span) * 100;
+  const highPct = ((max - bounds.min) / span) * 100;
+
+  return (
+    <div className="mt-5 border-b border-[#D8D0C4] pb-4">
+      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#083534]">{label}</p>
+      <p className="mt-3 text-sm text-[#083534]">
+        {money(min)} – {money(max)}
+      </p>
+      <div className="relative mt-5 h-6">
+        <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-[#D8D0C4]" />
+        <div
+          className="absolute top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-[#083534]"
+          style={{ left: `${lowPct}%`, right: `${100 - highPct}%` }}
+        />
+        <input
+          type="range"
+          min={bounds.min}
+          max={bounds.max}
+          step={step}
+          value={min}
+          aria-label={`${label} min`}
+          onChange={(event) => {
+            const next = Math.min(Number(event.target.value), live.current.max);
+            live.current = { ...live.current, min: next };
+            setMin(next);
+          }}
+          onPointerUp={() => commit()}
+          onKeyUp={() => commit()}
+          className="pointer-events-none absolute inset-0 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#083534] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#083534]"
+        />
+        <input
+          type="range"
+          min={bounds.min}
+          max={bounds.max}
+          step={step}
+          value={max}
+          aria-label={`${label} max`}
+          onChange={(event) => {
+            const next = Math.max(Number(event.target.value), live.current.min);
+            live.current = { ...live.current, max: next };
+            setMax(next);
+          }}
+          onPointerUp={() => commit()}
+          onKeyUp={() => commit()}
+          className="pointer-events-none absolute inset-0 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#083534] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-30 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#083534]"
+        />
+      </div>
+    </div>
+  );
+}
+
+const filterKeys = ["gender", "note", "season", "size"] as const;
+
 export function ProductFilters({
   locale,
   groups,
+  priceBounds,
   basePath = "/products",
 }: {
   locale: Locale;
   groups: CatalogFilterGroup[];
+  priceBounds: { min: number; max: number; currencyCode: string };
   basePath?: string;
 }) {
   const t = getDict(locale);
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [sort, setSort] = useState(searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? ""));
-  const [selected, setSelected] = useState<Record<string, string[]>>({
+  const sort = searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? "");
+  const selected: Record<string, string[]> = {
     note: searchParams.getAll("note"),
     gender: searchParams.getAll("gender"),
     season: searchParams.getAll("season"),
     size: searchParams.getAll("size"),
-  });
+  };
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const searchText = searchParams.get("q") ?? "";
+  const rawMin = searchParams.get("minPrice");
+  const rawMax = searchParams.get("maxPrice");
+  const parsedMin = rawMin != null && rawMin !== "" ? Number(rawMin) : Number.NaN;
+  const parsedMax = rawMax != null && rawMax !== "" ? Number(rawMax) : Number.NaN;
+  const priceMin =
+    Number.isFinite(parsedMin)
+      ? Math.min(Math.max(parsedMin, priceBounds.min), priceBounds.max)
+      : priceBounds.min;
+  // Ignore a lone maxPrice=0 left by Number(null) parsing — treat as full range.
+  const priceMax =
+    Number.isFinite(parsedMax) && !(parsedMax === 0 && !Number.isFinite(parsedMin) && priceBounds.max > 0)
+      ? Math.min(Math.max(parsedMax, priceBounds.min), priceBounds.max)
+      : priceBounds.max;
+  const priceActive = priceMin > priceBounds.min || priceMax < priceBounds.max;
+  const hasPriceSlider = priceBounds.max > priceBounds.min;
+  const hasFilters =
+    Boolean(sort) ||
+    Boolean(searchText) ||
+    priceActive ||
+    searchParams.getAll("brand").length > 0 ||
+    filterKeys.some((key) => selected[key]?.length);
 
   function toggle(list: string[], value: string, checked: boolean) {
     return checked ? [...list, value] : list.filter((item) => item !== value);
   }
 
-  const searchText = searchParams.get("q") ?? "";
-
-  function apply() {
+  function navigate(next: {
+    sort?: string;
+    selected?: Record<string, string[]>;
+    priceMin?: number;
+    priceMax?: number;
+  }) {
+    const nextSort = next.sort ?? sort;
+    const nextSelected = next.selected ?? selected;
+    const nextPriceMin = next.priceMin ?? priceMin;
+    const nextPriceMax = next.priceMax ?? priceMax;
     const params = new URLSearchParams();
     if (searchText) params.set("q", searchText);
-    if (sort === "new") params.set("new", "1");
-    else if (sort) params.set("sort", sort);
-    (["gender", "note", "season", "size"] as const).forEach((key) => {
-      (selected[key] ?? []).forEach((value) => params.append(key, value));
+    if (nextSort === "new") params.set("new", "1");
+    else if (nextSort) params.set("sort", nextSort);
+    filterKeys.forEach((key) => {
+      (nextSelected[key] ?? []).forEach((value) => params.append(key, value));
     });
-    const brand = searchParams.getAll("brand");
-    brand.forEach((value) => params.append("brand", value));
+    searchParams.getAll("brand").forEach((value) => params.append("brand", value));
+    if (nextPriceMin > priceBounds.min) params.set("minPrice", String(nextPriceMin));
+    if (nextPriceMax < priceBounds.max) params.set("maxPrice", String(nextPriceMax));
     const qs = params.toString();
     router.push(path(locale, `${basePath}${qs ? `?${qs}` : ""}`), { scroll: false });
     scrollToCatalog();
   }
 
-  function reset() {
-    setSort("");
-    setSelected({ note: [], gender: [], season: [], size: [] });
+  function clear() {
     router.push(path(locale, basePath), { scroll: false });
     scrollToCatalog();
   }
 
   return (
-    <aside className="w-full shrink-0 rounded-md border border-[#D8D0C4] bg-[#F7F2EA] px-5 py-5 lg:w-[280px]">
+    <aside className="w-full shrink-0 rounded-md border border-[#D8D0C4] bg-[#F7F2EA] px-5 py-5 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:w-[280px] lg:self-start lg:overflow-y-auto">
       <SelectField
         label={t.sortBy}
         value={sort}
         placeholder={t.sortSelect}
-        onChange={setSort}
+        onChange={(value) => navigate({ sort: value })}
         options={[
           { value: "price-asc", label: t.sortPriceAsc },
           { value: "price-desc", label: t.sortPriceDesc },
@@ -221,6 +347,17 @@ export function ProductFilters({
           { value: "new", label: t.sortNew },
         ]}
       />
+
+      {hasPriceSlider ? (
+        <PriceRangeField
+          label={t.filterPrice}
+          locale={locale}
+          bounds={priceBounds}
+          valueMin={Math.min(priceMin, priceMax)}
+          valueMax={Math.max(priceMin, priceMax)}
+          onCommit={(min, max) => navigate({ priceMin: min, priceMax: max })}
+        />
+      ) : null}
 
       {searchText ? <p className="mt-4 text-sm text-[#083534]">{t.search}: {searchText}</p> : null}
 
@@ -241,10 +378,12 @@ export function ProductFilters({
                     label={item.label}
                     checked={values.includes(item.value)}
                     onChange={(checked) =>
-                      setSelected((current) => ({
-                        ...current,
-                        [group.id]: toggle(current[group.id] ?? [], item.value, checked),
-                      }))
+                      navigate({
+                        selected: {
+                          ...selected,
+                          [group.id]: toggle(values, item.value, checked),
+                        },
+                      })
                     }
                   />
                 ))}
@@ -254,22 +393,17 @@ export function ProductFilters({
         })}
       </div>
 
-      <div className="mt-5 flex gap-3">
-        <button
-          type="button"
-          onClick={reset}
-          className="inline-flex flex-1 items-center justify-center rounded-[2px] border border-[#D8D0C4] bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"
-        >
-          {t.filterReset}
-        </button>
-        <button
-          type="button"
-          onClick={apply}
-          className="inline-flex flex-1 items-center justify-center rounded-[2px] bg-[#083534] px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
-        >
-          {t.filterApply}
-        </button>
-      </div>
+      {hasFilters ? (
+        <div className="mt-5">
+          <button
+            type="button"
+            onClick={clear}
+            className="inline-flex w-full items-center justify-center rounded-[2px] border border-[#D8D0C4] bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"
+          >
+            {t.filterClear}
+          </button>
+        </div>
+      ) : null}
     </aside>
   );
 }

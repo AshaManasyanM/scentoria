@@ -1,8 +1,9 @@
+import { CatalogPageHero } from "@/components/catalog-page-hero";
 import { PageEnd } from "@/components/page-end";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
-import { isSectionVisible } from "@/lib/shopify/catalog";
+import { getPageBanner, isSectionVisible } from "@/lib/shopify/catalog";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 
@@ -14,26 +15,17 @@ export default async function AboutPage({
   const locale = await localeFrom(params);
   if (!(await isSectionVisible("about"))) redirect(`/${locale}`);
   const t = getDict(locale);
+  const banner = await getPageBanner("about");
 
   return (
     <>
-      <section className="relative h-[clamp(280px,45vw,520px)] overflow-hidden bg-[#083534]">
-        <img
-          src="/hero/rose.jpg"
-          alt=""
-          className="h-full w-full object-cover object-center"
-        />
-        <div className="absolute inset-0 bg-[#083534]/60" />
-        <div className="absolute inset-0 flex items-end px-4 pb-8 md:px-8 md:pb-14">
-          <div className="mx-auto w-full max-w-[min(100%,82.5rem)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{t.nav.about}</p>
-            <h1 className="mt-3 max-w-3xl heading-display font-serif font-medium text-[#f7f2ea]">
-              {t.aboutHero}
-            </h1>
-            <p className="mt-4 max-w-xl text-[15px] leading-7 text-[#f7f2ea]/90">{t.aboutIntro}</p>
-          </div>
-        </div>
-      </section>
+      <CatalogPageHero
+        eyebrow={t.nav.about}
+        title={t.aboutHero}
+        subtitle={t.aboutIntro}
+        image={banner.url}
+        alt={banner.alt}
+      />
 
       <section className="bg-[#f7f2ea] section-pad">
         <div className="mx-auto grid max-w-[min(100%,82.5rem)] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-16">

@@ -255,6 +255,8 @@ const en = {
     autumn: "Autumn",
   },
   filterDiscount: "Discount",
+  filterClear: "Clear",
+  filterPrice: "Price",
   filterReset: "Reset",
   filterApply: "Apply",
   previousPage: "Previous",
@@ -558,6 +560,8 @@ const hy: typeof en = {
   emptyWishlist: "Դուք դեռ ցանկ չունեք",
   emptyWishlistHint: "Սկսեք դիտել և պահել ձեր սիրելի օծանելիքները",
   filterSeason: "Սեզոն",
+  filterClear: "Մաքրել",
+  filterPrice: "Գին",
   seasons: {
     winter: "Ձմեռ",
     spring: "Գարուն",

@@ -8,7 +8,7 @@ export function PageHero({
   image?: string;
 }) {
   return (
-    <section className="relative flex h-[clamp(280px,42vw,600px)] items-center justify-end overflow-hidden px-4 md:px-8">
+    <section className="relative flex h-[clamp(200px,28vw,320px)] items-center justify-end overflow-hidden px-4 md:px-8">
       <div
         className="absolute inset-0 bg-cover bg-center bg-no-repeat"
         style={{

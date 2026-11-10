@@ -475,6 +475,53 @@ export async function getHeroSlides(): Promise<HeroSlide[]> {
     .map(({ order: _order, ...slide }) => slide);
 }
 
+export const pageBannerKeys = ["products", "sales", "brands", "about"] as const;
+export type PageBannerKey = (typeof pageBannerKeys)[number];
+
+export type PageBanner = {
+  url: string;
+  alt: string;
+};
+
+const fallbackPageBanners: Record<PageBannerKey, PageBanner> = {
+  products: { url: "/hero/citrus.jpg", alt: "Perfumes" },
+  sales: { url: "/hero/amber.jpg", alt: "Sales" },
+  brands: { url: "/hero/amber.jpg", alt: "Brands" },
+  about: { url: "/hero/rose.jpg", alt: "About" },
+};
+
+function pageBannerKey(handle: string, fields: NoteField[]): PageBannerKey | null {
+  const raw = (metaValue(fields, ["page", "key", "slug"]) || handle).trim().toLowerCase();
+  return pageBannerKeys.find((key) => key === raw) ?? null;
+}
+
+export const getPageBanners = cache(async (): Promise<Record<PageBannerKey, PageBanner>> => {
+  const banners = { ...fallbackPageBanners };
+  if (!hasStorefrontToken()) return banners;
+
+  const data = await storefrontFetch<{
+    metaobjects: { nodes: { handle: string; fields: NoteField[] }[] };
+  }>(NOTES_QUERY, { type: "page_banner", first: 20 });
+
+  for (const entry of data?.metaobjects?.nodes ?? []) {
+    if (sectionFlag(entry) === false) continue;
+    const key = pageBannerKey(entry.handle, entry.fields);
+    if (!key) continue;
+    const url = noteImage(entry.fields);
+    if (!url) continue;
+    banners[key] = {
+      url,
+      alt: metaValue(entry.fields, ["alt", "name", "caption", "title"]) || banners[key].alt,
+    };
+  }
+  return banners;
+});
+
+export async function getPageBanner(page: PageBannerKey): Promise<PageBanner> {
+  const banners = await getPageBanners();
+  return banners[page];
+}
+
 const filterGroupIds = ["note", "gender", "season", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
@@ -710,6 +757,20 @@ export function productDiscountBucket(product: Product) {
   return buckets.find((bucket) => percent >= bucket && percent < bucket + 10) ?? (percent >= 70 ? 70 : null);
 }
 
+export function catalogPriceBounds(products: Product[]) {
+  const amounts = products
+    .flatMap((product) => [Number(product.minPrice.amount), Number(product.maxPrice.amount)])
+    .filter((amount) => Number.isFinite(amount) && amount >= 0);
+  if (!amounts.length) {
+    return { min: 0, max: 0, currencyCode: products[0]?.minPrice.currencyCode ?? "AMD" };
+  }
+  return {
+    min: 0,
+    max: Math.ceil(Math.max(...amounts)),
+    currencyCode: products[0]?.minPrice.currencyCode ?? "AMD",
+  };
+}
+
 export function filterProducts(
   products: Product[],
   opts: {
@@ -719,6 +780,8 @@ export function filterProducts(
     season?: string | string[];
     size?: string | string[];
     discount?: string | string[];
+    minPrice?: string | number;
+    maxPrice?: string | number;
     sale?: boolean;
     isNew?: boolean;
     featured?: boolean;
@@ -732,6 +795,8 @@ export function filterProducts(
   const seasons = asList(opts.season).map((value) => filterValue("season", value));
   const sizes = asList(opts.size);
   const discounts = asList(opts.discount);
+  const minPrice = opts.minPrice != null && opts.minPrice !== "" ? Number(opts.minPrice) : null;
+  const maxPrice = opts.maxPrice != null && opts.maxPrice !== "" ? Number(opts.maxPrice) : null;
 
   let list = products.filter((p) => {
     if (
@@ -750,6 +815,9 @@ export function filterProducts(
       const bucket = productDiscountBucket(p);
       if (bucket == null || !discounts.includes(String(bucket))) return false;
     }
+    const amount = Number(p.minPrice.amount);
+    if (minPrice != null && Number.isFinite(minPrice) && amount < minPrice) return false;
+    if (maxPrice != null && Number.isFinite(maxPrice) && amount > maxPrice) return false;
     if (opts.sale && !p.onSale) return false;
     if (opts.isNew && !p.isNew) return false;
     if (opts.featured && !p.featured) return false;
