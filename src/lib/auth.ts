@@ -1,6 +1,6 @@
 export const AUTH_EVENT = "scentoria-auth";
 
-export type AuthProvider = "email" | "google";
+export type AuthProvider = "email" | "google" | "shopify";
 
 export type Profile = {
   name: string;

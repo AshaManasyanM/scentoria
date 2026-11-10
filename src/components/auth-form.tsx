@@ -1,12 +1,13 @@
 "use client";
 
 import { GoogleSignInButton } from "@/components/google-sign-in";
+import { ShopifySignInButton } from "@/components/shopify-sign-in";
 import { AUTH_EVENT, isLoggedIn, refreshSession, signInWithEmail, signUp } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const labelClass = "block text-[11px] font-semibold uppercase tracking-[0.12em] text-[#083534]";
@@ -22,17 +23,19 @@ export function AuthForm({
 }) {
   const t = getDict(locale);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [ready, setReady] = useState(false);
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [remember, setRemember] = useState(false);
   const [error, setError] = useState("");
+  const nextPath = searchParams.get("next") || path(locale, "/account");
 
   useEffect(() => {
     const sync = () => {
       if (isLoggedIn()) {
-        router.replace(path(locale, "/account"));
+        router.replace(nextPath);
         return;
       }
       setReady(true);
@@ -40,7 +43,11 @@ export function AuthForm({
     void refreshSession().then(sync).catch(() => setReady(true));
     window.addEventListener(AUTH_EVENT, sync);
     return () => window.removeEventListener(AUTH_EVENT, sync);
-  }, [locale, router]);
+  }, [locale, nextPath, router]);
+
+  useEffect(() => {
+    if (searchParams.get("error") === "shopify") setError(t.shopifySignInFailed);
+  }, [searchParams, t.shopifySignInFailed]);
 
   if (!ready) return null;
 
@@ -70,7 +77,7 @@ export function AuthForm({
       setError(result.reason === "rate" ? t.tooManyAttempts : t.wrongPassword);
       return;
     }
-    router.push(path(locale, "/account"));
+    router.push(nextPath);
   }
 
   return (
@@ -160,23 +167,23 @@ export function AuthForm({
             {isSignup ? t.signUp : t.signIn}
           </button>
 
-          {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
-            <>
-              <div className="mt-5 flex items-center gap-4">
-                <span className="h-px flex-1 bg-[#d8d0c4]" />
-                <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#083534]/45">{t.or}</span>
-                <span className="h-px flex-1 bg-[#d8d0c4]" />
-              </div>
-              <div className="mt-5">
-                <GoogleSignInButton
-                  locale={locale}
-                  onSuccess={() => router.push(path(locale, "/account"))}
-                  onFailure={() => setError(t.googleSignInFailed)}
-                  onLinkRequired={() => setError(t.googleLinkRequired)}
-                />
-              </div>
-            </>
-          ) : null}
+          <div className="mt-5 flex items-center gap-4">
+            <span className="h-px flex-1 bg-[#d8d0c4]" />
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#083534]/45">{t.or}</span>
+            <span className="h-px flex-1 bg-[#d8d0c4]" />
+          </div>
+
+          <div className="mt-5 space-y-3">
+            {!isSignup ? <ShopifySignInButton locale={locale} next={nextPath} /> : null}
+            {process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID ? (
+              <GoogleSignInButton
+                locale={locale}
+                onSuccess={() => router.push(nextPath)}
+                onFailure={() => setError(t.googleSignInFailed)}
+                onLinkRequired={() => setError(t.googleLinkRequired)}
+              />
+            ) : null}
+          </div>
 
           <p className="mt-6 text-sm leading-6 text-[#083534]/80">
             {isSignup ? t.haveAccount : t.needAccount}{" "}

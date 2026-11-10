@@ -1,5 +1,6 @@
 import { CatalogBanner } from "@/components/catalog-banner";
 import { HeroSlider } from "@/components/hero-slider";
+import { HomeSectionHeading } from "@/components/home-section-heading";
 import { NoteGrid } from "@/components/note-grid";
 import { PageEnd } from "@/components/page-end";
 import { ProductSlider } from "@/components/product-slider";
@@ -42,6 +43,12 @@ const typeTiles = [
     cta: "shopUnisex" as const,
   },
 ];
+
+const sectionShell = "px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.25rem)]";
+const ctaGold =
+  "mt-8 inline-flex rounded-full bg-[#c5a059] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#083534] transition hover:bg-[#a9884a]";
+const ctaDark =
+  "mt-8 inline-flex rounded-full bg-[#083534] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f7f2ea] transition hover:bg-[#0e4544]";
 
 export default async function HomePage({
   params,
@@ -92,158 +99,135 @@ export default async function HomePage({
       <CatalogBanner locale={locale} source={source} />
 
       {sections.types ? (
-      <section className="bg-[#f7f2ea] section-pad">
-        <div className="mx-auto max-w-[min(100%,82.5rem)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-            {t.shopByType}
-          </p>
-          <h2 className="mt-4 max-w-4xl heading-section font-serif font-medium text-[#083534]">
-            {t.shopByTypeSub}
-          </h2>
-          <div className="mt-10 grid gap-6 md:grid-cols-2">
-            {typeTiles.map((tile) => (
-              <Link
-                key={tile.key}
-                href={path(locale, `/products${tile.query}`)}
-                className="group relative flex min-h-[clamp(12.5rem,28vw,18.75rem)] flex-col justify-between overflow-hidden rounded-md p-5 text-[#f7f2ea] md:p-[clamp(1.25rem,2vw,2rem)]"
-                style={{
-                  backgroundColor: "#083534",
-                  backgroundImage: `linear-gradient(180deg, rgba(8,53,52,0.72), rgba(8,53,52,0.82)), url("${tile.image}")`,
-                  backgroundSize: "cover",
-                  backgroundPosition: "center",
-                }}
-              >
-                <div>
-                  <p className="text-[11px] font-bold uppercase tracking-[0.16em] text-[#c5a059]">
-                    {typeLabels[tile.key]}
-                  </p>
-                  <p className="mt-3 max-w-md font-serif text-xl font-medium leading-snug md:text-[clamp(22px,2.4vw,30px)]">
-                    {t[tile.body]}
-                  </p>
-                </div>
-                <span className="mt-8 flex items-center justify-between text-sm font-semibold">
-                  <span>{t[tile.cta]}</span>
-                  <span aria-hidden className="transition-transform group-hover:translate-x-1">
-                    →
+        <section className="bg-[#f7f2ea] px-[clamp(1rem,2.5vw,2rem)] py-[clamp(1.25rem,2.5vw,2rem)] lg:py-[clamp(2rem,4vw,3.25rem)]">
+          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+            <HomeSectionHeading eyebrow={t.shopByType} title={t.shopByTypeSub} compact />
+            <div className="mt-3 grid grid-cols-2 gap-2 text-left md:mt-4 md:gap-3 lg:mt-8 lg:grid-cols-4 lg:gap-4">
+              {typeTiles.map((tile) => (
+                <Link
+                  key={tile.key}
+                  href={path(locale, `/products${tile.query}`)}
+                  className="group relative flex h-[5.5rem] items-end overflow-hidden rounded-lg bg-[#083534] text-[#f7f2ea] shadow-[0_10px_30px_rgba(8,53,52,0.12)] sm:h-28 md:h-32 lg:h-auto lg:aspect-[4/5] lg:rounded-2xl"
+                >
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 bg-cover bg-center transition-transform duration-700 ease-out group-hover:scale-105"
+                    style={{ backgroundImage: `url("${tile.image}")` }}
+                  />
+                  <span
+                    aria-hidden
+                    className="absolute inset-0 bg-gradient-to-t from-[#083534] via-[#083534]/55 to-[#083534]/10"
+                  />
+                  <span className="relative z-10 flex w-full flex-col gap-1 p-2.5 sm:p-3 md:p-3.5 lg:gap-2 lg:p-5">
+                    <span className="flex items-center justify-between gap-2 lg:block">
+                      <span className="font-serif text-sm font-medium leading-none sm:text-base md:text-lg lg:text-[1.35rem]">
+                        {typeLabels[tile.key]}
+                      </span>
+                      <span
+                        aria-hidden
+                        className="text-xs text-[#c5a059] transition-transform duration-300 group-hover:translate-x-1 lg:hidden"
+                      >
+                        →
+                      </span>
+                    </span>
+                    <span className="hidden max-w-[16rem] text-xs leading-5 text-[#f7f2ea]/75 lg:block">
+                      {t[tile.body]}
+                    </span>
+                    <span className="mt-1 hidden items-center gap-2 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#c5a059] lg:inline-flex">
+                      {t[tile.cta]}
+                      <span aria-hidden className="transition-transform duration-300 group-hover:translate-x-1">
+                        →
+                      </span>
+                    </span>
                   </span>
-                </span>
-              </Link>
-            ))}
+                </Link>
+              ))}
+            </div>
           </div>
-        </div>
-      </section>
+        </section>
       ) : null}
 
       {sections.bestsellers ? (
-      <section className="bg-[#083534] section-pad">
-        <div className="mx-auto max-w-[min(100%,73.75rem)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-            {t.bestSellers}
-          </p>
-          <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
-            {t.bestSellersSub}
-          </h2>
-          <div className="mt-10">
-            <ProductSlider products={featured} locale={locale} variant="feature" />
+        <section className={`bg-[#083534] ${sectionShell}`}>
+          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+            <HomeSectionHeading eyebrow={t.bestSellers} title={t.bestSellersSub} light />
+            <div className="mt-8">
+              <ProductSlider products={featured} locale={locale} variant="feature" />
+            </div>
+            <Link href={path(locale, "/products")} className={ctaGold}>
+              {t.viewAllProducts}
+            </Link>
           </div>
-          <Link
-            href={path(locale, "/products")}
-            className="mt-10 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
-          >
-            {t.viewAllProducts}
-          </Link>
-        </div>
-      </section>
+        </section>
       ) : null}
 
       {sections.brands ? (
-      <section className="mx-auto w-full max-w-[min(100%,82.5rem)] px-4 py-10 min-[1352px]:px-0 md:py-20">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-          {t.popularBrands}
-        </p>
-        <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#083534]">
-          {t.popularBrandsSub}
-        </h2>
-        <div className="mt-8 grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 min-[1352px]:grid-cols-[repeat(4,312px)] min-[1352px]:justify-start min-[1352px]:gap-6">
-          {brands.map((brand) => (
-            <Link
-              key={brand.handle}
-              href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
-              className="flex h-[clamp(7.5rem,12vw,11.25rem)] w-full items-center justify-center rounded-lg border border-[#D8D0C4] bg-[#F7F2EA] px-6 xl:max-w-[19.5rem]"
-            >
-              {brand.logo ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={brand.logo}
-                  alt={`${brand.name} perfume brand logo`}
-                  title={`${brand.name} perfume brand`}
-                  className="w-auto max-w-[70%] object-contain"
-                />
-              ) : (
-                <span className="text-center font-serif text-xl font-medium text-[#083534] md:text-2xl">{brand.name}</span>
-              )}
-            </Link>
-          ))}
-        </div>
-        <Link
-          href={path(locale, "/brands")}
-          className="mt-8 inline-flex rounded-[2px] bg-[#083534] px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f2ea]"
-        >
-          {t.viewAllBrands}
-        </Link>
-      </section>
+        <section className={`bg-[#f7f2ea] ${sectionShell}`}>
+          <div className="mx-auto max-w-[min(100%,72rem)]">
+            <HomeSectionHeading eyebrow={t.popularBrands} title={t.popularBrandsSub} />
+            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4">
+              {brands.map((brand) => (
+                <Link
+                  key={brand.handle}
+                  href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
+                  className="group flex aspect-[5/3] items-center justify-center rounded-2xl border border-[#e4ddd3] bg-white px-5 transition duration-300 hover:-translate-y-0.5 hover:border-[#c5a059]/70 hover:shadow-[0_12px_28px_rgba(8,53,52,0.1)]"
+                >
+                  {brand.logo ? (
+                    // eslint-disable-next-line @next/next/no-img-element
+                    <img
+                      src={brand.logo}
+                      alt={`${brand.name} perfume brand logo`}
+                      title={`${brand.name} perfume brand`}
+                      className="max-h-[58%] w-auto max-w-[72%] object-contain transition duration-300 group-hover:scale-[1.03]"
+                    />
+                  ) : (
+                    <span className="text-center font-serif text-lg font-medium text-[#083534] md:text-xl">
+                      {brand.name}
+                    </span>
+                  )}
+                </Link>
+              ))}
+            </div>
+            <div className="text-center">
+              <Link href={path(locale, "/brands")} className={ctaDark}>
+                {t.viewAllBrands}
+              </Link>
+            </div>
+          </div>
+        </section>
       ) : null}
 
       {sections.arrivals ? (
-      <section className="bg-[#083534] section-pad">
-        <div className="mx-auto max-w-[min(100%,73.75rem)]">
-          <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-            {t.newArrivals}
-          </p>
-          <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
-            {t.newArrivalsSub}
-          </h2>
-          <div className="mt-10">
-            <ProductSlider products={newest} locale={locale} variant="feature" />
+        <section className={`bg-[#083534] ${sectionShell}`}>
+          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+            <HomeSectionHeading eyebrow={t.newArrivals} title={t.newArrivalsSub} light />
+            <div className="mt-8">
+              <ProductSlider products={newest} locale={locale} variant="feature" />
+            </div>
+            <Link href={path(locale, "/products?new=1")} className={ctaGold}>
+              {t.viewAllNew}
+            </Link>
           </div>
-          <Link
-            href={path(locale, "/products?new=1")}
-            className="mt-10 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
-          >
-            {t.viewAllNew}
-          </Link>
-        </div>
-      </section>
+        </section>
       ) : null}
 
       {sections.notes ? (
-      <section id="shop-by-note" className="mx-auto w-full max-w-[min(100%,82.5rem)] px-4 py-10 min-[1352px]:px-0 md:py-20">
-        <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-          {t.shopByNote}
-        </p>
-        <h2 className="mt-4 heading-section font-serif font-medium text-[#083534]">
-          {t.shopByNoteSub}
-        </h2>
-        <NoteGrid notes={notes} viewAllLabel={t.viewAllNotes} showLessLabel={t.showLess} />
-      </section>
+        <section id="shop-by-note" className={`bg-[#f7f2ea] ${sectionShell}`}>
+          <div className="mx-auto max-w-[min(100%,72rem)]">
+            <HomeSectionHeading eyebrow={t.shopByNote} title={t.shopByNoteSub} />
+            <NoteGrid notes={notes} viewAllLabel={t.viewAllNotes} showLessLabel={t.showLess} />
+          </div>
+        </section>
       ) : null}
 
       {sections.sale ? (
-        <section className="bg-[#083534] section-pad">
-          <div className="mx-auto max-w-[min(100%,73.75rem)]">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">
-              {t.onSale}
-            </p>
-            <h2 className="mt-4 max-w-3xl heading-section font-serif font-medium text-[#f7f2ea]">
-              {t.onSaleSub}
-            </h2>
-            <div className="mt-10">
+        <section className={`bg-[#083534] ${sectionShell}`}>
+          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+            <HomeSectionHeading eyebrow={t.onSale} title={t.onSaleSub} light />
+            <div className="mt-8">
               <ProductSlider products={sale} locale={locale} variant="feature" />
             </div>
-            <Link
-              href={path(locale, "/sales")}
-              className="mt-10 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
-            >
+            <Link href={path(locale, "/sales")} className={ctaGold}>
               {t.viewAllSale}
             </Link>
           </div>

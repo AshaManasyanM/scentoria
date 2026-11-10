@@ -6,7 +6,7 @@ import type { Locale } from "@/lib/types";
 import { useActionState, useEffect, useRef } from "react";
 
 const fieldClass =
-  "mt-2 block h-11 w-full rounded-sm border border-[#f7f2ea] bg-[#f7f2ea] px-3 text-sm text-[#083534] outline-none placeholder:text-[#083534]/45";
+  "mt-2 block h-11 w-full rounded-xl border border-[#f7f2ea]/0 bg-[#f7f2ea] px-3 text-sm text-[#083534] outline-none placeholder:text-[#083534]/45";
 
 export function ShareForm({ locale }: { locale: Locale }) {
   const t = getDict(locale);
@@ -18,19 +18,19 @@ export function ShareForm({ locale }: { locale: Locale }) {
   }, [state]);
 
   return (
-    <section className="section-pad bg-[#c5a059] text-[#083534]">
-      <div className="mx-auto grid max-w-[min(100%,80rem)] items-start gap-8 md:grid-cols-[0.85fr_1.15fr] md:gap-12 xl:gap-16">
+    <section className="bg-[#c5a059] px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.25rem)] text-[#083534]">
+      <div className="mx-auto grid max-w-[min(100%,72rem)] items-start gap-8 md:grid-cols-[0.9fr_1.1fr] md:gap-12">
         <div>
-          <p className="text-xs font-semibold uppercase tracking-[0.18em]">• {t.contact}</p>
-          <h2 className="heading-display mt-6 font-serif font-medium">
+          <p className="text-[11px] font-semibold uppercase tracking-[0.2em]">• {t.contact}</p>
+          <h2 className="mt-3 font-serif text-[clamp(1.5rem,1.1rem+1.2vw,2rem)] font-medium leading-[1.2]">
             {t.shareTitle.split("\n").map((line, index) => (
               <span key={line} className={index === 0 ? "block sm:whitespace-nowrap" : "block"}>
                 {line}
               </span>
             ))}
           </h2>
-          <p className="mt-8 max-w-md text-[15px] leading-7">{t.shareDescription}</p>
-          <a href="mailto:scentoria.la@gmail.com" className="mt-8 flex items-center gap-3 text-sm">
+          <p className="mt-4 max-w-md text-sm leading-6 md:text-[15px] md:leading-7">{t.shareDescription}</p>
+          <a href="mailto:scentoria.la@gmail.com" className="mt-6 flex items-center gap-3 text-sm">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
               <rect x="3" y="5" width="18" height="14" rx="1.5" />
               <path d="m4 7 8 6 8-6" />
@@ -45,8 +45,8 @@ export function ShareForm({ locale }: { locale: Locale }) {
           </a>
         </div>
 
-        <form ref={formRef} action={action} className="grid gap-5">
-          <div className="grid gap-5 sm:grid-cols-2">
+        <form ref={formRef} action={action} className="grid gap-4">
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
               {t.shareFullName}
               <input name="fullName" type="text" required placeholder={t.shareFullNamePh} className={fieldClass} />
@@ -56,7 +56,7 @@ export function ShareForm({ locale }: { locale: Locale }) {
               <input name="email" type="email" required placeholder={t.shareEmailPh} className={fieldClass} />
             </label>
           </div>
-          <div className="grid gap-5 sm:grid-cols-2">
+          <div className="grid gap-4 sm:grid-cols-2">
             <label className="text-[11px] font-semibold uppercase tracking-[0.12em]">
               {t.shareSubject}
               <input name="subject" type="text" required placeholder={t.shareSubjectPh} className={fieldClass} />
@@ -70,15 +70,15 @@ export function ShareForm({ locale }: { locale: Locale }) {
             {t.shareDetails}
             <textarea
               name="details"
-              rows={6}
+              rows={5}
               placeholder={t.shareDetailsPh}
-              className={`${fieldClass} h-auto min-h-[140px] py-3`}
+              className={`${fieldClass} h-auto min-h-[120px] py-3`}
             />
           </label>
           <button
             type="submit"
             disabled={pending}
-            className="mt-1 inline-flex w-fit rounded-[2px] bg-[#083534] px-8 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f2ea] disabled:opacity-60"
+            className="mt-1 inline-flex w-fit rounded-full bg-[#083534] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f7f2ea] transition hover:bg-[#0e4544] disabled:opacity-60"
           >
             {t.shareSubmit}
           </button>

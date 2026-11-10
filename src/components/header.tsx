@@ -46,9 +46,29 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   }, []);
 
   useEffect(() => {
-    document.body.style.overflow = menu ? "hidden" : "";
+    if (!menu) return;
+
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+
+    html.classList.add("overflow-hidden");
+    body.classList.add("overflow-hidden");
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+
     return () => {
-      document.body.style.overflow = "";
+      html.classList.remove("overflow-hidden");
+      body.classList.remove("overflow-hidden");
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
     };
   }, [menu]);
 
@@ -129,14 +149,20 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
         <QuoteBar />
       </div>
 
-      {/* Sticky bar keeps a fixed height — only opacity/color animate */}
+      {/* Sticky bar keeps a fixed height — only opacity/color animate.
+          When the mobile menu is open, pin the bar to the viewport so the close
+          control stays reachable after body scroll-lock shifts the document. */}
       <header
         ref={stickyRef}
-        className={`sticky top-0 z-40 overflow-visible transition-[background-color,box-shadow] duration-[350ms] ease-out ${
-          scrolled ? "bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]" : "bg-bg shadow-none"
+        className={`overflow-visible transition-[background-color,box-shadow] duration-[350ms] ease-out ${
+          menu
+            ? "fixed inset-x-0 top-0 z-[70] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
+            : scrolled
+              ? "sticky top-0 z-50 bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
+              : "sticky top-0 z-50 bg-bg shadow-none"
         }`}
       >
-        <div className="relative z-50 mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
+        <div className="relative z-[60] mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
             <SearchBox locale={locale} value={q} onChange={setQ} />
           </div>
@@ -146,7 +172,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
               aria-label={menu ? t.close : "Menu"}
               aria-expanded={menu}
               onClick={() => setMenu((v) => !v)}
-              className="flex h-9 w-9 shrink-0 items-center justify-center"
+              className="relative z-[80] flex h-11 w-11 shrink-0 items-center justify-center"
             >
               {menu ? (
                 <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
@@ -205,12 +231,12 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-1.5 text-[#143028] sm:gap-3 md:gap-4 xl:gap-5">
+          <div className="flex shrink-0 items-center justify-end gap-3 text-[#143028] sm:gap-3.5 md:gap-4 xl:gap-5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}
               data-wishlist-target
-              className="relative inline-flex"
+              className="relative inline-flex pr-1.5"
             >
               <svg viewBox="0 0 25 22" className="h-[18px] w-5 md:h-5 md:w-[22px]" aria-hidden>
                 <path
@@ -221,7 +247,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 />
               </svg>
               {wishlist.length > 0 ? (
-                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                <span className="absolute -right-0.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
                   {wishlist.length}
                 </span>
               ) : null}
@@ -230,14 +256,14 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             <Link
               href={path(locale, "/cart")}
               aria-label={t.cart}
-              className="relative inline-flex transition-colors hover:text-[#c5a059]"
+              className="relative inline-flex pr-1.5 transition-colors hover:text-[#c5a059]"
             >
               <svg viewBox="0 0 24 24" className="h-5 w-5 md:h-[22px] md:w-[22px]" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.2 8h11.6l-.9 10.2a1.2 1.2 0 0 1-1.2 1.1H8.3a1.2 1.2 0 0 1-1.2-1.1L6.2 8Z" />
                 <path strokeLinecap="round" d="M9 8V6.8A3 3 0 0 1 12 3.8 3 3 0 0 1 15 6.8V8" />
               </svg>
               {count > 0 ? (
-                <span className="absolute -right-2 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                <span className="absolute -right-0.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
                   {count}
                 </span>
               ) : null}
@@ -248,12 +274,24 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
 
         <div
           data-open={menu ? "true" : undefined}
-          className="absolute inset-x-0 top-full z-50 hidden max-h-[min(100dvh-4.5rem,100%)] overflow-y-auto overscroll-contain border-t border-line bg-white text-fg shadow-[0_16px_40px_rgba(9,54,35,0.18)] max-md:block max-md:pointer-events-none max-md:opacity-0 max-md:transition-opacity max-md:duration-200 max-md:data-[open]:pointer-events-auto max-md:data-[open]:opacity-100"
+          className="fixed inset-x-0 top-[3.75rem] z-[65] hidden h-[calc(100dvh-3.75rem)] overflow-y-auto overscroll-contain border-t border-[#e4ddd3] bg-white text-[#083534] max-md:block max-md:pointer-events-none max-md:invisible max-md:opacity-0 max-md:transition-[opacity,visibility] max-md:duration-200 max-md:data-[open]:pointer-events-auto max-md:data-[open]:visible max-md:data-[open]:opacity-100"
           aria-hidden={!menu}
         >
-          <div className="mx-auto flex min-h-full max-w-[min(100%,84.375rem)] flex-col px-8 pb-10 pt-6">
-            <div className="mx-2 mb-5">
-              <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+          <div className="mx-auto flex min-h-full w-full max-w-[min(100%,84.375rem)] flex-col px-5 pb-10 pt-5 sm:px-8 sm:pt-6">
+            <div className="mb-6 flex items-center gap-3">
+              <div className="min-w-0 flex-1">
+                <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
+              </div>
+              <button
+                type="button"
+                aria-label={t.close}
+                onClick={() => setMenu(false)}
+                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e4ddd3] text-[#083534] md:hidden"
+              >
+                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
             </div>
             <nav className="flex flex-col">
               {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
@@ -265,8 +303,8 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                     key={key}
                     href={href}
                     onClick={() => setMenu(false)}
-                    className={`border-b border-line py-3 text-center font-serif text-[18px] font-semibold uppercase tracking-[0.12em] ${
-                      sales ? "text-sale" : active ? "text-gold" : "text-fg"
+                    className={`border-b border-[#e4ddd3] py-3.5 text-center font-serif text-[18px] font-semibold uppercase tracking-[0.12em] ${
+                      sales ? "text-sale" : active ? "text-gold" : "text-[#083534]"
                     }`}
                   >
                     {t.nav[key]}
@@ -274,15 +312,15 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 );
               })}
             </nav>
-            <div className="mt-8 flex flex-col items-center gap-4 text-center">
-              <p className="font-serif text-base text-fg">{t.followUsShort}</p>
+            <div className="mt-auto flex flex-col items-center gap-4 pt-10 text-center">
+              <p className="font-serif text-base text-[#083534]">{t.followUsShort}</p>
               <div className="flex items-center gap-5">
                 <a
                   href="https://instagram.com"
                   target="_blank"
                   rel="noreferrer"
                   aria-label="Instagram"
-                  className="text-fg hover:text-gold"
+                  className="text-[#083534] hover:text-gold"
                 >
                   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
@@ -295,7 +333,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                   target="_blank"
                   rel="noreferrer"
                   aria-label="YouTube"
-                  className="text-fg hover:text-gold"
+                  className="text-[#083534] hover:text-gold"
                 >
                   <svg width="24" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
                     <path

@@ -1,5 +1,6 @@
 import { AuthForm } from "@/components/auth-form";
 import { localeFrom } from "@/lib/locale-params";
+import { Suspense } from "react";
 
 export default async function SignupPage({
   params,
@@ -7,5 +8,9 @@ export default async function SignupPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = await localeFrom(params);
-  return <AuthForm locale={locale} mode="signup" />;
+  return (
+    <Suspense fallback={null}>
+      <AuthForm locale={locale} mode="signup" />
+    </Suspense>
+  );
 }

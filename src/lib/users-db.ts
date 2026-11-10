@@ -3,14 +3,17 @@ import { expiryFrom, sessionIsExpired, SESSION_REMEMBER_MS } from "@/lib/securit
 import { randomBytes, scryptSync, timingSafeEqual } from "crypto";
 import mysql, { type Pool, type ResultSetHeader, type RowDataPacket } from "mysql2/promise";
 
+export type AuthProviderKind = "email" | "google" | "shopify";
+
 export type StoredUser = {
   id: number;
   email: string;
   name: string;
   image: string | null;
-  provider: "email" | "google";
+  provider: AuthProviderKind;
   passwordHash: string | null;
   googleSub: string | null;
+  shopifySub: string | null;
 };
 
 type UserRow = RowDataPacket & {
@@ -18,9 +21,10 @@ type UserRow = RowDataPacket & {
   email: string;
   name: string;
   image: string | null;
-  provider: "email" | "google";
+  provider: AuthProviderKind;
   password_hash: string | null;
   google_sub: string | null;
+  shopify_sub: string | null;
 };
 
 const boot = globalThis as typeof globalThis & { __scentoriaDevSessionsCleared?: boolean };
@@ -75,12 +79,24 @@ async function openDatabase() {
       provider VARCHAR(32) NOT NULL,
       password_hash TEXT NULL,
       google_sub VARCHAR(255) NULL,
+      shopify_sub VARCHAR(255) NULL,
       created_at VARCHAR(40) NOT NULL,
       PRIMARY KEY (id),
       UNIQUE KEY users_email_unique (email),
-      UNIQUE KEY users_google_sub_unique (google_sub)
+      UNIQUE KEY users_google_sub_unique (google_sub),
+      UNIQUE KEY users_shopify_sub_unique (shopify_sub)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci
   `);
+  try {
+    await next.query(`ALTER TABLE users ADD COLUMN shopify_sub VARCHAR(255) NULL`);
+  } catch {
+    /* column may already exist */
+  }
+  try {
+    await next.query(`CREATE UNIQUE INDEX users_shopify_sub_unique ON users (shopify_sub)`);
+  } catch {
+    /* index may already exist */
+  }
   await next.query(`
     CREATE TABLE IF NOT EXISTS sessions (
       token VARCHAR(64) NOT NULL,
@@ -160,7 +176,7 @@ async function run(sql: string, params: SqlValue[] = []) {
   return result;
 }
 
-const USER_COLUMNS = "id, email, name, image, provider, password_hash, google_sub";
+const USER_COLUMNS = "id, email, name, image, provider, password_hash, google_sub, shopify_sub";
 
 function mapUser(row: UserRow): StoredUser {
   return {
@@ -171,6 +187,7 @@ function mapUser(row: UserRow): StoredUser {
     provider: row.provider,
     passwordHash: row.password_hash,
     googleSub: row.google_sub,
+    shopifySub: row.shopify_sub ?? null,
   };
 }
 
@@ -201,7 +218,7 @@ export async function findUserByEmail(email: string) {
 export async function findUserBySession(token: string) {
   const row = await first<UserRow & { expires_at: string | null }>(
     `SELECT users.id, users.email, users.name, users.image, users.provider, users.password_hash,
-            users.google_sub, sessions.expires_at
+            users.google_sub, users.shopify_sub, sessions.expires_at
      FROM sessions JOIN users ON users.id = sessions.user_id
      WHERE sessions.token = ?`,
     [token],
@@ -229,18 +246,43 @@ export async function attachGoogleSub(id: number, sub: string) {
   return findUserByEmail(current.email);
 }
 
+export async function findUserByShopifySub(sub: string) {
+  const row = await first<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE shopify_sub = ?`, [sub]);
+  return row ? mapUser(row) : undefined;
+}
+
+export async function attachShopifySub(id: number, sub: string) {
+  const current = await first<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?`, [id]);
+  if (!current) return undefined;
+  if (current.shopify_sub && current.shopify_sub !== sub) return undefined;
+  const taken = await findUserByShopifySub(sub);
+  if (taken && taken.id !== id) return undefined;
+  await run("UPDATE users SET shopify_sub = ? WHERE id = ?", [sub, id]);
+  return findUserByEmail(current.email);
+}
+
 export async function createUser(input: {
   email: string;
   name: string;
   image?: string;
-  provider: "email" | "google";
+  provider: AuthProviderKind;
   passwordHash?: string;
   googleSub?: string;
+  shopifySub?: string;
 }) {
   const email = input.email.trim().toLowerCase();
   await run(
-    "INSERT INTO users (email, name, image, provider, password_hash, google_sub, created_at) VALUES (?, ?, ?, ?, ?, ?, ?)",
-    [email, input.name.trim(), input.image ?? null, input.provider, input.passwordHash ?? null, input.googleSub ?? null, new Date().toISOString()],
+    "INSERT INTO users (email, name, image, provider, password_hash, google_sub, shopify_sub, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      email,
+      input.name.trim(),
+      input.image ?? null,
+      input.provider,
+      input.passwordHash ?? null,
+      input.googleSub ?? null,
+      input.shopifySub ?? null,
+      new Date().toISOString(),
+    ],
   );
   const user = await findUserByEmail(email);
   if (!user) throw new Error("Could not save the account");
@@ -249,7 +291,7 @@ export async function createUser(input: {
 
 export async function updateUser(
   id: number,
-  input: { name?: string; image?: string | null; provider?: "email" | "google"; passwordHash?: string | null },
+  input: { name?: string; image?: string | null; provider?: AuthProviderKind; passwordHash?: string | null },
 ) {
   const current = await first<UserRow>(`SELECT ${USER_COLUMNS} FROM users WHERE id = ?`, [id]);
   if (!current) return undefined;

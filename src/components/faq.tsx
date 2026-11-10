@@ -14,22 +14,28 @@ export function Faq({
   const t = getDict(locale);
   const [open, setOpen] = useState<number | null>(0);
   return (
-    <section className="mx-auto max-w-6xl px-4 section-pad-y">
-      <h2 className="font-serif text-[clamp(28px,6vw,48px)] text-center leading-snug">{t.faq}</h2>
-      <p className="text-center text-[clamp(14px,3.4vw,22px)] text-muted mt-3 mb-8 md:mb-10">{t.faqSub}</p>
-      <div className="divide-y divide-line border-y border-line">
+    <section className="mx-auto w-full max-w-[min(100%,48rem)] px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.25rem)]">
+      <div className="mx-auto max-w-2xl text-center">
+        <h2 className="font-serif text-[clamp(1.5rem,1.1rem+1.2vw,2rem)] font-medium leading-[1.2] text-[#083534]">
+          {t.faq}
+        </h2>
+        <p className="mt-3 text-sm leading-6 text-[#083534]/70 md:text-[15px]">{t.faqSub}</p>
+      </div>
+      <div className="mt-8 divide-y divide-[#e4ddd3] border-y border-[#e4ddd3]">
         {items.map((item, i) => (
           <button
             key={item.question}
             type="button"
-            className="w-full text-left py-5"
+            className="w-full py-4 text-left md:py-5"
             onClick={() => setOpen(open === i ? null : i)}
           >
             <div className="flex justify-between gap-4">
-              <span className="text-base font-medium leading-snug md:text-lg">{item.question}</span>
-              <span className="text-xl text-gold">{open === i ? "–" : "+"}</span>
+              <span className="text-sm font-medium leading-snug text-[#083534] md:text-base">{item.question}</span>
+              <span className="text-lg leading-none text-[#c5a059]">{open === i ? "–" : "+"}</span>
             </div>
-            {open === i ? <p className="mt-3 text-[15px] text-muted leading-relaxed md:text-base">{item.answer}</p> : null}
+            {open === i ? (
+              <p className="mt-3 text-sm leading-6 text-[#083534]/70 md:text-[15px] md:leading-7">{item.answer}</p>
+            ) : null}
           </button>
         ))}
       </div>

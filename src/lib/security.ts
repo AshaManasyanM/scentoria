@@ -78,13 +78,13 @@ export function securityHeaders() {
     "base-uri 'self'",
     "object-src 'none'",
     "frame-ancestors 'none'",
-    "frame-src https://accounts.google.com",
-    "form-action 'self'",
+    "frame-src https://accounts.google.com https://shopify.com https://*.shopify.com",
+    "form-action 'self' https://shopify.com https://*.shopify.com",
     "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://accounts.google.com",
     "style-src 'self' 'unsafe-inline' https://accounts.google.com",
     "img-src 'self' data: blob: https://cdn.shopify.com https://images.unsplash.com https://*.googleusercontent.com https://www.gstatic.com https://accounts.google.com",
     "font-src 'self'",
-    "connect-src 'self' https://accounts.google.com",
+    "connect-src 'self' https://accounts.google.com https://shopify.com https://*.shopify.com https://*.myshopify.com",
   ].join("; ");
 
   return [

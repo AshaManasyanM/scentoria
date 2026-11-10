@@ -20,20 +20,22 @@ export function NoteGrid({
 
   return (
     <>
-      <div className="mt-10 grid grid-cols-2 gap-4 md:grid-cols-4 md:gap-5">
+      <div className="mt-8 grid grid-cols-2 gap-3 md:grid-cols-4 md:gap-4">
         {visible.map((note) => (
           <NoteTile key={note.key} href={note.href} image={note.image} label={note.label} variant="home" />
         ))}
       </div>
       {canToggle ? (
-        <button
-          type="button"
-          aria-expanded={open}
-          onClick={() => setOpen((current) => !current)}
-          className="mt-8 inline-flex rounded-[2px] bg-[#083534] px-5 py-3 text-xs font-semibold uppercase tracking-[0.12em] text-[#f7f2ea]"
-        >
-          {open ? showLessLabel : viewAllLabel}
-        </button>
+        <div className="text-center">
+          <button
+            type="button"
+            aria-expanded={open}
+            onClick={() => setOpen((current) => !current)}
+            className="mt-8 inline-flex rounded-full bg-[#083534] px-6 py-3 text-[11px] font-semibold uppercase tracking-[0.12em] text-[#f7f2ea] transition hover:bg-[#0e4544]"
+          >
+            {open ? showLessLabel : viewAllLabel}
+          </button>
+        </div>
       ) : null}
     </>
   );

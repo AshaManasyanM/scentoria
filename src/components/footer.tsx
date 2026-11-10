@@ -27,21 +27,26 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
   return (
     <footer className="mt-auto bg-[#083534] text-[#f7f2ea]">
       <div className="mx-auto grid max-w-[min(100%,80rem)] gap-8 px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2.5rem,4vw,3.5rem)] md:grid-cols-[1.1fr_0.8fr_0.8fr_1fr] md:gap-10 xl:gap-12">
-        <div>
-          <Link href={path(locale)} className="inline-block">
-            <Image
-              src="/brand/scentoria-prive.png"
-              alt={t.brand}
-              width={112}
-              height={112}
-              className="h-14 w-14 object-contain"
-            />
-          </Link>
-          <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#c5a059]">{t.footerSlogan}</p>
+        <div className="text-center md:text-left">
+          <div className="inline-flex flex-col items-center">
+            <Link href={path(locale)} className="inline-flex">
+              <Image
+                src="/brand/scentoria-prive.png"
+                alt={t.brand}
+                width={220}
+                height={180}
+                unoptimized
+                className="h-16 w-auto object-contain object-center md:h-[4.5rem]"
+              />
+            </Link>
+            <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.28em] text-[#c5a059]">
+              {t.footerSlogan}
+            </p>
+          </div>
           <p className="mt-4 text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">
             {t.footerJoin}
           </p>
-          <div className="mt-4 flex gap-3">
+          <div className="mt-4 flex justify-center gap-3 md:justify-start">
             <Link
               href={path(locale, "/signup")}
               className="inline-flex rounded-[2px] bg-[#c5a059] px-5 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"

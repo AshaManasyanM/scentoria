@@ -27,7 +27,7 @@ function publicUser(user: {
   name: string;
   email: string;
   image: string | null;
-  provider: "email" | "google";
+  provider: "email" | "google" | "shopify";
   googleSub: string | null;
 }) {
   return {

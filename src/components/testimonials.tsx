@@ -37,14 +37,16 @@ export function Testimonials({
   }
 
   return (
-    <section className={`mx-auto w-full px-4 section-pad-y ${width}`}>
-      <p className="text-xs font-semibold uppercase tracking-[0.18em] text-[#c5a059]">{eyebrow}</p>
-      {heading ? (
-        <h2 className="mt-4 max-w-[min(100%,80rem)] heading-section font-serif font-medium text-[#083534]">
-          {heading}
-        </h2>
-      ) : null}
-      <div className={`relative ${heading ? "mt-10" : "mt-6"}`}>
+    <section className={`mx-auto w-full px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.25rem)] ${width}`}>
+      <div className="mx-auto max-w-2xl text-center">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-[#c5a059]">{eyebrow}</p>
+        {heading ? (
+          <h2 className="mt-3 font-serif text-[clamp(1.5rem,1.1rem+1.2vw,2rem)] font-medium leading-[1.2] text-[#083534]">
+            {heading}
+          </h2>
+        ) : null}
+      </div>
+      <div className={`relative ${heading ? "mt-8" : "mt-6"}`}>
         {slides ? (
           <>
             <button
@@ -74,7 +76,7 @@ export function Testimonials({
         <div className={`overflow-hidden ${slides ? "mx-14" : ""}`}>
           <div
             className={`transition-transform duration-300 ease-out ${
-              slides ? "flex" : count === 3 ? "grid gap-5 md:grid-cols-3" : count === 2 ? "grid gap-5 md:grid-cols-2" : "grid grid-cols-1"
+              slides ? "flex" : count === 3 ? "grid gap-3 md:grid-cols-3 md:gap-4" : count === 2 ? "grid gap-3 md:grid-cols-2 md:gap-4" : "grid grid-cols-1"
             }`}
             style={
               slides
@@ -96,12 +98,12 @@ export function Testimonials({
             {items.map((item, card) => (
               <blockquote
                 key={`${item.name}-${item.product}-${card}`}
-                className="h-full rounded-md border border-[#e4ddd2] bg-white px-5 py-6 text-[#083534] md:px-6 md:py-7"
+                className="h-full rounded-2xl border border-[#e4ddd2] bg-white px-5 py-5 text-[#083534] md:px-6 md:py-6"
                 style={slides ? { flex: `0 0 calc((100% - ${(perView - 1) * gap}px) / ${perView})` } : undefined}
               >
-                <p className="text-xs font-bold uppercase tracking-[0.08em]">{item.product}</p>
-                <p className="mt-4 text-[15px] leading-7">“{item.text}”</p>
-                <p className="mt-8 text-xs font-bold uppercase tracking-[0.08em] text-[#c5a059]">{item.name}</p>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#083534]/70">{item.product}</p>
+                <p className="mt-3 text-sm leading-6 md:text-[15px] md:leading-7">“{item.text}”</p>
+                <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#c5a059]">{item.name}</p>
               </blockquote>
             ))}
           </div>

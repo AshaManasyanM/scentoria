@@ -52,7 +52,7 @@ function Steps({ labels, active }: { labels: string[]; active: number }) {
 
 function TrashIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
+    <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden="true">
       <path strokeLinecap="round" d="M4 7h16" />
       <path strokeLinecap="round" d="M9 7V5.5A1.5 1.5 0 0 1 10.5 4h3A1.5 1.5 0 0 1 15 5.5V7" />
       <path strokeLinecap="round" strokeLinejoin="round" d="M6.5 7l.8 12.2A1.5 1.5 0 0 0 8.8 20.5h6.4a1.5 1.5 0 0 0 1.5-1.3L17.5 7" />
@@ -384,7 +384,6 @@ export default function CartPage() {
                   >
                     {t.buyNow} →
                   </a>
-                  {!loggedIn ? <p className="text-center text-xs text-white/60">{t.loginToCheckout}</p> : null}
                 </div>
               ) : (
                 <p className="mt-5 text-center text-sm leading-6 text-white/70">
@@ -1093,7 +1092,7 @@ function OrderLine({
       : null;
 
   return (
-    <div className="flex flex-wrap items-center gap-4 sm:gap-8">
+    <div className="flex items-start gap-3 sm:items-center sm:gap-6">
       <Link
         href={path(locale, `/products/${line.handle}`)}
         className="flex h-[88px] w-[88px] shrink-0 items-center justify-center rounded-2xl bg-white p-2"
@@ -1102,36 +1101,47 @@ function OrderLine({
           <Image src={line.image} alt="" width={72} height={72} className="h-full w-full object-contain" />
         ) : null}
       </Link>
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <Link href={path(locale, `/products/${line.handle}`)} className="block text-lg font-medium leading-6">
           {line.title}
         </Link>
         {meta ? <p className="mt-1 text-sm text-white/60">{meta}</p> : null}
-        <div className="mt-3 inline-flex items-center gap-2.5 rounded-full bg-black/20 px-2.5 py-1.5 text-sm">
+        <div className="mt-3 inline-flex items-center gap-1 rounded-full bg-black/20 px-1.5 py-1 text-base">
           <button
             type="button"
-            onClick={() => onQty(line.id, line.quantity - 1)}
-            className="flex h-6 w-6 items-center justify-center text-white"
-            aria-label={line.quantity === 1 ? removeLabel : "Decrease quantity"}
+            onClick={() => onQty(line.id, Math.max(1, line.quantity - 1))}
+            disabled={line.quantity <= 1}
+            className="flex h-8 w-8 items-center justify-center text-lg leading-none text-white disabled:opacity-40"
+            aria-label="Decrease quantity"
           >
-            {line.quantity === 1 ? <TrashIcon /> : "−"}
+            −
           </button>
-          <span className="min-w-3 text-center">{line.quantity}</span>
+          <span className="min-w-6 text-center text-base font-medium tabular-nums">{line.quantity}</span>
           <button
             type="button"
             onClick={() => onQty(line.id, line.quantity + 1)}
-            className="flex h-6 w-6 items-center justify-center text-lg leading-none"
+            className="flex h-8 w-8 items-center justify-center text-lg leading-none"
             aria-label="Increase quantity"
           >
             +
           </button>
         </div>
       </div>
-      <div className="shrink-0 sm:ml-4">
-        <p className="text-lg font-medium">{formatMoney(linePrice, locale)}</p>
-        {lineCompare ? (
-          <p className="text-sm text-white/45 line-through">{formatMoney(lineCompare, locale)}</p>
-        ) : null}
+      <div className="flex shrink-0 flex-col items-end gap-3 self-stretch sm:ml-2 sm:justify-between">
+        <button
+          type="button"
+          onClick={() => onQty(line.id, 0)}
+          className="flex h-10 w-10 items-center justify-center text-white/80 transition hover:text-white"
+          aria-label={removeLabel}
+        >
+          <TrashIcon />
+        </button>
+        <div className="flex flex-wrap items-baseline justify-end gap-x-2 whitespace-nowrap">
+          <p className="text-lg font-medium">{formatMoney(linePrice, locale)}</p>
+          {lineCompare ? (
+            <p className="text-sm text-white/45 line-through">{formatMoney(lineCompare, locale)}</p>
+          ) : null}
+        </div>
       </div>
     </div>
   );
