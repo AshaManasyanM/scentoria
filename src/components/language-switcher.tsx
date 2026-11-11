@@ -50,14 +50,14 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
   }, []);
 
   return (
-    <div className="relative z-50">
+    <div className="relative z-50 inline-flex h-10 w-10 items-center justify-center">
       <button
         type="button"
         aria-expanded={open}
         aria-haspopup="listbox"
         aria-label={current.label}
         onClick={() => setOpen((value) => !value)}
-        className="inline-flex h-5 items-center md:h-[22px]"
+        className="inline-flex h-10 w-10 items-center justify-center"
       >
         <span className="inline-flex overflow-hidden rounded-[2px] ring-1 ring-[#d8d0c4]">
           <Flag locale={locale} />

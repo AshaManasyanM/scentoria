@@ -37,12 +37,14 @@ function SelectField({
   placeholder,
   options,
   onChange,
+  className = "",
 }: {
   label: string;
   value: string;
   placeholder: string;
   options: { value: string; label: string }[];
   onChange: (value: string) => void;
+  className?: string;
 }) {
   const [open, setOpen] = useState(false);
   const rootRef = useRef<HTMLDivElement>(null);
@@ -57,7 +59,7 @@ function SelectField({
   }, []);
 
   return (
-    <div ref={rootRef} className="relative">
+    <div ref={rootRef} className={`relative ${className}`}>
       <p className="text-sm text-[#083534]">{label}</p>
       <button
         type="button"
@@ -204,7 +206,7 @@ function PriceRangeField({
   const highPct = ((max - bounds.min) / span) * 100;
 
   return (
-    <div className="mt-5 border-b border-[#D8D0C4] pb-4">
+    <div className="border-b border-[#D8D0C4] py-4">
       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#083534]">{label}</p>
       <p className="mt-3 text-sm text-[#083534]">
         {money(min)} – {money(max)}
@@ -254,6 +256,12 @@ function PriceRangeField({
 
 const filterKeys = ["gender", "note", "season", "size"] as const;
 
+type Draft = {
+  selected: Record<string, string[]>;
+  priceMin: number;
+  priceMax: number;
+};
+
 export function ProductFilters({
   locale,
   groups,
@@ -276,6 +284,10 @@ export function ProductFilters({
     size: searchParams.getAll("size"),
   };
   const [open, setOpen] = useState<Record<string, boolean>>({});
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [drawerVisible, setDrawerVisible] = useState(false);
+  const [drawerEntered, setDrawerEntered] = useState(false);
+  const [draft, setDraft] = useState<Draft | null>(null);
   const searchText = searchParams.get("q") ?? "";
   const rawMin = searchParams.get("minPrice");
   const rawMax = searchParams.get("maxPrice");
@@ -285,7 +297,6 @@ export function ProductFilters({
     Number.isFinite(parsedMin)
       ? Math.min(Math.max(parsedMin, priceBounds.min), priceBounds.max)
       : priceBounds.min;
-  // Ignore a lone maxPrice=0 left by Number(null) parsing — treat as full range.
   const priceMax =
     Number.isFinite(parsedMax) && !(parsedMax === 0 && !Number.isFinite(parsedMin) && priceBounds.max > 0)
       ? Math.min(Math.max(parsedMax, priceBounds.min), priceBounds.max)
@@ -299,8 +310,54 @@ export function ProductFilters({
     searchParams.getAll("brand").length > 0 ||
     filterKeys.some((key) => selected[key]?.length);
 
+  const sortOptions = [
+    { value: "price-asc", label: t.sortPriceAsc },
+    { value: "price-desc", label: t.sortPriceDesc },
+    { value: "name", label: t.sortName },
+    { value: "new", label: t.sortNew },
+  ];
+
+  useEffect(() => {
+    if (!drawerVisible) return;
+    const html = document.documentElement;
+    const body = document.body;
+    const scrollY = window.scrollY;
+    html.classList.add("overflow-hidden");
+    body.classList.add("overflow-hidden");
+    body.style.position = "fixed";
+    body.style.top = `-${scrollY}px`;
+    body.style.left = "0";
+    body.style.right = "0";
+    body.style.width = "100%";
+    return () => {
+      html.classList.remove("overflow-hidden");
+      body.classList.remove("overflow-hidden");
+      body.style.position = "";
+      body.style.top = "";
+      body.style.left = "";
+      body.style.right = "";
+      body.style.width = "";
+      window.scrollTo(0, scrollY);
+    };
+  }, [drawerVisible]);
+
+  useEffect(() => {
+    if (!drawerVisible || !drawerOpen) return;
+    const frame = requestAnimationFrame(() => setDrawerEntered(true));
+    return () => cancelAnimationFrame(frame);
+  }, [drawerVisible, drawerOpen]);
+
   function toggle(list: string[], value: string, checked: boolean) {
     return checked ? [...list, value] : list.filter((item) => item !== value);
+  }
+
+  function closeDrawer() {
+    setDrawerEntered(false);
+    setDrawerOpen(false);
+    window.setTimeout(() => {
+      setDrawerVisible(false);
+      setDraft(null);
+    }, 280);
   }
 
   function navigate(next: {
@@ -333,37 +390,72 @@ export function ProductFilters({
     scrollToCatalog();
   }
 
-  return (
-    <aside className="w-full shrink-0 rounded-md border border-[#D8D0C4] bg-[#F7F2EA] px-5 py-5 lg:sticky lg:top-20 lg:max-h-[calc(100dvh-5.5rem)] lg:w-[280px] lg:self-start lg:overflow-y-auto">
-      <SelectField
-        label={t.sortBy}
-        value={sort}
-        placeholder={t.sortSelect}
-        onChange={(value) => navigate({ sort: value })}
-        options={[
-          { value: "price-asc", label: t.sortPriceAsc },
-          { value: "price-desc", label: t.sortPriceDesc },
-          { value: "name", label: t.sortName },
-          { value: "new", label: t.sortNew },
-        ]}
-      />
+  function openDrawer() {
+    setDraft({
+      selected: {
+        note: [...selected.note],
+        gender: [...selected.gender],
+        season: [...selected.season],
+        size: [...selected.size],
+      },
+      priceMin,
+      priceMax,
+    });
+    setDrawerEntered(false);
+    setDrawerVisible(true);
+    setDrawerOpen(true);
+  }
 
-      {hasPriceSlider ? (
-        <PriceRangeField
-          label={t.filterPrice}
-          locale={locale}
-          bounds={priceBounds}
-          valueMin={Math.min(priceMin, priceMax)}
-          valueMax={Math.max(priceMin, priceMax)}
-          onCommit={(min, max) => navigate({ priceMin: min, priceMax: max })}
-        />
-      ) : null}
+  function applyDraft() {
+    if (!draft) return;
+    navigate({
+      selected: draft.selected,
+      priceMin: draft.priceMin,
+      priceMax: draft.priceMax,
+    });
+    closeDrawer();
+  }
 
-      {searchText ? <p className="mt-4 text-sm text-[#083534]">{t.search}: {searchText}</p> : null}
+  function resetDraft() {
+    setDraft({
+      selected: { note: [], gender: [], season: [], size: [] },
+      priceMin: priceBounds.min,
+      priceMax: priceBounds.max,
+    });
+    clear();
+    closeDrawer();
+  }
 
-      <div className="mt-4">
+  const activeSelected = draft?.selected ?? selected;
+  const activePriceMin = draft?.priceMin ?? priceMin;
+  const activePriceMax = draft?.priceMax ?? priceMax;
+
+  function renderGroups(mode: "live" | "draft") {
+    return (
+      <>
+        {hasPriceSlider ? (
+          <PriceRangeField
+            label={t.filterPrice}
+            locale={locale}
+            bounds={priceBounds}
+            valueMin={Math.min(activePriceMin, activePriceMax)}
+            valueMax={Math.max(activePriceMin, activePriceMax)}
+            onCommit={(min, max) => {
+              if (mode === "draft") {
+                setDraft((current) =>
+                  current
+                    ? { ...current, priceMin: min, priceMax: max }
+                    : { selected, priceMin: min, priceMax: max },
+                );
+                return;
+              }
+              navigate({ priceMin: min, priceMax: max });
+            }}
+          />
+        ) : null}
+
         {groups.map((group) => {
-          const values = selected[group.id] ?? [];
+          const values = activeSelected[group.id] ?? [];
           return (
             <Group
               key={group.id}
@@ -377,33 +469,135 @@ export function ProductFilters({
                     key={item.value}
                     label={item.label}
                     checked={values.includes(item.value)}
-                    onChange={(checked) =>
-                      navigate({
-                        selected: {
-                          ...selected,
-                          [group.id]: toggle(values, item.value, checked),
-                        },
-                      })
-                    }
+                    onChange={(checked) => {
+                      const nextSelected = {
+                        ...activeSelected,
+                        [group.id]: toggle(values, item.value, checked),
+                      };
+                      if (mode === "draft") {
+                        setDraft((current) =>
+                          current
+                            ? { ...current, selected: nextSelected }
+                            : { selected: nextSelected, priceMin, priceMax },
+                        );
+                        return;
+                      }
+                      navigate({ selected: nextSelected });
+                    }}
                   />
                 ))}
               </div>
             </Group>
           );
         })}
+      </>
+    );
+  }
+
+  return (
+    <>
+      {/* Mobile: Sort + Filter bar */}
+      <div className="mb-6 flex items-end gap-3 lg:hidden">
+        <SelectField
+          className="min-w-0 flex-1"
+          label={t.sortBy}
+          value={sort}
+          placeholder={t.sortSelect}
+          onChange={(value) => navigate({ sort: value })}
+          options={sortOptions}
+        />
+        <button
+          type="button"
+          onClick={openDrawer}
+          className="inline-flex h-11 shrink-0 items-center gap-2 rounded-[2px] border border-[#D8D0C4] bg-white px-4 text-sm text-[#083534]"
+        >
+          {t.filter}
+          <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
+            <path d="M4 7h16M7 12h10M10 17h4" strokeLinecap="round" />
+          </svg>
+        </button>
       </div>
 
-      {hasFilters ? (
-        <div className="mt-5">
+      {/* Mobile filter sheet */}
+      {drawerVisible ? (
+        <div className="fixed inset-0 z-[80] lg:hidden" role="dialog" aria-modal="true" aria-label={t.filter}>
           <button
             type="button"
-            onClick={clear}
-            className="inline-flex w-full items-center justify-center rounded-[2px] border border-[#D8D0C4] bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"
+            aria-label={t.close}
+            className={`absolute inset-0 bg-[#083534]/40 transition-opacity duration-[280ms] ease-out ${
+              drawerEntered ? "opacity-100" : "opacity-0"
+            }`}
+            onClick={closeDrawer}
+          />
+          <div
+            className={`absolute inset-x-0 bottom-0 flex max-h-[72dvh] flex-col rounded-t-2xl bg-white shadow-[0_-12px_40px_rgba(8,53,52,0.18)] transition-transform duration-[280ms] ease-[cubic-bezier(0.22,1,0.36,1)] ${
+              drawerEntered ? "translate-y-0" : "translate-y-full"
+            }`}
           >
-            {t.filterClear}
-          </button>
+            <div className="mx-auto mt-3 h-1 w-10 shrink-0 rounded-full bg-[#D8D0C4]" aria-hidden />
+            <div className="flex items-center justify-between border-b border-[#D8D0C4] px-5 py-3">
+              <h2 className="font-serif text-xl text-[#083534]">{t.filter}</h2>
+              <button
+                type="button"
+                aria-label={t.close}
+                onClick={closeDrawer}
+                className="inline-flex h-10 w-10 items-center justify-center text-[#083534]"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              </button>
+            </div>
+            <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 pb-4">
+              {searchText ? <p className="mt-4 text-sm text-[#083534]">{t.search}: {searchText}</p> : null}
+              {renderGroups("draft")}
+            </div>
+            <div className="shrink-0 space-y-3 border-t border-[#D8D0C4] bg-white px-5 py-4 pb-[max(1rem,env(safe-area-inset-bottom))]">
+              <button
+                type="button"
+                onClick={resetDraft}
+                className="inline-flex w-full items-center justify-center rounded-[2px] border border-[#D8D0C4] bg-[#F0EBE3] px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"
+              >
+                {t.filterReset}
+              </button>
+              <button
+                type="button"
+                onClick={applyDraft}
+                className="inline-flex w-full items-center justify-center rounded-[2px] bg-[#083534] px-4 py-3 text-xs font-semibold uppercase tracking-[0.08em] text-[#f7f2ea]"
+              >
+                {t.filterApply}
+              </button>
+            </div>
+          </div>
         </div>
       ) : null}
-    </aside>
+
+      {/* Desktop sidebar */}
+      <aside className="hidden w-full shrink-0 rounded-md border border-[#D8D0C4] bg-[#F7F2EA] px-5 py-5 lg:sticky lg:top-20 lg:block lg:max-h-[calc(100dvh-5.5rem)] lg:w-[280px] lg:self-start lg:overflow-y-auto">
+        <SelectField
+          label={t.sortBy}
+          value={sort}
+          placeholder={t.sortSelect}
+          onChange={(value) => navigate({ sort: value })}
+          options={sortOptions}
+        />
+
+        {searchText ? <p className="mt-4 text-sm text-[#083534]">{t.search}: {searchText}</p> : null}
+
+        <div className="mt-4">{renderGroups("live")}</div>
+
+        {hasFilters ? (
+          <div className="mt-5">
+            <button
+              type="button"
+              onClick={clear}
+              className="inline-flex w-full items-center justify-center rounded-[2px] border border-[#D8D0C4] bg-white px-4 py-2.5 text-xs font-semibold uppercase tracking-[0.08em] text-[#083534]"
+            >
+              {t.filterClear}
+            </button>
+          </div>
+        ) : null}
+      </aside>
+    </>
   );
 }

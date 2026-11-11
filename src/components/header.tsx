@@ -23,6 +23,12 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const { count } = useCart();
   const { items: wishlist } = useWishlist();
   const [menu, setMenu] = useState(false);
+  const [menuShown, setMenuShown] = useState(false);
+  const [menuIn, setMenuIn] = useState(false);
+  const [searchOpen, setSearchOpen] = useState(false);
+  const [searchShown, setSearchShown] = useState(false);
+  const [searchIn, setSearchIn] = useState(false);
+  const [overlayQuoteTop, setOverlayQuoteTop] = useState(0);
   const [q, setQ] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -31,13 +37,106 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const quoteRef = useRef<HTMLDivElement>(null);
   const stickyRef = useRef<HTMLElement>(null);
   const navSentinelRef = useRef<HTMLDivElement>(null);
+  const menuTimer = useRef<number | null>(null);
+  const searchTimer = useRef<number | null>(null);
 
   const home = path(locale);
   const isHome = pathname === home || pathname === `${home}/`;
+  const overlayOpen = menu || searchOpen || menuShown || searchShown;
+
+  function measureQuoteTop() {
+    const quoteVisible = !scrolled && (quoteRef.current?.getBoundingClientRect().bottom ?? 0) > 0;
+    return quoteVisible ? quoteRef.current?.offsetHeight ?? 0 : 0;
+  }
+
+  function clearTimer(ref: { current: number | null }) {
+    if (ref.current != null) {
+      window.clearTimeout(ref.current);
+      ref.current = null;
+    }
+  }
+
+  function closeOverlays() {
+    clearTimer(menuTimer);
+    clearTimer(searchTimer);
+    setMenu(false);
+    setMenuIn(false);
+    setMenuShown(false);
+    setSearchOpen(false);
+    setSearchIn(false);
+    setSearchShown(false);
+    setOverlayQuoteTop(0);
+  }
+
+  function closeSearch() {
+    setSearchOpen(false);
+    setSearchIn(false);
+    clearTimer(searchTimer);
+    searchTimer.current = window.setTimeout(() => {
+      setSearchShown(false);
+      if (!menu && !menuShown) setOverlayQuoteTop(0);
+    }, 300);
+  }
+
+  function closeMenu() {
+    setMenu(false);
+    setMenuIn(false);
+    clearTimer(menuTimer);
+    menuTimer.current = window.setTimeout(() => {
+      setMenuShown(false);
+      if (!searchOpen && !searchShown) setOverlayQuoteTop(0);
+    }, 300);
+  }
+
+  function openSearch() {
+    clearTimer(menuTimer);
+    setMenu(false);
+    setMenuIn(false);
+    setMenuShown(false);
+    clearTimer(searchTimer);
+    setOverlayQuoteTop(measureQuoteTop());
+    setSearchShown(true);
+    setSearchIn(false);
+    setSearchOpen(true);
+  }
+
+  function openMenu() {
+    clearTimer(searchTimer);
+    setSearchOpen(false);
+    setSearchIn(false);
+    setSearchShown(false);
+    clearTimer(menuTimer);
+    setOverlayQuoteTop(measureQuoteTop());
+    setMenuShown(true);
+    setMenuIn(false);
+    setMenu(true);
+  }
+
+  function toggleSearch() {
+    if (searchOpen) closeSearch();
+    else openSearch();
+  }
+
+  function toggleMenu() {
+    if (menu) closeMenu();
+    else openMenu();
+  }
 
   useEffect(() => {
-    setMenu(false);
+    closeOverlays();
   }, [pathname]);
+
+  useEffect(() => {
+    if (!menuShown || !menu) return;
+    const frame = requestAnimationFrame(() => setMenuIn(true));
+    return () => cancelAnimationFrame(frame);
+  }, [menuShown, menu]);
+
+  useEffect(() => {
+    if (!searchShown || !searchOpen) return;
+    const frame = requestAnimationFrame(() => setSearchIn(true));
+    return () => cancelAnimationFrame(frame);
+  }, [searchShown, searchOpen]);
 
   useEffect(() => {
     const query = window.matchMedia("(min-width: 768px)");
@@ -55,7 +154,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   }, []);
 
   useEffect(() => {
-    if (!menu) return;
+    if (!overlayOpen) return;
 
     const html = document.documentElement;
     const body = document.body;
@@ -79,7 +178,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
       body.style.width = "";
       window.scrollTo(0, scrollY);
     };
-  }, [menu]);
+  }, [overlayOpen]);
 
   // White header/menu as soon as the quote bar is gone.
   useEffect(() => {
@@ -154,18 +253,25 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
 
   return (
     <>
-      <div ref={quoteRef}>
+      <div ref={quoteRef} className={overlayOpen && overlayQuoteTop > 0 ? "max-md:invisible" : undefined}>
         <QuoteBar />
       </div>
 
       {/* Sticky bar keeps a fixed height — only opacity/color animate.
-          When the mobile menu is open, pin the bar to the viewport so the close
+          When a mobile overlay is open, pin the bar to the viewport so the close
           control stays reachable after body scroll-lock shifts the document. */}
+      {overlayOpen && overlayQuoteTop > 0 ? (
+        <div className="fixed inset-x-0 top-0 z-[72] md:hidden" aria-hidden>
+          <QuoteBar />
+        </div>
+      ) : null}
+
       <header
         ref={stickyRef}
+        style={overlayOpen ? { top: overlayQuoteTop } : undefined}
         className={`overflow-visible transition-[background-color,box-shadow,border-color] duration-[350ms] ease-out ${
-          menu
-            ? "fixed inset-x-0 top-0 z-[70] border-b-2 border-[#C9BEB0] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
+          overlayOpen
+            ? "fixed inset-x-0 z-[70] border-b-2 border-[#C9BEB0] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
             : scrolled
               ? "sticky top-0 z-50 border-b-2 border-[#C9BEB0] bg-white shadow-[0_8px_24px_rgba(8,53,52,0.12)]"
               : "sticky top-0 z-50 border-b-2 border-transparent bg-bg shadow-none"
@@ -175,12 +281,12 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           <div className="relative z-50 hidden overflow-visible md:block">
             {desktop ? <SearchBox locale={locale} value={q} onChange={setQ} bordered={scrolled || menu} /> : null}
           </div>
-          <div className="flex items-center md:hidden">
+          <div className="flex items-center gap-0.5 md:hidden">
             <button
               type="button"
               aria-label={menu ? t.close : "Menu"}
               aria-expanded={menu}
-              onClick={() => setMenu((v) => !v)}
+              onClick={toggleMenu}
               className="relative z-[80] flex h-11 w-11 shrink-0 items-center justify-center"
             >
               {menu ? (
@@ -193,12 +299,30 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 </svg>
               )}
             </button>
+            <button
+              type="button"
+              aria-label={t.search}
+              aria-expanded={searchOpen}
+              onClick={toggleSearch}
+              className="relative z-[80] flex h-11 w-11 shrink-0 items-center justify-center"
+            >
+              {searchOpen ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M6 6l12 12M18 6L6 18" />
+                </svg>
+              ) : (
+                <svg viewBox="0 0 24 24" aria-hidden className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.7">
+                  <circle cx="11" cy="11" r="6.5" />
+                  <path d="M16 16.5 20 20.5" strokeLinecap="round" />
+                </svg>
+              )}
+            </button>
           </div>
 
           <Link
             href={path(locale)}
             aria-label={t.brand}
-            onClick={() => setMenu(false)}
+            onClick={closeOverlays}
             className="justify-self-center md:hidden"
           >
             <Image
@@ -240,14 +364,14 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-3 text-[#143028] sm:gap-3.5 md:gap-4 xl:gap-5">
+          <div className="flex shrink-0 items-center justify-end gap-1 text-[#143028] sm:gap-1.5 md:gap-2 xl:gap-2.5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}
               data-wishlist-target
-              className="relative inline-flex pr-1.5"
+              className="relative hidden h-10 w-10 items-center justify-center md:inline-flex"
             >
-              <svg viewBox="0 0 25 22" className="h-[18px] w-5 md:h-5 md:w-[22px]" aria-hidden>
+              <svg viewBox="0 0 25 22" className="h-5 w-[22px]" aria-hidden>
                 <path
                   d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
                   fill="#ffffff"
@@ -256,7 +380,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 />
               </svg>
               {wishlist.length > 0 ? (
-                <span className="absolute -right-0.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
                   {wishlist.length}
                 </span>
               ) : null}
@@ -265,14 +389,14 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             <Link
               href={path(locale, "/cart")}
               aria-label={t.cart}
-              className="relative inline-flex pr-1.5 transition-colors hover:text-[#c5a059]"
+              className="relative inline-flex h-10 w-10 items-center justify-center transition-colors hover:text-[#c5a059]"
             >
-              <svg viewBox="0 0 24 24" className="h-5 w-5 md:h-[22px] md:w-[22px]" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+              <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6.2 8h11.6l-.9 10.2a1.2 1.2 0 0 1-1.2 1.1H8.3a1.2 1.2 0 0 1-1.2-1.1L6.2 8Z" />
                 <path strokeLinecap="round" d="M9 8V6.8A3 3 0 0 1 12 3.8 3 3 0 0 1 15 6.8V8" />
               </svg>
               {count > 0 ? (
-                <span className="absolute -right-0.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
+                <span className="absolute right-0.5 top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-[#c5a059] px-1 text-[10px] font-medium leading-none text-[#083534]">
                   {count}
                 </span>
               ) : null}
@@ -281,29 +405,43 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
           </div>
         </div>
 
+        {searchShown ? (
         <div
-          data-open={menu ? "true" : undefined}
-          className="fixed inset-x-0 top-[3.75rem] z-[65] hidden h-[calc(100dvh-3.75rem)] overflow-y-auto overscroll-contain border-t border-[#e4ddd3] bg-white text-[#083534] max-md:block max-md:pointer-events-none max-md:invisible max-md:opacity-0 max-md:transition-[opacity,visibility] max-md:duration-200 max-md:data-[open]:pointer-events-auto max-md:data-[open]:visible max-md:data-[open]:opacity-100"
+          style={{
+            top: `calc(${overlayQuoteTop}px + 3.75rem)`,
+            height: `calc(100dvh - ${overlayQuoteTop}px - 3.75rem)`,
+            transform: searchIn ? "translate3d(0,0,0)" : "translate3d(100%,0,0)",
+          }}
+          className="fixed inset-x-0 z-[66] flex flex-col overflow-hidden border-t border-[#e4ddd3] bg-white text-[#083534] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden"
+          aria-hidden={!searchOpen}
+        >
+          <div className="mx-auto flex h-full w-full max-w-[min(100%,84.375rem)] flex-col px-5 pt-5 sm:px-8">
+            <h2 className="mb-4 shrink-0 font-serif text-[26px] font-medium leading-tight text-[#1a1a1a]">{t.searchPerfumes}</h2>
+            {!desktop ? (
+              <SearchBox
+                locale={locale}
+                value={q}
+                onChange={setQ}
+                onNavigate={closeSearch}
+                panelLayout
+                autoFocus={searchIn}
+              />
+            ) : null}
+          </div>
+        </div>
+        ) : null}
+
+        {menuShown ? (
+        <div
+          style={{
+            top: `calc(${overlayQuoteTop}px + 3.75rem)`,
+            height: `calc(100dvh - ${overlayQuoteTop}px - 3.75rem)`,
+            transform: menuIn ? "translate3d(0,0,0)" : "translate3d(-100%,0,0)",
+          }}
+          className="fixed inset-x-0 z-[65] overflow-y-auto overscroll-contain border-t border-[#e4ddd3] bg-white text-[#083534] transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:hidden"
           aria-hidden={!menu}
         >
           <div className="mx-auto flex min-h-full w-full max-w-[min(100%,84.375rem)] flex-col px-5 pb-10 pt-5 sm:px-8 sm:pt-6">
-            <div className="mb-6 flex items-center gap-3">
-              <div className="min-w-0 flex-1">
-                {!desktop && menu ? (
-                  <SearchBox locale={locale} value={q} onChange={setQ} onNavigate={() => setMenu(false)} compact />
-                ) : null}
-              </div>
-              <button
-                type="button"
-                aria-label={t.close}
-                onClick={() => setMenu(false)}
-                className="inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-full border border-[#e4ddd3] text-[#083534] md:hidden"
-              >
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden fill="none" stroke="currentColor" strokeWidth="2">
-                  <path d="M6 6l12 12M18 6L6 18" />
-                </svg>
-              </button>
-            </div>
             <nav className="flex flex-col">
               {NAV.filter((key) => !hiddenNav.includes(key)).map((key) => {
                 const href = hrefFor(locale, key);
@@ -313,7 +451,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                   <Link
                     key={key}
                     href={href}
-                    onClick={() => setMenu(false)}
+                    onClick={closeMenu}
                     className={`border-b border-[#e4ddd3] py-3.5 text-center font-serif text-[18px] font-semibold uppercase tracking-[0.12em] ${
                       sales ? "text-sale" : active ? "text-gold" : "text-[#083534]"
                     }`}
@@ -359,6 +497,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </div>
           </div>
         </div>
+        ) : null}
       </header>
 
       {/* Page nav scrolls away under the sticky bar; no height animation on sticky */}

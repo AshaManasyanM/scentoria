@@ -62,7 +62,7 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
           </div>
         </div>
 
-        <nav aria-label="Footer">
+        <nav aria-label="Footer" className="text-center md:text-left">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">
             {t.navLabel}
           </p>
@@ -77,7 +77,7 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
           </ul>
         </nav>
 
-        <nav aria-label={t.policies}>
+        <nav aria-label={t.policies} className="text-center md:text-left">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{t.policies}</p>
           <ul className="mt-5 space-y-3 text-sm">
             {policies.map((policy) => (
@@ -90,7 +90,7 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
           </ul>
         </nav>
 
-        <div className="text-sm">
+        <div className="text-center text-sm md:text-left">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{t.contact}</p>
           <p className="mt-5 text-[#f7f2ea]/80">{t.yourEmail}</p>
           <a href="mailto:scentoria.la@gmail.com" className="mt-1 block hover:text-[#c5a059]">

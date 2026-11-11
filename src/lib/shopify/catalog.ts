@@ -93,6 +93,7 @@ export type ProductSuggestion = {
   handle: string;
   title: string;
   image?: string;
+  brand?: string;
 };
 
 function scoreSuggestion(product: { title: string; brand?: string; tags?: string[] }, q: string) {
@@ -118,12 +119,18 @@ function rankSuggestions(
     .map((product) => {
       const score = scoreSuggestion(product, q);
       if (!score) return null;
-      return { score, handle: product.handle, title: product.title, image: product.image };
+      return {
+        score,
+        handle: product.handle,
+        title: product.title,
+        image: product.image,
+        brand: product.brand,
+      };
     })
     .filter((item): item is NonNullable<typeof item> => Boolean(item))
     .sort((a, b) => b.score - a.score || a.title.localeCompare(b.title))
     .slice(0, limit)
-    .map(({ handle, title, image }) => ({ handle, title, image }));
+    .map(({ handle, title, image, brand }) => ({ handle, title, image, brand }));
 }
 
 export async function suggestProducts(query: string, limit = 8): Promise<ProductSuggestion[]> {
