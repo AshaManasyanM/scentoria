@@ -8,18 +8,19 @@ import { NAV, hrefFor } from "@/lib/nav";
 import { SiteNav } from "@/components/site-nav";
 import { useCart } from "./cart-provider";
 import { useWishlist } from "./wishlist-provider";
-import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
+import { AUTH_EVENT, clearProfile, isLoggedIn, loadProfile, refreshSession } from "@/lib/auth";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import type { Locale } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 
 export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
   const pathname = usePathname();
+  const router = useRouter();
   const { count } = useCart();
   const { items: wishlist } = useWishlist();
   const [menu, setMenu] = useState(false);
@@ -31,6 +32,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   const [overlayQuoteTop, setOverlayQuoteTop] = useState(0);
   const [q, setQ] = useState("");
   const [loggedIn, setLoggedIn] = useState(false);
+  const [userName, setUserName] = useState("");
   const [scrolled, setScrolled] = useState(false);
   const [compact, setCompact] = useState(false);
   const [desktop, setDesktop] = useState(false);
@@ -147,7 +149,11 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
   }, []);
 
   useEffect(() => {
-    const sync = () => setLoggedIn(isLoggedIn());
+    const sync = () => {
+      const signedIn = isLoggedIn();
+      setLoggedIn(signedIn);
+      setUserName(signedIn ? loadProfile().name.trim() : "");
+    };
     void refreshSession().then(sync);
     window.addEventListener(AUTH_EVENT, sync);
     return () => window.removeEventListener(AUTH_EVENT, sync);
@@ -461,6 +467,54 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                 );
               })}
             </nav>
+
+            {loggedIn ? (
+              <div className="mt-6 border-y border-[#e4ddd3] py-5 text-center">
+                <p className="text-base font-semibold text-[#1a1a1a]">
+                  {userName ? `${t.hi} ${userName}` : t.hi}
+                </p>
+                <div className="mt-4 flex items-center justify-center gap-6 sm:gap-8">
+                  <Link
+                    href={path(locale, "/account")}
+                    onClick={closeMenu}
+                    className="inline-flex items-center gap-1.5 text-sm text-[#1a1a1a]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+                      <circle cx="12" cy="8" r="3.1" />
+                      <path strokeLinecap="round" d="M5.6 19.2c1-2.7 3.3-4.1 6.4-4.1s5.4 1.4 6.4 4.1" />
+                    </svg>
+                    {t.account}
+                  </Link>
+                  <Link
+                    href={path(locale, "/account/orders")}
+                    onClick={closeMenu}
+                    className="inline-flex items-center gap-1.5 text-sm text-[#1a1a1a]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden>
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M6.2 8h11.6l-.9 10.2a1.2 1.2 0 0 1-1.2 1.1H8.3a1.2 1.2 0 0 1-1.2-1.1L6.2 8Z" />
+                      <path strokeLinecap="round" d="M9 8V6.8A3 3 0 0 1 12 3.8 3 3 0 0 1 15 6.8V8" />
+                    </svg>
+                    {t.orders}
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      closeMenu();
+                      void clearProfile().then(() => router.push(path(locale)));
+                    }}
+                    className="inline-flex items-center gap-1.5 text-sm text-[#ef4444]"
+                  >
+                    <svg viewBox="0 0 24 24" className="h-[18px] w-[18px]" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
+                      <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                      <path d="M16 17l5-5-5-5" />
+                      <path d="M21 12H9" />
+                    </svg>
+                    {t.logout}
+                  </button>
+                </div>
+              </div>
+            ) : null}
+
             <div className="mt-auto flex flex-col items-center gap-4 pt-10 text-center">
               <p className="font-serif text-base text-[#083534]">{t.followUsShort}</p>
               <div className="flex items-center gap-5">
@@ -475,22 +529,6 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
                     <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.7" />
                     <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.7" />
                     <circle cx="17.2" cy="6.8" r="1" fill="currentColor" />
-                  </svg>
-                </a>
-                <a
-                  href="https://youtube.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  aria-label="YouTube"
-                  className="text-[#083534] hover:text-gold"
-                >
-                  <svg width="24" height="22" viewBox="0 0 24 24" fill="none" aria-hidden>
-                    <path
-                      d="M22 12.2s0-3.2-.4-4.6c-.2-.8-.9-1.5-1.7-1.7C18.4 5.5 12 5.5 12 5.5s-6.4 0-7.9.4c-.8.2-1.5.9-1.7 1.7C2 9 2 12.2 2 12.2s0 3.2.4 4.6c.2.8.9 1.5 1.7 1.7 1.5.4 7.9.4 7.9.4s6.4 0 7.9-.4c.8-.2 1.5-.9 1.7-1.7.4-1.4.4-4.6.4-4.6Z"
-                      stroke="currentColor"
-                      strokeWidth="1.5"
-                    />
-                    <path d="M10 15.2V9.2l5.2 3-5.2 3Z" fill="currentColor" />
                   </svg>
                 </a>
               </div>

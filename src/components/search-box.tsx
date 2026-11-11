@@ -315,9 +315,10 @@ export function SearchBox({
             }}
             placeholder={`${t.search}...`}
             autoComplete="off"
+            style={panelLayout ? { fontSize: 16 } : undefined}
             className={
               panelLayout
-                ? `h-12 w-full rounded-lg border border-[#d8d0c4] bg-[#faf7f2] py-3 text-base text-[#083534] shadow-[inset_0_1px_2px_rgba(8,53,52,0.04)] outline-none transition-[border-color,box-shadow,background-color] placeholder:text-[#9a9188] focus:border-[#c5a059] focus:bg-white focus:shadow-[0_0_0_3px_rgba(197,160,89,0.18)] ${
+                ? `h-12 w-full rounded-lg border border-[#d8d0c4] bg-[#faf7f2] py-3 text-[16px] text-[#083534] shadow-[inset_0_1px_2px_rgba(8,53,52,0.04)] outline-none transition-[border-color,box-shadow,background-color] placeholder:text-[#9a9188] focus:border-[#c5a059] focus:bg-white focus:shadow-[0_0_0_3px_rgba(197,160,89,0.18)] ${
                     value ? "pl-11 pr-11" : "pl-11 pr-4"
                   }`
                 : compact
