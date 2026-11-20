@@ -101,8 +101,10 @@ export function Testimonials({
                 className="h-full rounded-2xl border border-[#e4ddd2] bg-white px-5 py-5 text-[#083534] md:px-6 md:py-6"
                 style={slides ? { flex: `0 0 calc((100% - ${(perView - 1) * gap}px) / ${perView})` } : undefined}
               >
-                <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#083534]/70">{item.product}</p>
-                <p className="mt-3 text-sm leading-6 md:text-[15px] md:leading-7">“{item.text}”</p>
+                {item.product ? (
+                  <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#083534]/70">{item.product}</p>
+                ) : null}
+                <p className={`${item.product ? "mt-3" : ""} text-sm leading-6 md:text-[15px] md:leading-7`}>“{item.text}”</p>
                 <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#c5a059]">{item.name}</p>
               </blockquote>
             ))}

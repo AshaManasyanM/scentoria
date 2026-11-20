@@ -10,7 +10,7 @@ import { catalogHref } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { path } from "@/lib/path";
-import { filterProducts, getBrands, getCatalog, getHeroSlides, getHomeReviews, getNotes, getSectionVisibility } from "@/lib/shopify/catalog";
+import { filterProducts, getBrands, getCatalog, getHeroSlides, getNotes, getSectionVisibility, getTestimonials } from "@/lib/shopify/catalog";
 import Link from "next/link";
 
 const typeTiles = [
@@ -61,7 +61,7 @@ export default async function HomePage({
   const sections = await getSectionVisibility();
   const heroSlides = sections.hero ? await getHeroSlides() : [];
   const brands = sections.brands ? (await getBrands(locale)).slice(0, 8) : [];
-  const testimonials = sections.testimonials ? await getHomeReviews(products) : [];
+  const testimonials = sections.testimonials ? await getTestimonials() : [];
   const notes = sections.notes
     ? (await getNotes()).map((note) => ({
         key: note.key,

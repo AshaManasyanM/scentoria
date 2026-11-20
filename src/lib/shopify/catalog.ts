@@ -297,20 +297,20 @@ export async function getHomeReviews(products: Product[]): Promise<Testimonial[]
 export async function getTestimonials(): Promise<Testimonial[]> {
   if (!hasStorefrontToken()) return mockTestimonials;
 
+  // Fresh fetch so Active/Draft toggles show up immediately on the homepage.
   const data = await storefrontFetch<{
     metaobjects: { nodes: { handle: string; fields: { key: string; value: string }[] }[] };
-  }>(TESTIMONIALS_QUERY, { type: "testimonial", first: 20 });
+  }>(TESTIMONIALS_QUERY, { type: "testimonial", first: 20 }, { fresh: true });
 
-  const items = (data?.metaobjects?.nodes ?? [])
+  // Storefront only returns Active entries. Empty Parfume/product is allowed.
+  return (data?.metaobjects?.nodes ?? [])
     .map((entry) => ({
-      name: metaValue(entry.fields, ["name", "author", "customer"]),
+      name: metaValue(entry.fields, ["name", "author", "customer"]) || "Customer",
       product: metaValue(entry.fields, ["product", "perfume", "parfume", "title"]),
       text: metaValue(entry.fields, ["text", "quote", "review", "opinion"]),
       date: metaValue(entry.fields, ["date"]),
     }))
-    .filter((item) => item.text);
-
-  return items.length ? items : mockTestimonials;
+    .filter((item) => item.text.trim().length > 0);
 }
 
 const sectionNames = [
