@@ -9,7 +9,8 @@
     "lint": "eslint",
     "test": "node --experimental-strip-types --test tests/security.test.ts tests/shipping-choices.test.ts tests/checkout-quote.test.ts",
     "test:auth": "node --test tests/auth-security.mjs",
-    "sync:brands": "node --experimental-strip-types scripts/sync-brands.ts"
+    "sync:brands": "node --experimental-strip-types scripts/sync-brands.ts",
+    "sync:unisex-tags": "node --experimental-strip-types scripts/sync-unisex-tags.ts"
   },
   "dependencies": {
     "jose": "^5.10.0",

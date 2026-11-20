@@ -5,8 +5,19 @@ Admin: https://gfc5xh-m1.myshopify.com/admin
 1. **Products → Add product**
 2. Title, photos, description
 3. Variants for each size (5 ml / 10 ml decant, 50 ml, 100 ml) with price and stock
-4. Tags: `men` / `women` / `unisex`, note names (`floral`, `woody`, …), `sale`, `new`, `bestseller`
+4. Tags: `men` / `women` / `unisex`, note names (`floral`, `woody`, …), occasion tags matching filter values (`Daily`, `Office`, `Date Night`), season tags (`Winter`, …), `sale`, `new`, `bestseller`
 5. **Save** and **Publish**
+
+### Catalog filters (`filter` metaobject)
+
+Products and Sales sidebars load options from metaobject type **`filter`**. Fields:
+
+- `group` — `occasion` / `Occasion`, `season`, or `gender` (case-insensitive)
+- `value` — filter id written to the URL (also matched against product tags)
+- `display_name` (Display name) — checkbox label
+- optional `order`, `show` / `visible` / `enabled`
+
+New entries under an existing group appear automatically. Tag products with the same occasion/season/gender values so filters return matches.
 
 The Scentoria Prive site reads the Storefront API. Until `SHOPIFY_STOREFRONT_ACCESS_TOKEN` is set in `.env.local`, the site shows a sample catalog.
 
@@ -92,3 +103,25 @@ BRAND_SYNC_CONFIRM=YES BRAND_SYNC_TOKEN="$BRAND_SYNC_SECRET" npm run sync:brands
 ```
 
 This paginates all Admin products, groups by Vendor, ensures Collection + `brand` metaobject, links products, and publishes both sales channels. It does **not** change prices, inventory, or vendor names.
+
+## Auto-tag Unisex products (Men + Women)
+
+When a product is created or updated with the exact tag **`Unisex`** (any casing), the same webhook ensures **`Men`** and **`Women`** tags are also present. Existing tags (including `Unisex`) are preserved. No duplicates. Products without `Unisex` are left unchanged.
+
+Uses Admin GraphQL `tagsAdd` only — titles, descriptions, prices, variants, inventory, and images are never modified. Idempotent re-runs skip already-tagged products (no webhook loop).
+
+### One-time sync of existing Unisex products
+
+After deploy, run once on the production server (idempotent, safe to re-run):
+
+```bash
+UNISEX_TAGS_CONFIRM=YES npm run sync:unisex-tags
+```
+
+If `UNISEX_TAGS_SECRET` is set in env:
+
+```bash
+UNISEX_TAGS_CONFIRM=YES UNISEX_TAGS_TOKEN="$UNISEX_TAGS_SECRET" npm run sync:unisex-tags
+```
+
+Requires `SHOPIFY_CLIENT_ID` / `SHOPIFY_CLIENT_SECRET` with `write_products`. Logs updated, skipped, and failed products.

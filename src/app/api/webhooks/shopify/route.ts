@@ -1,4 +1,5 @@
 import { ensureBrandFromVendor } from "@/lib/shopify/brand-sync";
+import { ensureUnisexGenderTags } from "@/lib/shopify/unisex-tags";
 import { createHmac, timingSafeEqual } from "crypto";
 import { NextResponse } from "next/server";
 
@@ -26,6 +27,8 @@ type ProductWebhook = {
   id?: number | string;
   admin_graphql_api_id?: string;
   vendor?: string;
+  title?: string;
+  tags?: string | string[];
 };
 
 export async function POST(request: Request) {
@@ -52,19 +55,33 @@ export async function POST(request: Request) {
     payload.admin_graphql_api_id ||
     (payload.id != null ? `gid://shopify/Product/${payload.id}` : undefined);
 
-  // No vendor / store vendor — nothing to sync; acknowledge.
-  if (!vendor.trim()) {
-    return NextResponse.json({ ok: true, skipped: true });
-  }
-
   try {
-    const result = await ensureBrandFromVendor(vendor, productGid);
-    return NextResponse.json({ ok: true, result });
+    // Idempotent: only calls tagsAdd when Unisex is present and Men/Women are missing.
+    // A follow-up products/update from tagsAdd then skips — no webhook loop.
+    const unisexResult = await ensureUnisexGenderTags(productGid, payload.tags, payload.title);
+    if (unisexResult?.status === "failed") {
+      return NextResponse.json(
+        { error: unisexResult.error || "unisex tags failed" },
+        { status: 500 },
+      );
+    }
+
+    let brandResult = null;
+    if (vendor.trim()) {
+      brandResult = await ensureBrandFromVendor(vendor, productGid);
+    }
+
+    return NextResponse.json({
+      ok: true,
+      unisexResult,
+      brandResult,
+      skipped: !vendor.trim() && unisexResult?.status === "skipped",
+    });
   } catch (error) {
-    console.error("[webhooks/shopify] brand sync failed", error);
+    console.error("[webhooks/shopify] product sync failed", error);
     // Non-2xx so Shopify retries; handlers are idempotent.
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : "brand sync failed" },
+      { error: error instanceof Error ? error.message : "product sync failed" },
       { status: 500 },
     );
   }

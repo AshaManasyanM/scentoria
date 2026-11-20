@@ -583,7 +583,7 @@ export async function getPageBanner(page: PageBannerKey): Promise<PageBanner> {
   return banners[page];
 }
 
-const filterGroupIds = ["brand", "note", "gender", "season", "size"] as const;
+const filterGroupIds = ["brand", "occasion", "season", "gender", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
 export type CatalogFilterGroup = { id: FilterGroupId; title: string; items: FilterChoice[] };
@@ -596,22 +596,37 @@ const filterGroupAliases: Record<string, FilterGroupId> = {
   vendors: "brand",
   "բրենդ": "brand",
   "բրենդեր": "brand",
-  note: "note",
-  notes: "note",
-  "նոտա": "note",
-  "նոտաներ": "note",
+  occasion: "occasion",
+  occasions: "occasion",
+  "ocasión": "occasion",
+  ocasion: "occasion",
+  "առիթ": "occasion",
   gender: "gender",
   genders: "gender",
   "սեռ": "gender",
+  "género": "gender",
+  genero: "gender",
   season: "season",
   seasons: "season",
   "սեզոն": "season",
   "սեզոններ": "season",
+  temporada: "season",
   size: "size",
   sizes: "size",
   "չափս": "size",
   "չափսեր": "size",
 };
+
+function normalizeOccasionKey(value: string) {
+  return value
+    .trim()
+    .toLowerCase()
+    .replace(/^occasion:\s*/i, "")
+    .replace(/[_-]+/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
 
 function filterShown(value: string) {
   if (!value) return true;
@@ -636,13 +651,13 @@ function filterValue(group: FilterGroupId, value: string) {
   }
   if (group === "season") {
     const season = text.toLowerCase().replace(/-/g, " ").trim();
-    if (["winter", "ձմեռ"].includes(season)) return "winter";
-    if (["spring", "գարուն"].includes(season)) return "spring";
-    if (["summer", "ամառ"].includes(season)) return "summer";
-    if (["autumn", "fall", "աշուն"].includes(season)) return "autumn";
+    if (["winter", "ձմեռ", "invierno"].includes(season)) return "winter";
+    if (["spring", "գարուն", "primavera"].includes(season)) return "spring";
+    if (["summer", "ամառ", "verano"].includes(season)) return "summer";
+    if (["autumn", "fall", "աշուն", "otoño", "otono"].includes(season)) return "autumn";
     return season;
   }
-  if (group === "note") return text.toLowerCase();
+  if (group === "occasion") return normalizeOccasionKey(text);
   return text;
 }
 
@@ -653,6 +668,16 @@ function productMatchesTagFilter(product: Product, values: string[], kind: "note
   }
   const tags = product.tags.map((tag) => tag.toLowerCase());
   return values.some((value) => product.notes.includes(value) || tags.includes(value));
+}
+
+/** Match occasion filter values against product tags (e.g. Daily, Date Night, occasion:office). */
+function productMatchesOccasionFilter(product: Product, values: string[]) {
+  if (!values.length) return true;
+  const tags = product.tags.map((tag) => normalizeOccasionKey(tag));
+  return values.some((value) => {
+    const needle = normalizeOccasionKey(value);
+    return Boolean(needle) && tags.includes(needle);
+  });
 }
 
 export function shopFiltersFromEntries(
@@ -677,7 +702,15 @@ export function shopFiltersFromEntries(
     const items = grouped.get(group) ?? [];
     items.push({
       value,
-      label: metaValue(entry.fields, ["label", "name", "title"]) || rawValue,
+      label:
+        metaValue(entry.fields, [
+          "display_name",
+          "display name",
+          "displayname",
+          "label",
+          "name",
+          "title",
+        ]) || rawValue,
       order,
       title: metaValue(entry.fields, ["group_label", "heading"]),
     });
@@ -702,7 +735,7 @@ export const getShopFilters = cache(async (): Promise<ShopFilterConfig> => {
   if (!hasStorefrontToken()) return {};
   const data = await storefrontFetch<{
     metaobjects: { nodes: { handle: string; fields: { key: string; value: string }[] }[] };
-  }>(TESTIMONIALS_QUERY, { type: "filter", first: 100 });
+  }>(TESTIMONIALS_QUERY, { type: "filter", first: 250 });
   const entries = data?.metaobjects?.nodes ?? [];
   if (!entries.length) return {};
   return shopFiltersFromEntries(entries);
@@ -716,9 +749,11 @@ export function catalogFilterGroups(
   return filterGroupIds.flatMap((id) => {
     const custom = shop[id];
     // Brand choices always come from storefront products (defaults), not manual filter metaobjects.
+    // Occasion / season / gender options come from `filter` metaobjects when present.
     const items = id === "brand" ? (defaults.brand ?? []) : custom?.items.length ? custom.items : (defaults[id] ?? []);
     if (!items.length) return [];
-    return [{ id, title: (id === "brand" ? titles.brand : custom?.title) || titles[id], items }];
+    // Prefer localized UI titles so EN/HY/ES headings stay correct.
+    return [{ id, title: titles[id] || custom?.title || id, items }];
   });
 }
 
@@ -859,6 +894,7 @@ export function filterProducts(
     gender?: string | string[];
     brand?: string | string[];
     note?: string | string[];
+    occasion?: string | string[];
     season?: string | string[];
     size?: string | string[];
     discount?: string | string[];
@@ -874,6 +910,7 @@ export function filterProducts(
   const genders = asList(opts.gender).filter((g) => g !== "all");
   const brands = asList(opts.brand);
   const notes = asList(opts.note).map((value) => value.toLowerCase());
+  const occasions = asList(opts.occasion).map((value) => normalizeOccasionKey(value)).filter(Boolean);
   const seasons = asList(opts.season).map((value) => filterValue("season", value));
   const sizes = asList(opts.size);
   const discounts = asList(opts.discount);
@@ -883,7 +920,12 @@ export function filterProducts(
   let list = products.filter((p) => {
     if (
       genders.length &&
-      !genders.some((g) => p.gender === g || p.gender === "all")
+      !genders.some((g) => {
+        if (p.gender === g || p.gender === "all") return true;
+        // Unisex products are tagged Men + Women and belong in both gender filters.
+        if (p.gender === "unisex" && (g === "men" || g === "women")) return true;
+        return false;
+      })
     ) {
       return false;
     }
@@ -891,6 +933,7 @@ export function filterProducts(
       return false;
     }
     if (!productMatchesTagFilter(p, notes, "note")) return false;
+    if (!productMatchesOccasionFilter(p, occasions)) return false;
     if (!productMatchesTagFilter(p, seasons, "season")) return false;
     if (sizes.length && !sizes.some((size) => productSizeKeys(p).has(size))) return false;
     if (discounts.length) {

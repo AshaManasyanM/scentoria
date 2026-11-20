@@ -240,6 +240,7 @@ export const en = {
   filter: "Filter",
   filterBrand: "Brand",
   filterNote: "Note",
+  filterOccasion: "Occasion",
   filterGender: "Gender",
   filterSeason: "Season",
   seasons: {
@@ -247,6 +248,11 @@ export const en = {
     spring: "Spring",
     summer: "Summer",
     autumn: "Autumn",
+  },
+  occasions: {
+    daily: "Daily",
+    office: "Office",
+    "date-night": "Date Night",
   },
   filterDiscount: "Discount",
   filterClear: "Clear",

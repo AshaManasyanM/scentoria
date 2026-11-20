@@ -48,9 +48,10 @@ export function brandHandle(brand: string) {
 
 function genderFromTags(tags: string[]): Product["gender"] {
   const lower = tags.map((t) => t.toLowerCase());
+  // Unisex products also carry Men + Women tags for filter discovery — Unisex wins.
+  if (lower.includes("unisex")) return "unisex";
   if (lower.includes("men") || lower.includes("male")) return "men";
   if (lower.includes("women") || lower.includes("female")) return "women";
-  if (lower.includes("unisex")) return "unisex";
   return "all";
 }
 

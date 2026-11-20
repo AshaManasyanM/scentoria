@@ -254,7 +254,7 @@ function PriceRangeField({
   );
 }
 
-const filterKeys = ["brand", "gender", "note", "season", "size"] as const;
+const filterKeys = ["brand", "occasion", "season", "gender", "size"] as const;
 
 type Draft = {
   selected: Record<string, string[]>;
@@ -279,9 +279,9 @@ export function ProductFilters({
   const sort = searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? "");
   const selected: Record<string, string[]> = {
     brand: searchParams.getAll("brand"),
-    note: searchParams.getAll("note"),
-    gender: searchParams.getAll("gender"),
+    occasion: searchParams.getAll("occasion"),
     season: searchParams.getAll("season"),
+    gender: searchParams.getAll("gender"),
     size: searchParams.getAll("size"),
   };
   const [open, setOpen] = useState<Record<string, boolean>>({});
@@ -394,9 +394,9 @@ export function ProductFilters({
     setDraft({
       selected: {
         brand: [...selected.brand],
-        note: [...selected.note],
-        gender: [...selected.gender],
+        occasion: [...selected.occasion],
         season: [...selected.season],
+        gender: [...selected.gender],
         size: [...selected.size],
       },
       priceMin,
@@ -419,7 +419,7 @@ export function ProductFilters({
 
   function resetDraft() {
     setDraft({
-      selected: { brand: [], note: [], gender: [], season: [], size: [] },
+      selected: { brand: [], occasion: [], season: [], gender: [], size: [] },
       priceMin: priceBounds.min,
       priceMax: priceBounds.max,
     });

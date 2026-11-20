@@ -254,6 +254,7 @@ export const es: EnDictionary = {
   filter: "Filtro",
   filterBrand: "Marca",
   filterNote: "Nota",
+  filterOccasion: "Ocasión",
   filterGender: "Género",
   filterSeason: "Temporada",
   seasons: {
@@ -261,6 +262,11 @@ export const es: EnDictionary = {
     spring: "Primavera",
     summer: "Verano",
     autumn: "Otoño",
+  },
+  occasions: {
+    daily: "Diario",
+    office: "Oficina",
+    "date-night": "Cita nocturna",
   },
   filterDiscount: "Descuento",
   filterClear: "Borrar",

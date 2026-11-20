@@ -246,6 +246,7 @@ export const hy: EnDictionary = {
   filter: "Ֆիլտր",
   filterBrand: "Բրենդ",
   filterNote: "Նոտա",
+  filterOccasion: "Առիթ",
   filterGender: "Սեռ",
   filterSeason: "Սեզոն",
   seasons: {
@@ -253,6 +254,11 @@ export const hy: EnDictionary = {
     spring: "Գարուն",
     summer: "Ամառ",
     autumn: "Աշուն",
+  },
+  occasions: {
+    daily: "Ամենօրյա",
+    office: "Գրասենյակ",
+    "date-night": "Երեկոյան հանդիպում",
   },
   filterDiscount: "Զեղչ",
   filterClear: "Մաքրել",
