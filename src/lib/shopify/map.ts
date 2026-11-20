@@ -14,6 +14,7 @@ type ShopifyProduct = {
   title: string;
   description: string;
   vendor: string;
+  productType?: string | null;
   tags: string[];
   featuredImage?: { url: string; altText?: string | null } | null;
   images?: { nodes: { url: string; altText?: string | null }[] };
@@ -105,6 +106,67 @@ function seasonsFromTags(tags: string[]): string[] {
 const systemTags = new Set(["men", "male", "women", "female", "unisex", "bestseller", "best-seller", "new", "sale"]);
 const accordNames = new Set<string>([...noteKeys, "amber", "balsamic", "smoky", "warm spicy", "oud"]);
 
+const CONCENTRATION_PATTERNS: { match: RegExp; label: string }[] = [
+  { match: /\bextrait(?:\s+de\s+parfum)?\b|\bpure\s+perfume\b|\bperfume\s+extrait\b/i, label: "Extrait de Parfum" },
+  { match: /\beau\s*de\s*parfum\b|\bedp\b/i, label: "Eau de Parfum" },
+  { match: /\beau\s*de\s*toilette\b|\bedt\b/i, label: "Eau de Toilette" },
+  { match: /\beau\s*de\s*cologne\b|\bedc\b|\bcologne\b/i, label: "Eau de Cologne" },
+  { match: /\beau\s*fra[iî]che\b/i, label: "Eau Fraîche" },
+  { match: /\bparfum\b(?!\s)/i, label: "Parfum" },
+];
+
+function titleCaseWords(value: string) {
+  return value
+    .split(/[\s/_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function looksLikeConcentration(value: string) {
+  return CONCENTRATION_PATTERNS.some((item) => item.match.test(value));
+}
+
+export function concentrationFromProduct(productType: string | null | undefined, tags: string[]) {
+  const type = (productType || "").trim();
+  for (const item of CONCENTRATION_PATTERNS) {
+    if (item.match.test(type)) return item.label;
+  }
+  for (const tag of tags) {
+    for (const item of CONCENTRATION_PATTERNS) {
+      if (item.match.test(tag)) return item.label;
+    }
+  }
+  if (type && looksLikeConcentration(type)) return titleCaseWords(type);
+  return "";
+}
+
+export function fragranceCategoryFromProduct(
+  productType: string | null | undefined,
+  tags: string[],
+  notes: string[],
+) {
+  if (notes.length) {
+    return notes
+      .slice(0, 2)
+      .map((note) => titleCaseWords(note))
+      .join(" & ");
+  }
+  const type = (productType || "").trim();
+  if (type && !looksLikeConcentration(type)) return titleCaseWords(type);
+
+  const familyTags = tags
+    .map(bareTag)
+    .filter((tag) => noteKeys.includes(tag as (typeof noteKeys)[number]) || accordNames.has(tag));
+  if (familyTags.length) {
+    return [...new Set(familyTags)]
+      .slice(0, 2)
+      .map((tag) => titleCaseWords(tag))
+      .join(" & ");
+  }
+  return "";
+}
+
 function accordsFromTags(tags: string[]) {
   const found: { name: string; level: number | null }[] = [];
   for (const tag of tags) {
@@ -163,6 +225,16 @@ export function mapProduct(p: ShopifyProduct): Product {
     .map((variant) => (variant.compareAtPrice?.amount ? discountPercent(variant.price, variant.compareAtPrice) : null))
     .filter((percent): percent is number => percent != null && percent > 0);
   const maxDiscount = discounts.length ? Math.max(...discounts) : 0;
+  const notes = notesFromTags(tags);
+  const accords = accordsFromTags(tags);
+  const concentration = concentrationFromProduct(p.productType, tags);
+  const rankedAccords = [...accords].sort((a, b) => (b.level ?? 0) - (a.level ?? 0));
+  const fragranceFromAccords = rankedAccords
+    .slice(0, 2)
+    .map((accord) => titleCaseWords(accord.name))
+    .join(" & ");
+  const fragranceCategory =
+    fragranceFromAccords || fragranceCategoryFromProduct(p.productType, tags, notes);
 
   return {
     id: p.id,
@@ -172,9 +244,11 @@ export function mapProduct(p: ShopifyProduct): Product {
     description: p.description || "",
     tags,
     gender: genderFromTags(tags),
-    notes: notesFromTags(tags),
+    concentration,
+    fragranceCategory,
+    notes,
     seasons: seasonsFromTags(tags),
-    accords: accordsFromTags(tags),
+    accords,
     images,
     variants: p.variants.nodes.map((v) => ({
       id: v.id,

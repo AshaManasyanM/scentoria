@@ -255,7 +255,13 @@ button:disabled {
   width: auto;
   height: auto;
   display: flex;
+  align-items: stretch;
   justify-content: center;
+}
+
+.product-slider .swiper-slide > * {
+  width: 100%;
+  height: 100%;
 }
 
 .product-slider--feature .swiper-slide {

@@ -30,18 +30,12 @@ export function ShareForm({ locale }: { locale: Locale }) {
             ))}
           </h2>
           <p className="mt-4 max-w-md text-sm leading-6 md:text-[15px] md:leading-7">{t.shareDescription}</p>
-          <a href="mailto:scentoria.la@gmail.com" className="mt-6 flex items-center gap-3 text-sm">
+          <a href="mailto:support@scentoriaprive.com" className="mt-6 flex items-center gap-3 text-sm">
             <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
               <rect x="3" y="5" width="18" height="14" rx="1.5" />
               <path d="m4 7 8 6 8-6" />
             </svg>
-            scentoria.la@gmail.com
-          </a>
-          <a href="tel:+37400000000" className="mt-3 flex items-center gap-3 text-sm">
-            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.6" aria-hidden>
-              <path d="M7 3h3l1.5 4-2 1.5a12 12 0 0 0 6 6L17 13l4 1.5V18a2 2 0 0 1-2 2A15 15 0 0 1 4 5a2 2 0 0 1 2-2Z" />
-            </svg>
-            +374 00 000 000
+            support@scentoriaprive.com
           </a>
         </div>
 

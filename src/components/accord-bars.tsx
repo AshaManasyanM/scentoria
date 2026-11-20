@@ -19,6 +19,33 @@ const accordColors: Record<string, string> = {
 
 const accordWidths = [92, 58, 48, 38, 28];
 
+/** Rank accords strongest-first using level when present (same ranking as the main accord bars). */
+export function rankMainAccords(accords: { name: string; level: number | null }[]) {
+  let auto = 0;
+  return accords
+    .map((accord) => ({
+      ...accord,
+      width: accord.level ?? accordWidths[auto++] ?? Math.max(18, 22),
+    }))
+    .sort((a, b) => b.width - a.width || a.name.localeCompare(b.name));
+}
+
+function titleCaseAccord(name: string) {
+  return name
+    .split(/[\s/_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+/** Top 1–2 main accords for the product header subtitle (strongest first). */
+export function topMainAccordLabel(accords: { name: string; level: number | null }[], limit = 2) {
+  return rankMainAccords(accords)
+    .slice(0, limit)
+    .map((accord) => titleCaseAccord(accord.name))
+    .join(" & ");
+}
+
 export function AccordBars({
   title,
   accords,
@@ -28,13 +55,7 @@ export function AccordBars({
 }) {
   if (!accords.length) return null;
 
-  let auto = 0;
-  const rows = accords
-    .map((accord) => ({
-      ...accord,
-      width: accord.level ?? accordWidths[auto++] ?? Math.max(18, 22),
-    }))
-    .sort((a, b) => b.width - a.width);
+  const rows = rankMainAccords(accords);
 
   return (
     <div className="mt-8">

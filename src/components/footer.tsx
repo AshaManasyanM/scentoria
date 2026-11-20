@@ -93,8 +93,8 @@ export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hidde
         <div className="text-center text-sm md:text-left">
           <p className="text-xs font-semibold uppercase tracking-[0.16em] text-[#c5a059]">{t.contact}</p>
           <p className="mt-5 text-[#f7f2ea]/80">{t.yourEmail}</p>
-          <a href="mailto:scentoria.la@gmail.com" className="mt-1 block hover:text-[#c5a059]">
-            scentoria.la@gmail.com
+          <a href="mailto:support@scentoriaprive.com" className="mt-1 block hover:text-[#c5a059]">
+            support@scentoriaprive.com
           </a>
           <p className="mt-4 text-[#f7f2ea]/80">{t.workingHours}</p>
           <p className="mt-1">{t.hoursValue}</p>

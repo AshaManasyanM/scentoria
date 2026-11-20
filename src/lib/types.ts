@@ -35,6 +35,10 @@ export type Product = {
   description: string;
   tags: string[];
   gender: "men" | "women" | "unisex" | "all";
+  /** e.g. Eau de Parfum — from product type / tags when available */
+  concentration: string;
+  /** e.g. Aquatic & Fresh — from notes / product type when available */
+  fragranceCategory: string;
   notes: string[];
   seasons: string[];
   accords: { name: string; level: number | null }[];

@@ -19,10 +19,10 @@ export function ProductGrid({
     <div
       className={
         variant === "catalog"
-          ? "grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4"
+          ? "grid grid-cols-2 items-stretch gap-3 sm:grid-cols-3 xl:grid-cols-4"
           : variant === "feature"
-            ? "grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-3"
-            : "grid grid-cols-2 gap-6 md:grid-cols-3 md:gap-10 lg:grid-cols-4"
+            ? "grid grid-cols-1 items-stretch gap-4 sm:grid-cols-2 xl:grid-cols-3"
+            : "grid grid-cols-2 items-stretch gap-6 md:grid-cols-3 md:gap-10 lg:grid-cols-4"
       }
     >
       {products.map((product) => (

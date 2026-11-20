@@ -1,4 +1,4 @@
-import { AccordBars } from "@/components/accord-bars";
+import { AccordBars, topMainAccordLabel } from "@/components/accord-bars";
 import { AddToCart } from "@/components/add-to-cart";
 import { AuthenticityBadge } from "@/components/authenticity-badge";
 import { ProductGallery } from "@/components/product-gallery";
@@ -12,10 +12,12 @@ import { StatBars } from "@/components/stat-bars";
 import { TrustRow } from "@/components/trust-row";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
+import { path } from "@/lib/path";
 import { getBottleColors, getCatalog, getProduct } from "@/lib/shopify/catalog";
 import { publishedProductReviews } from "@/lib/shopify/reviews";
 import { findUserBySession, statVoteCounts } from "@/lib/users-db";
 import { cookies } from "next/headers";
+import Link from "next/link";
 import { notFound } from "next/navigation";
 
 export default async function ProductPage({
@@ -44,13 +46,42 @@ export default async function ProductPage({
         <ProductGallery />
         <div className="min-w-0">
           <div className="flex flex-wrap items-start justify-between gap-3">
-            <h1 className="heading-display min-w-0 flex-1 font-serif font-medium">{product.title}</h1>
+            <div className="min-w-0 flex-1">
+              {product.brand ? (
+                <Link
+                  href={path(locale, `/products?brand=${encodeURIComponent(product.brand)}`)}
+                  className="text-[11px] font-semibold uppercase tracking-[0.16em] text-[#083534]/55 transition-colors hover:text-[#c5a059]"
+                >
+                  {product.brand}
+                </Link>
+              ) : null}
+              <h1
+                className={`min-w-0 font-serif text-[clamp(1.45rem,1.15rem+1.1vw,2.2rem)] font-medium leading-[1.18] text-[#083534] ${
+                  product.brand ? "mt-1.5" : ""
+                }`}
+              >
+                {(() => {
+                  const title = product.title.trim();
+                  const brand = product.brand.trim();
+                  if (!brand || !title.toLowerCase().startsWith(brand.toLowerCase())) return title;
+                  return title.slice(brand.length).replace(/^[\s\-–—|:]+/, "").trim() || title;
+                })()}
+              </h1>
+              {(() => {
+                const accords = topMainAccordLabel(product.accords) || product.fragranceCategory;
+                const parts = [product.concentration, accords].filter(Boolean);
+                if (!parts.length) return null;
+                return (
+                  <p className="mt-2 text-sm leading-6 text-[#083534]/55">{parts.join(" · ")}</p>
+                );
+              })()}
+              <p className="mt-2.5 text-sm text-muted">
+                ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
+              </p>
+            </div>
             <ProductWishlistButton locale={locale} />
           </div>
-          <p className="mt-3 text-sm text-muted">
-            ★ {product.rating.toFixed(1)} ({product.reviewCount} {t.reviews})
-          </p>
-          <div className="mt-8">
+          <div className="mt-5">
             <AddToCart locale={locale} bottleColors={bottleColors} />
           </div>
           <AccordBars title={t.mainAccords} accords={product.accords} />

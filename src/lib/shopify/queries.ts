@@ -4,6 +4,7 @@ const PRODUCT_FIELDS = `
   title
   description
   vendor
+  productType
   tags
   featuredImage { url altText }
   images(first: 8) { nodes { url altText } }

@@ -70,22 +70,15 @@ export function ProductCard({
     });
   }
 
+  const badgeBase =
+    "inline-flex w-fit max-w-full items-center rounded-full px-1.5 py-0.5 text-[9px] font-medium leading-none tracking-[0.02em] text-white sm:px-2 sm:text-[10px]";
+  const badgeClass = `${badgeBase} bg-black`;
   const badges = (
-    <div className="absolute left-2 top-2 z-[1] flex flex-col items-start gap-1.5">
-      {product.featured ? (
-        <span className="inline-flex min-h-5 items-center rounded-l-md bg-black px-1.5 text-[10px] font-medium leading-4 text-white md:px-2 md:text-[14px] md:leading-[22px]">
-          Best seller
-        </span>
-      ) : null}
-      {product.isNew ? (
-        <span className="inline-flex min-h-5 items-center rounded-l-md bg-black px-1.5 text-[10px] font-medium leading-4 text-white md:px-2 md:text-[14px] md:leading-[22px]">
-          New
-        </span>
-      ) : null}
+    <div className="absolute left-1.5 top-1.5 z-[1] flex flex-col items-start gap-1 sm:left-2 sm:top-2 sm:gap-1.5">
+      {product.featured ? <span className={badgeClass}>Best Seller</span> : null}
+      {product.isNew ? <span className={badgeClass}>New</span> : null}
       {product.onSale ? (
-        <span className="inline-flex min-h-5 items-center rounded-l-md bg-[#c53030] px-1.5 text-[10px] font-medium leading-4 text-white md:px-2 md:text-[14px] md:leading-[22px]">
-          {product.discountLabel ?? "Sale"}
-        </span>
+        <span className={`${badgeBase} bg-[#c53030]`}>{product.discountLabel ?? "Sale"}</span>
       ) : null}
     </div>
   );
@@ -157,34 +150,32 @@ export function ProductCard({
           {categoryLabel ? (
             <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[#c5a059]">{categoryLabel}</p>
           ) : null}
-          <div className="mt-auto pt-3">
-            <p className="text-xs tracking-[0.08em] text-[#c5a059]">
-              ★★★★★ <span className="tracking-normal text-[#083534]/70">({product.reviewCount})</span>
-            </p>
-            <div className="mt-1 flex items-center justify-between gap-2">
-              <p className={`text-sm ${inStock ? "" : "text-[#9a6b6b]"}`}>{priceLabel}</p>
-              <button
-                type="button"
-                aria-label={t.wishlist}
-                onClick={onHeartClick}
-                className="shrink-0"
-              >
-                <svg width="18" height="16" viewBox="0 0 25 22" fill="none" aria-hidden>
-                  <path
-                    d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
-                    fill={saved ? "#c5a059" : "#083534"}
-                  />
-                </svg>
-              </button>
-            </div>
-            <div className="mt-3 flex justify-center">
-              <Link
-                href={path(locale, `/products/${product.handle}`)}
-                className="inline-flex rounded-[2px] bg-[#c5a059] px-3 py-1.5 text-xs font-semibold text-[#083534]"
-              >
-                {t.viewProduct}
-              </Link>
-            </div>
+          <p className="mt-3 text-xs tracking-[0.08em] text-[#c5a059]">
+            ★★★★★ <span className="tracking-normal text-[#083534]/70">({product.reviewCount})</span>
+          </p>
+          <div className="mt-1 flex items-center justify-between gap-2">
+            <p className={`text-sm ${inStock ? "" : "text-[#9a6b6b]"}`}>{priceLabel}</p>
+            <button
+              type="button"
+              aria-label={t.wishlist}
+              onClick={onHeartClick}
+              className="shrink-0"
+            >
+              <svg width="18" height="16" viewBox="0 0 25 22" fill="none" aria-hidden>
+                <path
+                  d="M22.5737 1.49585C19.8979 -0.784421 15.9185 -0.374265 13.4624 2.15991L12.5005 3.15112L11.5386 2.15991C9.0874 -0.374265 5.10303 -0.784421 2.42725 1.49585C-0.63916 4.11304 -0.800293 8.8103 1.94385 11.6472L11.3921 21.4031C12.0024 22.033 12.9937 22.033 13.604 21.4031L23.0522 11.6472C25.8013 8.8103 25.6401 4.11304 22.5737 1.49585Z"
+                  fill={saved ? "#c5a059" : "#083534"}
+                />
+              </svg>
+            </button>
+          </div>
+          <div className="mt-auto flex justify-center pt-3">
+            <Link
+              href={path(locale, `/products/${product.handle}`)}
+              className="inline-flex rounded-[2px] bg-[#c5a059] px-3 py-1.5 text-xs font-semibold text-[#083534]"
+            >
+              {t.viewProduct}
+            </Link>
           </div>
         </div>
       </div>
@@ -276,7 +267,7 @@ export function ProductCard({
         <span className="absolute right-3 top-3 z-10 flex h-8 w-8 items-center justify-center rounded-full bg-[#083534]/55">
           {heart}
         </span>
-        <div className="flex flex-1 flex-col p-4">
+        <div className="flex flex-1 flex-col px-4 pb-4 pt-4">
           <h3 className="font-serif text-xl font-medium leading-7">
             {displayName}
           </h3>
@@ -286,21 +277,23 @@ export function ProductCard({
           <p className={`mt-2 text-lg font-semibold ${inStock ? "text-[#c5a059]" : "text-[#f7f2ea]/70"}`}>
             {priceLabel}
           </p>
-          <Link
-            href={path(locale, `/products/${product.handle}`)}
-            className="btn-green mt-3.5 w-full"
-          >
-            {t.viewPerfume}
-          </Link>
+          <div className="mt-auto flex justify-center pt-4">
+            <Link
+              href={path(locale, `/products/${product.handle}`)}
+              className="btn-green w-full text-center"
+            >
+              {t.viewPerfume}
+            </Link>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="group relative rounded-2xl bg-bg-2 p-3">
+    <div className="group relative flex h-full flex-col rounded-2xl bg-bg-2 p-3">
       {heart}
-      <Link href={path(locale, `/products/${product.handle}`)} className="block">
+      <Link href={path(locale, `/products/${product.handle}`)} className="flex min-h-0 flex-1 flex-col">
         <div className="relative overflow-hidden rounded-xl bg-white">
           <div className="relative aspect-square">
             {img ? (
@@ -315,25 +308,15 @@ export function ProductCard({
               <div className="flex h-full items-center justify-center text-muted">{t.brand}</div>
             )}
           </div>
-          <div className="absolute left-3 top-3 flex flex-col gap-1">
-            {product.featured ? (
-              <span className="rounded-full bg-black px-2 py-0.5 text-[10px] uppercase tracking-wide text-white">
-                Best seller
-              </span>
-            ) : null}
-            {product.isNew ? (
-              <span className="rounded-full bg-black px-2 py-0.5 text-[10px] uppercase tracking-wide text-white">
-                New
-              </span>
-            ) : null}
+          <div className="absolute left-1.5 top-1.5 flex flex-col items-start gap-1 sm:left-2.5 sm:top-2.5 sm:gap-1.5">
+            {product.featured ? <span className={badgeClass}>Best Seller</span> : null}
+            {product.isNew ? <span className={badgeClass}>New</span> : null}
             {product.onSale ? (
-              <span className="rounded-full bg-sale px-2 py-0.5 text-[10px] text-white">
-                {product.discountLabel ?? "Sale"}
-              </span>
+              <span className={`${badgeBase} bg-sale`}>{product.discountLabel ?? "Sale"}</span>
             ) : null}
           </div>
         </div>
-        <div className="px-1 pb-3 pt-3">
+        <div className="flex flex-1 flex-col px-1 pb-3 pt-3">
           {product.brand ? <p className="text-xs font-bold uppercase tracking-wide">{product.brand}</p> : null}
           <h3 className="mt-1 font-serif text-lg">{product.title}</h3>
           <p className="mt-1 text-sm text-star">
@@ -342,7 +325,7 @@ export function ProductCard({
           <p className={`mt-1 text-sm font-medium ${inStock ? "" : "text-[#9a6b6b]"}`}>
             {priceLabel}
           </p>
-          <p className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-gold group-hover:underline">
+          <p className="mt-auto pt-3 text-center text-[11px] font-semibold uppercase tracking-[0.16em] text-gold group-hover:underline">
             {t.viewPerfume}
           </p>
         </div>

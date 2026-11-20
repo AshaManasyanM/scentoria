@@ -367,7 +367,7 @@ function sectionFlag(entry: { fields: { key: string; value: string }[] }) {
   return value === "true" || value === "yes" || value === "1";
 }
 
-const fallbackContactEmail = "scentoria.la@gmail.com";
+const fallbackContactEmail = "support@scentoriaprive.com";
 
 export async function getContactEmail() {
   if (!hasStorefrontToken()) return fallbackContactEmail;

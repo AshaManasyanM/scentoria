@@ -48,10 +48,17 @@ function variant(
 }
 
 function profile(notes: string[], accords?: string[], seasons: string[] = []) {
+  const accordList = (accords ?? notes).map((name) => ({ name, level: null as number | null }));
+  const category = accordList
+    .slice(0, 2)
+    .map((accord) => accord.name.charAt(0).toUpperCase() + accord.name.slice(1))
+    .join(" & ");
   return {
     notes,
     seasons,
-    accords: (accords ?? notes).map((name) => ({ name, level: null })),
+    concentration: "Eau de Parfum",
+    fragranceCategory: category,
+    accords: accordList,
     longevity: defaultLongevity,
     season: defaultSeason,
     sillage: defaultSillage,
