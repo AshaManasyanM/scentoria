@@ -64,7 +64,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
   }, []);
 
   return (
-    <div className="relative z-50 inline-flex h-10 w-10 items-center justify-center">
+    <div className="relative z-50 h-10 w-10 shrink-0">
       {open ? (
         <button
           type="button"
@@ -79,7 +79,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
         aria-haspopup="listbox"
         aria-label={current.label}
         onClick={() => setOpen((value) => !value)}
-        className="relative z-50 inline-flex h-10 w-10 items-center justify-center"
+        className="relative z-50 flex h-10 w-10 items-center justify-center"
       >
         <span className="pointer-events-none inline-flex overflow-hidden rounded-[2px] ring-1 ring-[#d8d0c4]">
           <Flag locale={locale} />
@@ -88,7 +88,7 @@ export function LanguageSwitcher({ locale }: { locale: Locale }) {
       {open ? (
         <ul
           role="listbox"
-          className="absolute right-0 z-50 mt-2 flex flex-col gap-2 bg-white p-2 shadow-md"
+          className="absolute right-0 top-full z-50 mt-1 flex min-w-full flex-col items-center gap-2 bg-white p-2 shadow-md"
         >
           {LOCALES.filter((item) => item.code !== locale).map((item) => (
             <li key={item.code} role="option">

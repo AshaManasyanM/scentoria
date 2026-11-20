@@ -149,7 +149,7 @@ export default async function HomePage({
 
       {sections.bestsellers ? (
         <section className={`bg-[#083534] ${sectionShell}`}>
-          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+          <div className="mx-auto max-w-[min(100%,80rem)] text-center">
             <HomeSectionHeading eyebrow={t.bestSellers} title={t.bestSellersSub} light />
             <div className="mt-8">
               <ProductSlider products={featured} locale={locale} variant="feature" />
@@ -199,7 +199,7 @@ export default async function HomePage({
 
       {sections.arrivals ? (
         <section className={`bg-[#083534] ${sectionShell}`}>
-          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+          <div className="mx-auto max-w-[min(100%,80rem)] text-center">
             <HomeSectionHeading eyebrow={t.newArrivals} title={t.newArrivalsSub} light />
             <div className="mt-8">
               <ProductSlider products={newest} locale={locale} variant="feature" />
@@ -222,7 +222,7 @@ export default async function HomePage({
 
       {sections.sale ? (
         <section className={`bg-[#083534] ${sectionShell}`}>
-          <div className="mx-auto max-w-[min(100%,72rem)] text-center">
+          <div className="mx-auto max-w-[min(100%,80rem)] text-center">
             <HomeSectionHeading eyebrow={t.onSale} title={t.onSaleSub} light />
             <div className="mt-8">
               <ProductSlider products={sale} locale={locale} variant="feature" />

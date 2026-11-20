@@ -259,7 +259,7 @@ button:disabled {
 }
 
 .product-slider--feature .swiper-slide {
-  width: 220px;
+  width: 236px;
 }
 
 @media (min-width: 768px) {
@@ -268,7 +268,7 @@ button:disabled {
   }
 
   .product-slider--feature .swiper-slide {
-    width: clamp(220px, 20vw, 284px);
+    width: clamp(236px, 21vw, 304px);
     height: auto;
   }
 }
