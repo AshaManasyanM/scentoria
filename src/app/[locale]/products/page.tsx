@@ -6,7 +6,7 @@ import { ProductGrid } from "@/components/product-grid";
 import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
-import { brandHandle, catalogFilterGroups, catalogPriceBounds, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getPageBanner, getShopFilters, uniqueBrands } from "@/lib/shopify/catalog";
+import { brandHandle, catalogBrandFilterChoices, catalogFilterGroups, catalogPriceBounds, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getPageBanner, getShopFilters, uniqueBrands } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -67,12 +67,14 @@ export default async function ProductsPage({
   const groups = catalogFilterGroups(
     shopFilters,
     {
+      brand: t.filterBrand,
       note: t.filterNote,
       gender: t.filterGender,
       season: t.filterSeason,
       size: t.size,
     },
     {
+      brand: catalogBrandFilterChoices(products, shopBrands),
       season: [
         { value: "winter", label: t.seasons.winter },
         { value: "spring", label: t.seasons.spring },

@@ -254,7 +254,7 @@ function PriceRangeField({
   );
 }
 
-const filterKeys = ["gender", "note", "season", "size"] as const;
+const filterKeys = ["brand", "gender", "note", "season", "size"] as const;
 
 type Draft = {
   selected: Record<string, string[]>;
@@ -278,6 +278,7 @@ export function ProductFilters({
   const searchParams = useSearchParams();
   const sort = searchParams.get("new") === "1" ? "new" : (searchParams.get("sort") ?? "");
   const selected: Record<string, string[]> = {
+    brand: searchParams.getAll("brand"),
     note: searchParams.getAll("note"),
     gender: searchParams.getAll("gender"),
     season: searchParams.getAll("season"),
@@ -377,7 +378,6 @@ export function ProductFilters({
     filterKeys.forEach((key) => {
       (nextSelected[key] ?? []).forEach((value) => params.append(key, value));
     });
-    searchParams.getAll("brand").forEach((value) => params.append("brand", value));
     if (nextPriceMin > priceBounds.min) params.set("minPrice", String(nextPriceMin));
     if (nextPriceMax < priceBounds.max) params.set("maxPrice", String(nextPriceMax));
     const qs = params.toString();
@@ -393,6 +393,7 @@ export function ProductFilters({
   function openDrawer() {
     setDraft({
       selected: {
+        brand: [...selected.brand],
         note: [...selected.note],
         gender: [...selected.gender],
         season: [...selected.season],
@@ -418,7 +419,7 @@ export function ProductFilters({
 
   function resetDraft() {
     setDraft({
-      selected: { note: [], gender: [], season: [], size: [] },
+      selected: { brand: [], note: [], gender: [], season: [], size: [] },
       priceMin: priceBounds.min,
       priceMax: priceBounds.max,
     });

@@ -177,7 +177,14 @@ export async function suggestProducts(query: string, limit = 8): Promise<Product
 }
 
 export function uniqueBrands(products: Product[]) {
-  return [...new Set(products.map((p) => p.brand).filter(Boolean))].sort();
+  const byKey = new Map<string, string>();
+  for (const product of products) {
+    const name = product.brand?.trim();
+    if (!name) continue;
+    const key = name.toLowerCase();
+    if (!byKey.has(key)) byKey.set(key, name);
+  }
+  return [...byKey.values()].sort((a, b) => a.localeCompare(b));
 }
 
 export type ShopBrand = {
@@ -559,13 +566,19 @@ export async function getPageBanner(page: PageBannerKey): Promise<PageBanner> {
   return banners[page];
 }
 
-const filterGroupIds = ["note", "gender", "season", "size"] as const;
+const filterGroupIds = ["brand", "note", "gender", "season", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
 export type CatalogFilterGroup = { id: FilterGroupId; title: string; items: FilterChoice[] };
 export type ShopFilterConfig = Partial<Record<FilterGroupId, { title: string; items: FilterChoice[] }>>;
 
 const filterGroupAliases: Record<string, FilterGroupId> = {
+  brand: "brand",
+  brands: "brand",
+  vendor: "brand",
+  vendors: "brand",
+  "բրենդ": "brand",
+  "բրենդեր": "brand",
   note: "note",
   notes: "note",
   "նոտա": "note",
@@ -685,10 +698,25 @@ export function catalogFilterGroups(
 ): CatalogFilterGroup[] {
   return filterGroupIds.flatMap((id) => {
     const custom = shop[id];
-    const items = custom?.items.length ? custom.items : (defaults[id] ?? []);
+    // Brand choices always come from storefront products (defaults), not manual filter metaobjects.
+    const items = id === "brand" ? (defaults.brand ?? []) : custom?.items.length ? custom.items : (defaults[id] ?? []);
     if (!items.length) return [];
-    return [{ id, title: custom?.title || titles[id], items }];
+    return [{ id, title: (id === "brand" ? titles.brand : custom?.title) || titles[id], items }];
   });
+}
+
+/** Brand filter choices from storefront products; prefer /brands display names when they match. */
+export function catalogBrandFilterChoices(products: Product[], shopBrands: ShopBrand[] = []): FilterChoice[] {
+  return uniqueBrands(products)
+    .map((name) => {
+      const match = shopBrands.find(
+        (brand) =>
+          brand.name.toLowerCase() === name.toLowerCase() ||
+          brandHandleFromMap(brand.name) === brandHandleFromMap(name),
+      );
+      return { value: name, label: match?.name || name };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
 }
 
 export type BottleColorOption = {

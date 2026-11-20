@@ -563,6 +563,7 @@ const hy: typeof en = {
   emptyOrdersHint: "Սկսեք գնումները և կատարեք ձեր առաջին պատվերը",
   emptyWishlist: "Դուք դեռ ցանկ չունեք",
   emptyWishlistHint: "Սկսեք դիտել և պահել ձեր սիրելի օծանելիքները",
+  filterBrand: "Բրենդ",
   filterSeason: "Սեզոն",
   filterClear: "Մաքրել",
   filterPrice: "Գին",
