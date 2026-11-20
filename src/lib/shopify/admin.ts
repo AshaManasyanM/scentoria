@@ -36,7 +36,10 @@ export async function adminToken() {
 
 export async function adminFetch<T>(query: string, variables?: Record<string, unknown>): Promise<T | null> {
   const token = await adminToken();
-  if (!token) return null;
+  if (!token) {
+    console.error("[shopify-admin] missing access token (check SHOPIFY_CLIENT_ID/SECRET)");
+    return null;
+  }
   try {
     const res = await fetch(adminApi, {
       method: "POST",
@@ -47,11 +50,18 @@ export async function adminFetch<T>(query: string, variables?: Record<string, un
       body: JSON.stringify({ query, variables }),
       cache: "no-store",
     });
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error("[shopify-admin] HTTP", res.status, await res.text().catch(() => ""));
+      return null;
+    }
     const json = (await res.json()) as { data?: T; errors?: unknown };
-    if (json.errors || !json.data) return null;
+    if (json.errors) {
+      console.error("[shopify-admin] GraphQL errors", JSON.stringify(json.errors));
+    }
+    if (!json.data) return null;
     return json.data;
-  } catch {
+  } catch (error) {
+    console.error("[shopify-admin] fetch failed", error);
     return null;
   }
 }

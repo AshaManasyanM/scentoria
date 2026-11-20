@@ -57,6 +57,7 @@ When a product is created or updated with a **Vendor** (brand), the site webhook
    - `description` — multi-line text (optional)
 2. **Custom app** (Develop apps) client credentials scopes:
    - `read_products`, `write_products`
+   - `read_publications`, `write_publications` (publish brand collections to **Scentoria Headless**)
    - `read_metaobjects`, `write_metaobjects`, `read_metaobject_definitions`
 3. Env (production / `.env.local`):
 

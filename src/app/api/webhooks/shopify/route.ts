@@ -52,11 +52,20 @@ export async function POST(request: Request) {
     payload.admin_graphql_api_id ||
     (payload.id != null ? `gid://shopify/Product/${payload.id}` : undefined);
 
-  try {
-    await ensureBrandFromVendor(vendor, productGid);
-  } catch {
-    // Acknowledge so Shopify does not retry forever on transient Admin errors.
+  // No vendor / store vendor — nothing to sync; acknowledge.
+  if (!vendor.trim()) {
+    return NextResponse.json({ ok: true, skipped: true });
   }
 
-  return NextResponse.json({ ok: true });
+  try {
+    const result = await ensureBrandFromVendor(vendor, productGid);
+    return NextResponse.json({ ok: true, result });
+  } catch (error) {
+    console.error("[webhooks/shopify] brand sync failed", error);
+    // Non-2xx so Shopify retries; handlers are idempotent.
+    return NextResponse.json(
+      { error: error instanceof Error ? error.message : "brand sync failed" },
+      { status: 500 },
+    );
+  }
 }
