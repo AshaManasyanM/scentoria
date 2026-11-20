@@ -34,22 +34,31 @@ function stockText(variant: ProductVariant, t: ReturnType<typeof getDict>) {
 }
 
 function withCheckoutDiscount(url: string, code: string) {
-  // Shopify may hand back the brand domain; checkout must use the shop host.
-  const shopHost =
-    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
-    process.env.SHOPIFY_STORE_DOMAIN ||
-    "gfc5xh-m1.myshopify.com";
-  let normalized = url;
+  // Brand domain serves Next.js; checkout must stay on *.myshopify.com.
+  const candidates = [
+    process.env.NEXT_PUBLIC_SHOPIFY_CHECKOUT_DOMAIN,
+    process.env.SHOPIFY_CHECKOUT_DOMAIN,
+    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN,
+    process.env.SHOPIFY_STORE_DOMAIN,
+  ];
+  let shopHost = "8j5skn-jn.myshopify.com";
+  for (const candidate of candidates) {
+    if (!candidate) continue;
+    const host = candidate.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
+    if (host.endsWith(".myshopify.com")) {
+      shopHost = host;
+      break;
+    }
+  }
   try {
     const next = new URL(url, `https://${shopHost}`);
     next.protocol = "https:";
     next.host = shopHost;
     if (code.trim()) next.searchParams.set("discount", code.trim());
-    normalized = next.toString();
+    return next.toString();
   } catch {
-    if (!code.trim()) return url;
+    return url;
   }
-  return normalized;
 }
 
 function savedPromoCode(cartCodes?: { code: string; applicable: boolean }[]) {
