@@ -19,6 +19,7 @@ import {
   type ShippingSelection,
 } from "@/lib/shipping-choices";
 import { path } from "@/lib/path";
+import { withCheckoutDiscount } from "@/lib/shopify/config";
 import type { CartLine, Locale, Money } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -67,33 +68,6 @@ function sizeLabel(title: string) {
   return cleaned.replace(/\s*\/\s*[\d.]+\s*oz$/i, "");
 }
 
-function withCheckoutDiscount(url: string | null | undefined, code: string) {
-  if (!url) return null;
-  const candidates = [
-    process.env.NEXT_PUBLIC_SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN,
-    process.env.SHOPIFY_STORE_DOMAIN,
-  ];
-  let shopHost = "8j5skn-jn.myshopify.com";
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    const host = candidate.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-    if (host.endsWith(".myshopify.com")) {
-      shopHost = host;
-      break;
-    }
-  }
-  try {
-    const next = new URL(url, `https://${shopHost}`);
-    next.protocol = "https:";
-    next.host = shopHost;
-    if (code.trim()) next.searchParams.set("discount", code.trim());
-    return next.toString();
-  } catch {
-    return url;
-  }
-}
 
 export default function CartPage() {
   const params = useParams<{ locale: string }>();

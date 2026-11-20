@@ -6,6 +6,7 @@ import { ProductPrice, useProductSelection } from "./product-selection";
 import { sizeWithOz } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
+import { withCheckoutDiscount } from "@/lib/shopify/config";
 import type { BottleColor, Locale, ProductVariant } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
@@ -31,34 +32,6 @@ function colorsForSize(colors: BottleColor[], variantTitle: string) {
 function stockText(variant: ProductVariant, t: ReturnType<typeof getDict>) {
   if (variant.available) return null;
   return t.outOfStock;
-}
-
-function withCheckoutDiscount(url: string, code: string) {
-  // Brand domain serves Next.js; checkout must stay on *.myshopify.com.
-  const candidates = [
-    process.env.NEXT_PUBLIC_SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN,
-    process.env.SHOPIFY_STORE_DOMAIN,
-  ];
-  let shopHost = "8j5skn-jn.myshopify.com";
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    const host = candidate.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-    if (host.endsWith(".myshopify.com")) {
-      shopHost = host;
-      break;
-    }
-  }
-  try {
-    const next = new URL(url, `https://${shopHost}`);
-    next.protocol = "https:";
-    next.host = shopHost;
-    if (code.trim()) next.searchParams.set("discount", code.trim());
-    return next.toString();
-  } catch {
-    return url;
-  }
 }
 
 function savedPromoCode(cartCodes?: { code: string; applicable: boolean }[]) {
@@ -235,7 +208,8 @@ export function AddToCart({
               showCartNotice(t.buyNowUnavailable);
               return;
             }
-            window.location.href = withCheckoutDiscount(next.checkoutUrl, savedPromoCode(next.discountCodes));
+            window.location.href =
+              withCheckoutDiscount(next.checkoutUrl, savedPromoCode(next.discountCodes)) || next.checkoutUrl;
           }}
           className="btn-green w-full !border-[#083534] !bg-[#f7f2ea] !text-[#083534] hover:!border-[#c5a059] hover:!bg-[#c5a059] hover:!text-[#083534] disabled:opacity-60"
         >
