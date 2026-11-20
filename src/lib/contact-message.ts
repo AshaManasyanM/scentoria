@@ -2,7 +2,6 @@
 
 import { clientKey, consumeLimit } from "@/lib/rate-limit";
 import { contactFieldsValid } from "@/lib/security";
-import { getContactEmail } from "@/lib/shopify/catalog";
 import { headers } from "next/headers";
 
 export async function sendContactMessage(_prev: { ok: boolean } | null, formData: FormData) {
@@ -18,7 +17,8 @@ export async function sendContactMessage(_prev: { ok: boolean } | null, formData
 
   if (!contactFieldsValid({ fullName, email, subject, phone, details })) return { ok: false };
 
-  const to = await getContactEmail();
+  // Always deliver contact form mail to the support inbox (ignore Shopify metaobject overrides).
+  const to = "support@scentoriaprive.com";
   const origin = (await headers()).get("origin") || "http://localhost:3000";
 
   try {

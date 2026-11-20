@@ -1,6 +1,5 @@
 import { parseLocale } from "@/lib/i18n";
 import { clientKey, consumeLimit } from "@/lib/rate-limit";
-import { getContactEmail } from "@/lib/shopify/catalog";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
 import { NextResponse } from "next/server";
@@ -58,7 +57,7 @@ export async function POST(request: Request) {
   let activateRequired = false;
 
   try {
-    const to = await getContactEmail();
+    const to = "support@scentoriaprive.com";
     const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
       method: "POST",
       headers: {

@@ -367,15 +367,10 @@ function sectionFlag(entry: { fields: { key: string; value: string }[] }) {
   return value === "true" || value === "yes" || value === "1";
 }
 
-const fallbackContactEmail = "support@scentoriaprive.com";
+const contactEmail = "support@scentoriaprive.com";
 
 export async function getContactEmail() {
-  if (!hasStorefrontToken()) return fallbackContactEmail;
-  const entries = await sectionEntries("contact");
-  const email = entries
-    .map((entry) => metaValue(entry.fields, ["email", "mail"]))
-    .find((value) => value.includes("@"));
-  return email || fallbackContactEmail;
+  return contactEmail;
 }
 
 export type ShopPolicy = {
