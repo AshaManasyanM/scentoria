@@ -272,10 +272,13 @@ export async function getBrands(locale: Locale = "en"): Promise<ShopBrand[]> {
   return brands.length ? brands : fallback;
 }
 
-function metaValue(fields: { key: string; value: string }[], keys: string[]) {
+function metaValue(fields: { key: string; value?: string | boolean | number | null }[], keys: string[]) {
   const wanted = new Set(keys.map((key) => key.toLowerCase()));
-  const value = fields.find((field) => wanted.has(field.key.toLowerCase()))?.value?.trim();
-  return value || "";
+  const raw = fields.find((field) => wanted.has(field.key.toLowerCase()))?.value;
+  if (raw === false || raw === 0) return "false";
+  if (raw === true || raw === 1) return "true";
+  if (raw == null) return "";
+  return String(raw).trim();
 }
 
 export async function getHomeReviews(products: Product[]): Promise<Testimonial[]> {
@@ -330,7 +333,7 @@ export const getSectionVisibility = cache(async () => {
   if (!hasStorefrontToken()) return visible;
 
   // Preferred: metaobject type "section", handle = section name, field visible/show/enabled = true|false
-  const named = await sectionEntries("section");
+  const named = await sectionEntries("section", true);
   for (const entry of named) {
     if (!sectionNames.includes(entry.handle as SectionName)) continue;
     const value = sectionFlag(entry);
@@ -341,9 +344,13 @@ export const getSectionVisibility = cache(async () => {
   await Promise.all(
     sectionNames.map(async (name) => {
       if (named.some((entry) => entry.handle === name && sectionFlag(entry) !== null)) return;
-      const entries = await sectionEntries(name === "faq" ? "faqs" : name);
-      const value = entries.map(sectionFlag).find((item) => item !== null);
-      if (value !== undefined && value !== null) visible[name] = value;
+      const entries = await sectionEntries(name === "faq" ? "faqs" : name, true);
+      for (const entry of entries) {
+        const flag = sectionFlag(entry);
+        if (flag === null) continue;
+        visible[name] = flag;
+        break;
+      }
     }),
   );
 
@@ -354,17 +361,19 @@ export async function isSectionVisible(name: SectionName) {
   return (await getSectionVisibility())[name];
 }
 
-async function sectionEntries(type: string) {
+async function sectionEntries(type: string, fresh = false) {
   const data = await storefrontFetch<{
-    metaobjects: { nodes: { handle: string; fields: { key: string; value: string }[] }[] };
-  }>(TESTIMONIALS_QUERY, { type, first: 20 });
+    metaobjects: { nodes: { handle: string; fields: { key: string; value: string | boolean | null }[] }[] };
+  }>(TESTIMONIALS_QUERY, { type, first: 20 }, fresh ? { fresh: true } : undefined);
   return data?.metaobjects?.nodes ?? [];
 }
 
-function sectionFlag(entry: { fields: { key: string; value: string }[] }) {
+function sectionFlag(entry: { fields: { key: string; value?: string | boolean | number | null }[] }) {
   const value = metaValue(entry.fields, ["section", "visible", "show", "enabled"]).toLowerCase();
   if (!value) return null;
-  return value === "true" || value === "yes" || value === "1";
+  if (["false", "no", "0", "off", "hide"].includes(value)) return false;
+  if (["true", "yes", "1", "on", "show"].includes(value)) return true;
+  return null;
 }
 
 const contactEmail = "support@scentoriaprive.com";
