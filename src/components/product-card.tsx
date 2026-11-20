@@ -118,6 +118,24 @@ export function ProductCard({
   );
 
   if (catalog) {
+    const categoryLabel =
+      product.gender === "men"
+        ? t.men
+        : product.gender === "women"
+          ? t.women
+          : product.gender === "unisex"
+            ? t.unisex
+            : "";
+    const titleOnly = (() => {
+      const name = product.title.trim();
+      const label = (product.brand || "").trim();
+      if (!label || !name) return name || displayName;
+      if (name.toLowerCase().startsWith(label.toLowerCase())) {
+        return name.slice(label.length).replace(/^[\s\-–—|:]+/, "").trim() || name;
+      }
+      return name;
+    })();
+
     return (
       <div className="flex h-full flex-col overflow-hidden rounded-md border border-[#D8D0C4] bg-[#F7F2EA] text-[#083534]">
         <Link href={path(locale, `/products/${product.handle}`)} className="relative block aspect-square overflow-hidden bg-white">
@@ -128,9 +146,17 @@ export function ProductCard({
           )}
         </Link>
         <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
-          <h3 className="line-clamp-2 font-serif text-base font-medium leading-5">
-            {displayName}
+          {product.brand ? (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-[#083534]/55">
+              {product.brand}
+            </p>
+          ) : null}
+          <h3 className={`line-clamp-2 font-serif text-base font-medium leading-5 ${product.brand ? "mt-1" : ""}`}>
+            {titleOnly}
           </h3>
+          {categoryLabel ? (
+            <p className="mt-1 text-[11px] uppercase tracking-[0.08em] text-[#c5a059]">{categoryLabel}</p>
+          ) : null}
           <div className="mt-auto pt-3">
             <p className="text-xs tracking-[0.08em] text-[#c5a059]">
               ★★★★★ <span className="tracking-normal text-[#083534]/70">({product.reviewCount})</span>

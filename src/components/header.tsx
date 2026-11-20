@@ -283,11 +283,11 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
               : "sticky top-0 z-50 border-b-2 border-transparent bg-bg shadow-none"
         }`}
       >
-        <div className="relative z-[60] mx-auto grid h-[3.75rem] max-w-[min(100%,82.5rem)] grid-cols-[auto_1fr_auto] items-center gap-2 overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] sm:grid-cols-[1fr_auto_1fr] md:h-16 md:gap-4">
+        <div className="relative z-[60] mx-auto flex h-[3.75rem] max-w-[min(100%,82.5rem)] items-center overflow-visible px-[clamp(0.75rem,2vw,1rem)] text-[#143028] md:grid md:h-16 md:grid-cols-[1fr_auto_1fr] md:gap-4">
           <div className="relative z-50 hidden overflow-visible md:block">
             {desktop ? <SearchBox locale={locale} value={q} onChange={setQ} bordered={scrolled || menu} /> : null}
           </div>
-          <div className="flex items-center gap-0.5 md:hidden">
+          <div className="relative z-50 flex items-center gap-0.5 md:hidden">
             <button
               type="button"
               aria-label={menu ? t.close : "Menu"}
@@ -329,7 +329,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             href={path(locale)}
             aria-label={t.brand}
             onClick={closeOverlays}
-            className="justify-self-center md:hidden"
+            className="absolute left-1/2 top-1/2 z-40 -translate-x-1/2 -translate-y-1/2 md:hidden"
           >
             <Image
               src="/brand/scentoria-prive.png"
@@ -370,7 +370,7 @@ export function Header({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?:
             </div>
           </div>
 
-          <div className="flex shrink-0 items-center justify-end gap-1 text-[#143028] sm:gap-1.5 md:gap-2 xl:gap-2.5">
+          <div className="relative z-50 ml-auto flex shrink-0 items-center justify-end gap-1 text-[#143028] sm:gap-1.5 md:ml-0 md:gap-2 xl:gap-2.5">
             <Link
               href={path(locale, loggedIn ? "/wishlist" : "/login")}
               aria-label={t.wishlist}

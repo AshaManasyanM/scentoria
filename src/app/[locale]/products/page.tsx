@@ -7,7 +7,7 @@ import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { localizedFilterGroups } from "@/lib/filter-labels";
-import { brandHandle, catalogBrandFilterChoices, catalogFilterGroups, catalogPriceBounds, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getPageBanner, getShopFilters, uniqueBrands } from "@/lib/shopify/catalog";
+import { brandHandle, catalogBrandFilterChoices, catalogFilterGroups, exactSearchFacet, filterProducts, getBrands, getCatalog, getNotes, getPageBanner, getShopFilters, uniqueBrands } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -23,8 +23,6 @@ export default async function ProductsPage({
     season?: string | string[];
     brand?: string | string[];
     size?: string | string[];
-    minPrice?: string;
-    maxPrice?: string;
     sort?: string;
     new?: string;
     page?: string;
@@ -93,7 +91,6 @@ export default async function ProductsPage({
       },
     ),
   );
-  const priceBounds = catalogPriceBounds(products);
   const banner = await getPageBanner("products");
   const list = filterProducts(products, {
     gender: query.gender,
@@ -102,8 +99,6 @@ export default async function ProductsPage({
     season: query.season,
     brand: query.brand,
     size: query.size,
-    minPrice: query.minPrice,
-    maxPrice: query.maxPrice,
     isNew: query.new === "1",
     sort: query.sort,
     query: facet ? "" : textQuery,
@@ -111,11 +106,27 @@ export default async function ProductsPage({
   const paging = catalogSlice(list, query.page);
   if (paging.needsRedirect) redirect(catalogHref(locale, "/products", query, paging.page));
 
+  const selectedGenders = Array.isArray(query.gender) ? query.gender : query.gender ? [query.gender] : [];
+  const focusGender = selectedGenders.length === 1 ? selectedGenders[0].toLowerCase() : null;
+  const categoryTitle =
+    focusGender === "men"
+      ? t.men
+      : focusGender === "women"
+        ? t.women
+        : focusGender === "unisex"
+          ? t.unisex
+          : null;
+  const heroEyebrow = focusBrand && categoryTitle ? focusBrand : t.nav.perfumes;
+  const heroTitle =
+    focusBrand && categoryTitle
+      ? categoryTitle
+      : focusBrand || categoryTitle || textQuery || t.perfumesHero;
+
   return (
     <>
       <CatalogPageHero
-        eyebrow={t.nav.perfumes}
-        title={focusBrand ?? (textQuery || t.perfumesHero)}
+        eyebrow={heroEyebrow}
+        title={heroTitle}
         subtitle={brandStory ?? t.perfumesSub}
         image={banner.url}
         alt={banner.alt}
@@ -125,7 +136,7 @@ export default async function ProductsPage({
       <section id="catalog" className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
         <div className="mx-auto flex max-w-[min(100%,82.5rem)] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <Suspense fallback={null}>
-            <ProductFilters key={catalogQuery(query)} locale={locale} groups={groups} priceBounds={priceBounds} />
+            <ProductFilters key={catalogQuery(query)} locale={locale} groups={groups} />
           </Suspense>
           <div className="min-w-0 flex-1">
             <ProductGrid products={paging.items} locale={locale} variant="catalog" />

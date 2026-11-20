@@ -1,6 +1,5 @@
 "use client";
 
-import { formatMoney } from "@/lib/format";
 import { getDict } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import { scrollToCatalog } from "@/lib/scroll-catalog";
@@ -161,119 +160,22 @@ function Group({
   );
 }
 
-function PriceRangeField({
-  label,
-  locale,
-  bounds,
-  valueMin,
-  valueMax,
-  onCommit,
-}: {
-  label: string;
-  locale: Locale;
-  bounds: { min: number; max: number; currencyCode: string };
-  valueMin: number;
-  valueMax: number;
-  onCommit: (min: number, max: number) => void;
-}) {
-  const [min, setMin] = useState(valueMin);
-  const [max, setMax] = useState(valueMax);
-  const live = useRef({ min: valueMin, max: valueMax });
-  const span = Math.max(bounds.max - bounds.min, 1);
-  const step = Math.max(1, Math.round(span / 100));
-
-  useEffect(() => {
-    setMin(valueMin);
-    setMax(valueMax);
-    live.current = { min: valueMin, max: valueMax };
-  }, [valueMin, valueMax]);
-
-  function money(amount: number) {
-    return formatMoney({ amount: String(amount), currencyCode: bounds.currencyCode }, locale);
-  }
-
-  function commit(nextMin = live.current.min, nextMax = live.current.max) {
-    const low = Math.min(nextMin, nextMax);
-    const high = Math.max(nextMin, nextMax);
-    live.current = { min: low, max: high };
-    setMin(low);
-    setMax(high);
-    if (low === valueMin && high === valueMax) return;
-    onCommit(low, high);
-  }
-
-  const lowPct = ((min - bounds.min) / span) * 100;
-  const highPct = ((max - bounds.min) / span) * 100;
-
-  return (
-    <div className="border-b border-[#D8D0C4] py-4">
-      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-[#083534]">{label}</p>
-      <p className="mt-3 text-sm text-[#083534]">
-        {money(min)} – {money(max)}
-      </p>
-      <div className="relative mt-5 h-6">
-        <div className="absolute left-0 right-0 top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-[#D8D0C4]" />
-        <div
-          className="absolute top-1/2 h-[2px] -translate-y-1/2 rounded-full bg-[#083534]"
-          style={{ left: `${lowPct}%`, right: `${100 - highPct}%` }}
-        />
-        <input
-          type="range"
-          min={bounds.min}
-          max={bounds.max}
-          step={step}
-          value={min}
-          aria-label={`${label} min`}
-          onChange={(event) => {
-            const next = Math.min(Number(event.target.value), live.current.max);
-            live.current = { ...live.current, min: next };
-            setMin(next);
-          }}
-          onPointerUp={() => commit()}
-          onKeyUp={() => commit()}
-          className="pointer-events-none absolute inset-0 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#083534] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-20 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#083534]"
-        />
-        <input
-          type="range"
-          min={bounds.min}
-          max={bounds.max}
-          step={step}
-          value={max}
-          aria-label={`${label} max`}
-          onChange={(event) => {
-            const next = Math.max(Number(event.target.value), live.current.min);
-            live.current = { ...live.current, max: next };
-            setMax(next);
-          }}
-          onPointerUp={() => commit()}
-          onKeyUp={() => commit()}
-          className="pointer-events-none absolute inset-0 w-full appearance-none bg-transparent [&::-moz-range-thumb]:pointer-events-auto [&::-moz-range-thumb]:h-4 [&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:appearance-none [&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:bg-[#083534] [&::-webkit-slider-thumb]:pointer-events-auto [&::-webkit-slider-thumb]:relative [&::-webkit-slider-thumb]:z-30 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-[#083534]"
-        />
-      </div>
-    </div>
-  );
-}
-
 const filterKeys = ["gender", "brand", "season", "occasion", "size"] as const;
 
-/** Sidebar order: Gender → Brand → Season → Occasion → Price → Size */
-const filterRenderOrder = ["gender", "brand", "season", "occasion", "price", "size"] as const;
+/** Sidebar order: Gender → Brand → Season → Occasion → Size */
+const filterRenderOrder = ["gender", "brand", "season", "occasion", "size"] as const;
 
 type Draft = {
   selected: Record<string, string[]>;
-  priceMin: number;
-  priceMax: number;
 };
 
 export function ProductFilters({
   locale,
   groups,
-  priceBounds,
   basePath = "/products",
 }: {
   locale: Locale;
   groups: CatalogFilterGroup[];
-  priceBounds: { min: number; max: number; currencyCode: string };
   basePath?: string;
 }) {
   const t = getDict(locale);
@@ -293,24 +195,9 @@ export function ProductFilters({
   const [drawerEntered, setDrawerEntered] = useState(false);
   const [draft, setDraft] = useState<Draft | null>(null);
   const searchText = searchParams.get("q") ?? "";
-  const rawMin = searchParams.get("minPrice");
-  const rawMax = searchParams.get("maxPrice");
-  const parsedMin = rawMin != null && rawMin !== "" ? Number(rawMin) : Number.NaN;
-  const parsedMax = rawMax != null && rawMax !== "" ? Number(rawMax) : Number.NaN;
-  const priceMin =
-    Number.isFinite(parsedMin)
-      ? Math.min(Math.max(parsedMin, priceBounds.min), priceBounds.max)
-      : priceBounds.min;
-  const priceMax =
-    Number.isFinite(parsedMax) && !(parsedMax === 0 && !Number.isFinite(parsedMin) && priceBounds.max > 0)
-      ? Math.min(Math.max(parsedMax, priceBounds.min), priceBounds.max)
-      : priceBounds.max;
-  const priceActive = priceMin > priceBounds.min || priceMax < priceBounds.max;
-  const hasPriceSlider = priceBounds.max > priceBounds.min;
   const hasFilters =
     Boolean(sort) ||
     Boolean(searchText) ||
-    priceActive ||
     searchParams.getAll("brand").length > 0 ||
     filterKeys.some((key) => selected[key]?.length);
 
@@ -367,13 +254,9 @@ export function ProductFilters({
   function navigate(next: {
     sort?: string;
     selected?: Record<string, string[]>;
-    priceMin?: number;
-    priceMax?: number;
   }) {
     const nextSort = next.sort ?? sort;
     const nextSelected = next.selected ?? selected;
-    const nextPriceMin = next.priceMin ?? priceMin;
-    const nextPriceMax = next.priceMax ?? priceMax;
     const params = new URLSearchParams();
     if (searchText) params.set("q", searchText);
     if (nextSort === "new") params.set("new", "1");
@@ -381,8 +264,6 @@ export function ProductFilters({
     filterKeys.forEach((key) => {
       (nextSelected[key] ?? []).forEach((value) => params.append(key, value));
     });
-    if (nextPriceMin > priceBounds.min) params.set("minPrice", String(nextPriceMin));
-    if (nextPriceMax < priceBounds.max) params.set("maxPrice", String(nextPriceMax));
     const qs = params.toString();
     router.push(path(locale, `${basePath}${qs ? `?${qs}` : ""}`), { scroll: false });
     scrollToCatalog();
@@ -402,8 +283,6 @@ export function ProductFilters({
         gender: [...selected.gender],
         size: [...selected.size],
       },
-      priceMin,
-      priceMax,
     });
     setDrawerEntered(false);
     setDrawerVisible(true);
@@ -412,27 +291,19 @@ export function ProductFilters({
 
   function applyDraft() {
     if (!draft) return;
-    navigate({
-      selected: draft.selected,
-      priceMin: draft.priceMin,
-      priceMax: draft.priceMax,
-    });
+    navigate({ selected: draft.selected });
     closeDrawer();
   }
 
   function resetDraft() {
     setDraft({
       selected: { brand: [], occasion: [], season: [], gender: [], size: [] },
-      priceMin: priceBounds.min,
-      priceMax: priceBounds.max,
     });
     clear();
     closeDrawer();
   }
 
   const activeSelected = draft?.selected ?? selected;
-  const activePriceMin = draft?.priceMin ?? priceMin;
-  const activePriceMax = draft?.priceMax ?? priceMax;
 
   function renderGroups(mode: "live" | "draft") {
     const groupsById = new Map(groups.map((group) => [group.id, group]));
@@ -440,31 +311,6 @@ export function ProductFilters({
     return (
       <>
         {filterRenderOrder.map((slot) => {
-          if (slot === "price") {
-            if (!hasPriceSlider) return null;
-            return (
-              <PriceRangeField
-                key="price"
-                label={t.filterPrice}
-                locale={locale}
-                bounds={priceBounds}
-                valueMin={Math.min(activePriceMin, activePriceMax)}
-                valueMax={Math.max(activePriceMin, activePriceMax)}
-                onCommit={(min, max) => {
-                  if (mode === "draft") {
-                    setDraft((current) =>
-                      current
-                        ? { ...current, priceMin: min, priceMax: max }
-                        : { selected, priceMin: min, priceMax: max },
-                    );
-                    return;
-                  }
-                  navigate({ priceMin: min, priceMax: max });
-                }}
-              />
-            );
-          }
-
           const group = groupsById.get(slot);
           if (!group) return null;
 
@@ -483,9 +329,7 @@ export function ProductFilters({
                     };
                     if (mode === "draft") {
                       setDraft((current) =>
-                        current
-                          ? { ...current, selected: nextSelected }
-                          : { selected: nextSelected, priceMin, priceMax },
+                        current ? { ...current, selected: nextSelected } : { selected: nextSelected },
                       );
                       return;
                     }

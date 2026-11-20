@@ -31,24 +31,25 @@ export default async function BrandsPage({
       />
       <CatalogBanner locale={locale} source={source} />
 
-      <section className="bg-[#f7f2ea] section-pad-y">
-        <div className="mx-auto w-full max-w-[min(100%,82.5rem)] px-4 min-[1352px]:px-0">
-          <div className="grid grid-cols-1 gap-4 min-[520px]:grid-cols-2 min-[1352px]:grid-cols-[repeat(4,312px)] min-[1352px]:justify-start min-[1352px]:gap-6">
+      <section className="bg-[#f7f2ea] px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.5rem)]">
+        <div className="mx-auto w-full max-w-[min(100%,82.5rem)]">
+          <div className="grid grid-cols-1 gap-3 min-[480px]:grid-cols-2 min-[480px]:gap-4 md:gap-5 lg:grid-cols-3 xl:grid-cols-4 xl:gap-6">
             {brands.map((brand) => (
               <Link
                 key={brand.handle}
                 href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
-                className="flex h-[clamp(7.5rem,12vw,11.25rem)] w-full items-center justify-center rounded-lg border border-[#D8D0C4] bg-[#F7F2EA] px-6 xl:max-w-[19.5rem]"
+                className="group flex aspect-[5/3] w-full items-center justify-center rounded-xl border border-[#D8D0C4] bg-[#fbf8f2] px-6 py-7 transition duration-300 hover:-translate-y-0.5 hover:border-[#c5a059]/65 hover:bg-white hover:shadow-[0_12px_28px_rgba(8,53,52,0.08)] sm:px-8 sm:py-8 md:rounded-2xl md:px-10"
               >
                 {brand.logo ? (
                   // eslint-disable-next-line @next/next/no-img-element
                   <img
                     src={brand.logo}
                     alt={`${brand.name} perfume brand logo`}
-                    className="w-auto max-w-[70%] object-contain"
+                    title={`${brand.name} perfume brand`}
+                    className="max-h-[58%] w-auto max-w-[72%] object-contain transition duration-300 group-hover:scale-[1.03]"
                   />
                 ) : (
-                  <span className="text-center font-serif text-xl font-medium text-[#083534] md:text-2xl">
+                  <span className="max-w-[90%] text-center font-serif text-[clamp(1.15rem,0.9rem+1.1vw,1.65rem)] font-medium leading-snug tracking-wide text-[#083534]">
                     {brand.name}
                   </span>
                 )}

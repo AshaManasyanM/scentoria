@@ -7,7 +7,7 @@ import { catalogHref, catalogQuery, catalogSlice } from "@/lib/catalog-page";
 import { getDict } from "@/lib/i18n";
 import { localeFrom } from "@/lib/locale-params";
 import { localizedFilterGroups } from "@/lib/filter-labels";
-import { catalogBrandFilterChoices, catalogFilterGroups, catalogPriceBounds, filterProducts, getBrands, getCatalog, getPageBanner, getShopFilters, isSectionVisible } from "@/lib/shopify/catalog";
+import { catalogBrandFilterChoices, catalogFilterGroups, filterProducts, getBrands, getCatalog, getPageBanner, getShopFilters, isSectionVisible } from "@/lib/shopify/catalog";
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 
@@ -23,8 +23,6 @@ export default async function SalesPage({
     season?: string | string[];
     brand?: string | string[];
     size?: string | string[];
-    minPrice?: string;
-    maxPrice?: string;
     sort?: string;
     new?: string;
     page?: string;
@@ -65,7 +63,6 @@ export default async function SalesPage({
       },
     ),
   );
-  const priceBounds = catalogPriceBounds(saleProducts);
   const banner = await getPageBanner("sales");
   const list = filterProducts(products, {
     gender: query.gender,
@@ -74,8 +71,6 @@ export default async function SalesPage({
     season: query.season,
     brand: query.brand,
     size: query.size,
-    minPrice: query.minPrice,
-    maxPrice: query.maxPrice,
     isNew: query.new === "1",
     sort: query.sort,
     sale: true,
@@ -97,7 +92,7 @@ export default async function SalesPage({
       <section id="catalog" className="bg-[#f7f2ea] px-4 py-10 md:px-8 md:py-16">
         <div className="mx-auto flex max-w-[min(100%,82.5rem)] flex-col gap-8 lg:flex-row lg:items-start lg:gap-10">
           <Suspense fallback={null}>
-            <ProductFilters locale={locale} groups={groups} priceBounds={priceBounds} basePath="/sales" />
+            <ProductFilters locale={locale} groups={groups} basePath="/sales" />
           </Suspense>
           <div className="min-w-0 flex-1">
             <ProductGrid products={paging.items} locale={locale} variant="catalog" />
