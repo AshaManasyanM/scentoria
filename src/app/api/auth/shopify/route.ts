@@ -1,3 +1,4 @@
+import { parseLocale } from "@/lib/i18n";
 import { path } from "@/lib/path";
 import { browserCookieOptions } from "@/lib/security";
 import {
@@ -17,7 +18,7 @@ const NEXT = "shopify_oauth_next";
 export async function GET(request: Request) {
   const url = new URL(request.url);
   const origin = publicOrigin(request);
-  const locale = url.searchParams.get("locale") === "hy" ? "hy" : "en";
+  const locale = parseLocale(url.searchParams.get("locale"));
   const next = url.searchParams.get("next") || path(locale, "/account");
   const loginPath = path(locale, `/login?error=shopify`);
 

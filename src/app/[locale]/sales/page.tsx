@@ -32,8 +32,8 @@ export default async function SalesPage({
   if (!(await isSectionVisible("sale"))) redirect(`/${locale}`);
   const query = await searchParams;
   const t = getDict(locale);
-  const { products, source } = await getCatalog();
-  const shopBrands = await getBrands();
+  const { products, source } = await getCatalog(locale);
+  const shopBrands = await getBrands(locale);
   const saleProducts = filterProducts(products, { sale: true });
   const shopFilters = await getShopFilters();
   const groups = catalogFilterGroups(

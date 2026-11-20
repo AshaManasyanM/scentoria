@@ -1,3 +1,4 @@
+import { parseLocale } from "@/lib/i18n";
 import { clientKey, consumeLimit } from "@/lib/rate-limit";
 import { getContactEmail } from "@/lib/shopify/catalog";
 import { mkdir, readFile, writeFile } from "fs/promises";
@@ -41,7 +42,7 @@ export async function POST(request: Request) {
   const email = String(body?.email ?? "")
     .trim()
     .toLowerCase();
-  const locale = body?.locale === "hy" ? "hy" : "en";
+  const locale = parseLocale(body?.locale);
   if (!emailOk(email)) return NextResponse.json({ ok: false, error: "invalid" }, { status: 400 });
 
   const isNew = await saveSubscriber(email);

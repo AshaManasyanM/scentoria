@@ -19,7 +19,7 @@ import {
   type ShippingSelection,
 } from "@/lib/shipping-choices";
 import { path } from "@/lib/path";
-import type { CartLine, Money } from "@/lib/types";
+import type { CartLine, Locale, Money } from "@/lib/types";
 import Image from "next/image";
 import Link from "next/link";
 import { useParams } from "next/navigation";
@@ -441,7 +441,7 @@ function DeliveryStep({
   productsLabel,
   onReady,
 }: {
-  locale: "en" | "hy";
+  locale: Locale;
   labels: ReturnType<typeof getDict>;
   step: number;
   cartKey: string;
@@ -1068,7 +1068,7 @@ function OrderLine({
   promoFactor = 1,
 }: {
   line: CartLine;
-  locale: "en" | "hy";
+  locale: Locale;
   removeLabel: string;
   onQty: (lineId: string, quantity: number) => void;
   promoFactor?: number;

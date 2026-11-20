@@ -16,8 +16,8 @@ export default async function BrandsPage({
   const locale = await localeFrom(params);
   if (!(await isSectionVisible("brands"))) redirect(`/${locale}`);
   const t = getDict(locale);
-  const { source } = await getCatalog();
-  const brands = await getBrands();
+  const { source } = await getCatalog(locale);
+  const brands = await getBrands(locale);
   const banner = await getPageBanner("brands");
 
   return (

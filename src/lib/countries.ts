@@ -45,8 +45,9 @@ export function toCountryCode(code: string) {
 }
 
 export function countryChoices(locale: string) {
-  const names = new Intl.DisplayNames([locale === "hy" ? "hy" : "en"], { type: "region" });
+  const displayLocale = locale === "hy" ? "hy" : locale === "es" ? "es" : "en";
+  const names = new Intl.DisplayNames([displayLocale], { type: "region" });
   return CODES.map(([code]) => ({ code, name: names.of(code) ?? code })).sort((a, b) =>
-    a.name.localeCompare(b.name, locale),
+    a.name.localeCompare(b.name, displayLocale),
   );
 }

@@ -22,7 +22,7 @@ export default async function PolicyPage({
   const locale = await localeFrom(params);
   if (!knownHandles.includes(handle as (typeof knownHandles)[number])) notFound();
   const t = getDict(locale);
-  const policy = await getShopPolicy(handle);
+  const policy = await getShopPolicy(handle, locale);
   const fallbackTitle =
     handle === "privacy-policy"
       ? t.privacyPolicy

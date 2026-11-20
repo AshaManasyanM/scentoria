@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Fraunces, Inter } from "next/font/google";
+import { headers } from "next/headers";
+import { isLocale } from "@/lib/i18n";
 import "./globals.css";
 
 const sans = Inter({
@@ -31,10 +33,14 @@ export const metadata: Metadata = {
   },
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  const headerList = await headers();
+  const raw = headerList.get("x-locale") || "en";
+  const lang = isLocale(raw) ? raw : "en";
+
   return (
     <html
-      lang="en"
+      lang={lang}
       className={`${sans.variable} ${display.variable} h-full antialiased`}
       suppressHydrationWarning
     >

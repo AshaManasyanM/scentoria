@@ -1,5 +1,5 @@
 import { cache } from "react";
-import type { Product, Testimonial } from "../types";
+import type { Locale, Product, Testimonial } from "../types";
 import { hasStorefrontToken } from "./config";
 import { storefrontFetch } from "./fetch";
 import { publishedReviewSummaries, publishedReviews } from "./reviews";
@@ -38,38 +38,51 @@ type ProductsData = {
   products: { nodes: Parameters<typeof mapProduct>[0][] };
 };
 
-export async function getCatalog(): Promise<Catalog> {
+const loadCatalog = cache(async (locale: Locale): Promise<Catalog> => {
   if (hasStorefrontToken()) {
-    const data = await storefrontFetch<ProductsData>(PRODUCTS_QUERY, { first: 80 });
+    let data = await storefrontFetch<ProductsData>(PRODUCTS_QUERY, { first: 80 }, { locale });
+    // English fallback when a market language is not enabled in Shopify.
+    if (!data?.products?.nodes && locale !== "en") {
+      data = await storefrontFetch<ProductsData>(PRODUCTS_QUERY, { first: 80 }, { locale: "en" });
+    }
     if (data?.products?.nodes) {
       const products = await attachReviews(data.products.nodes.map(mapProduct));
       return { products, source: products.length ? "shopify" : "empty" };
     }
   }
   return { products: await attachReviews(mockProducts), source: "sample" };
+});
+
+export async function getCatalog(locale: Locale = "en"): Promise<Catalog> {
+  return loadCatalog(locale);
 }
 
-export async function getProduct(handle: string): Promise<Product | undefined> {
-  const { products, source } = await getCatalog();
+export async function getProduct(handle: string, locale: Locale = "en"): Promise<Product | undefined> {
+  const { products, source } = await getCatalog(locale);
   const local = products.find((p) => p.handle === handle);
   if (local) return local;
   if (source === "sample") return undefined;
 
-  const data = await storefrontFetch<{
+  let data = await storefrontFetch<{
     product: Parameters<typeof mapProduct>[0] | null;
-  }>(PRODUCT_BY_HANDLE_QUERY, { handle });
+  }>(PRODUCT_BY_HANDLE_QUERY, { handle }, { locale });
+  if (!data?.product && locale !== "en") {
+    data = await storefrontFetch<{
+      product: Parameters<typeof mapProduct>[0] | null;
+    }>(PRODUCT_BY_HANDLE_QUERY, { handle }, { locale: "en" });
+  }
   if (!data?.product) return undefined;
   return (await attachReviews([mapProduct(data.product)]))[0];
 }
 
-export async function searchProducts(query: string): Promise<Product[]> {
+export async function searchProducts(query: string, locale: Locale = "en"): Promise<Product[]> {
   const q = query.trim().toLowerCase();
   if (!q) return [];
 
   if (hasStorefrontToken()) {
     const data = await storefrontFetch<{
       search: { edges: { node: Parameters<typeof mapProduct>[0] }[] };
-    }>(SEARCH_QUERY, { query: q });
+    }>(SEARCH_QUERY, { query: q }, { locale });
     if (data?.search?.edges) {
       return await attachReviews(
         data.search.edges
@@ -80,7 +93,7 @@ export async function searchProducts(query: string): Promise<Product[]> {
     }
   }
 
-  const { products } = await getCatalog();
+  const { products } = await getCatalog(locale);
   return products.filter(
     (p) =>
       p.title.toLowerCase().includes(q) ||
@@ -133,13 +146,17 @@ function rankSuggestions(
     .map(({ handle, title, image, brand }) => ({ handle, title, image, brand }));
 }
 
-export async function suggestProducts(query: string, limit = 8): Promise<ProductSuggestion[]> {
+export async function suggestProducts(
+  query: string,
+  limit = 8,
+  locale: Locale = "en",
+): Promise<ProductSuggestion[]> {
   const raw = query.trim();
   const q = raw.toLowerCase();
   if (q.length < 1) return [];
 
   // Name suggestions are title-based: only show perfumes whose name actually matches.
-  const { products } = await getCatalog();
+  const { products } = await getCatalog(locale);
   const local = rankSuggestions(
     products.map((product) => ({
       handle: product.handle,
@@ -158,7 +175,7 @@ export async function suggestProducts(query: string, limit = 8): Promise<Product
   try {
     const data = await storefrontFetch<{
       search: { edges: { node: { handle: string; title: string; featuredImage?: { url: string } | null } | null }[] };
-    }>(SUGGEST_QUERY, { query: raw, first: Math.max(limit * 3, 16) }, { fresh: true });
+    }>(SUGGEST_QUERY, { query: raw, first: Math.max(limit * 3, 16) }, { fresh: true, locale });
     return rankSuggestions(
       (data?.search?.edges || [])
         .map((edge) => edge.node)
@@ -202,7 +219,7 @@ function brandLogo(fields: NoteField[]) {
   return field?.reference?.image?.url || field?.reference?.url || (field?.value?.startsWith("http") ? field.value : "");
 }
 
-export async function getBrands(): Promise<ShopBrand[]> {
+export async function getBrands(locale: Locale = "en"): Promise<ShopBrand[]> {
   const localLogos = new Map<string, string>(popularBrands.map((brand) => [brand.handle, brand.logo]));
   const fallback = popularBrands.map((brand) => ({
     name: brand.name,
@@ -218,10 +235,10 @@ export async function getBrands(): Promise<ShopBrand[]> {
       collections: {
         nodes: { handle: string; title: string; description: string; image?: { url: string } | null }[];
       };
-    }>(COLLECTIONS_QUERY, { first: 100 }),
+    }>(COLLECTIONS_QUERY, { first: 100 }, { locale }),
     storefrontFetch<{
       metaobjects: { nodes: { handle: string; fields: NoteField[] }[] };
-    }>(NOTES_QUERY, { type: "brand", first: 100 }),
+    }>(NOTES_QUERY, { type: "brand", first: 100 }, { locale }),
   ]);
 
   const byHandle = new Map<string, ShopBrand>();
@@ -369,7 +386,7 @@ export type ShopPolicy = {
 
 const policyOrder = ["privacy-policy", "refund-policy", "shipping-policy", "terms-of-service"] as const;
 
-export const getShopPolicies = cache(async (): Promise<ShopPolicy[]> => {
+export const getShopPolicies = cache(async (locale: Locale = "en"): Promise<ShopPolicy[]> => {
   if (!hasStorefrontToken()) return [];
   const data = await storefrontFetch<{
     shop: {
@@ -378,7 +395,7 @@ export const getShopPolicies = cache(async (): Promise<ShopPolicy[]> => {
       shippingPolicy: { title: string; handle: string; body: string } | null;
       termsOfService: { title: string; handle: string; body: string } | null;
     };
-  }>(SHOP_POLICIES_QUERY);
+  }>(SHOP_POLICIES_QUERY, undefined, { locale });
   if (!data?.shop) return [];
   const list = [
     data.shop.privacyPolicy,
@@ -399,17 +416,17 @@ export const getShopPolicies = cache(async (): Promise<ShopPolicy[]> => {
   });
 });
 
-export async function getShopPolicy(handle: string) {
-  const policies = await getShopPolicies();
+export async function getShopPolicy(handle: string, locale: Locale = "en") {
+  const policies = await getShopPolicies(locale);
   return policies.find((policy) => policy.handle === handle) ?? null;
 }
 
-export async function getFaqs(): Promise<{ question: string; answer: string }[]> {
+export async function getFaqs(locale: Locale = "en"): Promise<{ question: string; answer: string }[]> {
   if (!hasStorefrontToken()) return [];
 
   const data = await storefrontFetch<{
     metaobjects: { nodes: { handle: string; fields: { key: string; value: string }[] }[] };
-  }>(TESTIMONIALS_QUERY, { type: "faq", first: 50 });
+  }>(TESTIMONIALS_QUERY, { type: "faq", first: 50 }, { locale });
 
   return (data?.metaobjects?.nodes ?? [])
     .map((entry) => ({

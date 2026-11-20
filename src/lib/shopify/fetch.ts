@@ -1,20 +1,47 @@
+import type { Locale } from "../types";
+import { shopifyLanguage } from "../i18n";
 import { storefrontApi, storefrontToken } from "./config";
+
+export type StorefrontFetchOptions = {
+  fresh?: boolean;
+  /** App locale — maps to Shopify @inContext(language). Defaults to no language context. */
+  locale?: Locale;
+  language?: "EN" | "HY" | "ES";
+};
+
+function applyInContext(query: string, language?: "EN" | "HY" | "ES") {
+  if (!language) return query;
+  return query.replace(
+    /(query\s+\w+(?:\s*\([^)]*\))?)\s*\{/,
+    `$1 @inContext(language: ${language}) {`,
+  );
+}
+
+function resolveLanguage(options?: StorefrontFetchOptions) {
+  if (options?.language) return options.language;
+  if (options?.locale) return shopifyLanguage(options.locale);
+  return undefined;
+}
 
 export async function storefrontFetch<T>(
   query: string,
   variables?: Record<string, unknown>,
-  options?: { fresh?: boolean },
+  options?: StorefrontFetchOptions,
 ): Promise<T | null> {
   if (!storefrontToken) return null;
 
   try {
+    const language = resolveLanguage(options);
     const res = await fetch(storefrontApi, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
         "X-Shopify-Storefront-Access-Token": storefrontToken,
       },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({
+        query: applyInContext(query, language),
+        variables,
+      }),
       ...(options?.fresh ? { cache: "no-store" as const } : { next: { revalidate: 30 } }),
     });
     if (!res.ok) return null;
@@ -35,10 +62,12 @@ type DeferredPart = {
 export async function storefrontFetchDeferred<T>(
   query: string,
   variables?: Record<string, unknown>,
+  options?: StorefrontFetchOptions,
 ): Promise<T | null> {
   if (!storefrontToken) return null;
 
   try {
+    const language = resolveLanguage(options);
     const res = await fetch(storefrontApi, {
       method: "POST",
       headers: {
@@ -46,7 +75,10 @@ export async function storefrontFetchDeferred<T>(
         Accept: "multipart/mixed",
         "X-Shopify-Storefront-Access-Token": storefrontToken,
       },
-      body: JSON.stringify({ query, variables }),
+      body: JSON.stringify({
+        query: applyInContext(query, language),
+        variables,
+      }),
       cache: "no-store",
       signal: AbortSignal.timeout(20_000),
     });

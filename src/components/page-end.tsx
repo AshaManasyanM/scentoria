@@ -7,7 +7,7 @@ import { ShareForm } from "./share-form";
 export async function PageEnd({ locale }: { locale: Locale }) {
   const t = getDict(locale);
   const sections = await getSectionVisibility();
-  const shopFaqs = sections.faq ? await getFaqs() : [];
+  const shopFaqs = sections.faq ? await getFaqs(locale) : [];
   const items = shopFaqs.length
     ? shopFaqs
     : t.faqs.map((item) => ({ question: item.q, answer: item.a }));

@@ -15,7 +15,7 @@ const policyFallback = [
 
 export async function Footer({ locale, hiddenNav = [] }: { locale: Locale; hiddenNav?: string[] }) {
   const t = getDict(locale);
-  const shopPolicies = await getShopPolicies();
+  const shopPolicies = await getShopPolicies(locale);
   const policies = policyFallback.map((item) => {
     const live = shopPolicies.find((policy) => policy.handle === item.handle);
     return {

@@ -12,7 +12,7 @@ export default async function BrandPage({
   const locale = await localeFrom(params);
   const { brand } = await params;
   const known = popularBrands.find((item) => item.handle === brand);
-  const { products } = await getCatalog();
+  const { products } = await getCatalog(locale);
   const name =
     known?.name ??
     uniqueBrands(products).find((item) => brandHandle(item) === brand) ??

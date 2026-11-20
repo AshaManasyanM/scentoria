@@ -32,8 +32,8 @@ export default async function ProductsPage({
   const locale = await localeFrom(params);
   const query = await searchParams;
   const t = getDict(locale);
-  const { products, source } = await getCatalog();
-  const shopBrands = await getBrands();
+  const { products, source } = await getCatalog(locale);
+  const shopBrands = await getBrands(locale);
   const selectedBrands = Array.isArray(query.brand) ? query.brand : query.brand ? [query.brand] : [];
   const focusBrand = selectedBrands.length === 1 ? selectedBrands[0] : null;
   const storyKey = focusBrand ? brandHandle(focusBrand) : "";

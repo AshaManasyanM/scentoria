@@ -98,7 +98,7 @@ export function GoogleSignInButton({
         locale,
       });
     };
-    const googleLocale = locale === "hy" ? "hy" : "en";
+    const googleLocale = locale === "hy" ? "hy" : locale === "es" ? "es" : "en";
     const src = `https://accounts.google.com/gsi/client?hl=${googleLocale}`;
     const existing = document.querySelector<HTMLScriptElement>('script[data-scentoria-gsi="1"]');
     if (existing && !existing.src.includes(`hl=${googleLocale}`)) {

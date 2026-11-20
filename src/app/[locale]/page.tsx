@@ -57,10 +57,10 @@ export default async function HomePage({
 }) {
   const locale = await localeFrom(params);
   const t = getDict(locale);
-  const { products, source } = await getCatalog();
+  const { products, source } = await getCatalog(locale);
   const sections = await getSectionVisibility();
   const heroSlides = sections.hero ? await getHeroSlides() : [];
-  const brands = sections.brands ? (await getBrands()).slice(0, 8) : [];
+  const brands = sections.brands ? (await getBrands(locale)).slice(0, 8) : [];
   const testimonials = sections.testimonials ? await getHomeReviews(products) : [];
   const notes = sections.notes
     ? (await getNotes()).map((note) => ({

@@ -9,7 +9,7 @@ export default async function WishlistPage({
   params: Promise<{ locale: string }>;
 }) {
   const locale = await localeFrom(params);
-  const { products } = await getCatalog();
+  const { products } = await getCatalog(locale);
 
   return (
     <>

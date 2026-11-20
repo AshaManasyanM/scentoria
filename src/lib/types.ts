@@ -1,4 +1,4 @@
-export type Locale = "en" | "hy";
+export type Locale = "en" | "hy" | "es";
 
 export type Money = {
   amount: string;

@@ -54,7 +54,7 @@ export async function GET(request: Request) {
   const origin = publicOrigin(request);
   const jar = await cookies();
   const next = jar.get(NEXT)?.value || path("en", "/account");
-  const failLocale = next.startsWith("/hy") ? "hy" : "en";
+  const failLocale = next.startsWith("/hy") ? "hy" : next.startsWith("/es") ? "es" : "en";
   const fail = (code = "shopify") =>
     new URL(path(failLocale, `/login?error=${encodeURIComponent(code)}`), origin);
 

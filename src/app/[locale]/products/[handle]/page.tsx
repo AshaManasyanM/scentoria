@@ -25,11 +25,11 @@ export default async function ProductPage({
 }) {
   const { handle } = await params;
   const locale = await localeFrom(params);
-  const product = await getProduct(handle);
+  const product = await getProduct(handle, locale);
   if (!product) notFound();
   const t = getDict(locale);
   const bottleColors = await getBottleColors();
-  const { products } = await getCatalog();
+  const { products } = await getCatalog(locale);
   const related = product.brand
     ? products.filter((p) => p.brand === product.brand && p.handle !== product.handle).slice(0, 4)
     : [];

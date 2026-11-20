@@ -104,7 +104,7 @@ export function SearchBox({
     setLoading(true);
     setOpen(true);
     const timer = window.setTimeout(() => {
-      void fetch(`/api/search?q=${encodeURIComponent(term.slice(0, 80))}`)
+      void fetch(`/api/search?q=${encodeURIComponent(term.slice(0, 80))}&locale=${encodeURIComponent(locale)}`)
         .then((res) => (res.ok ? res.json() : { items: [] }))
         .then((data: { items?: Suggestion[] }) => {
           if (!alive) return;
