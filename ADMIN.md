@@ -41,3 +41,35 @@ NEXT_PUBLIC_SHOPIFY_CUSTOMER_ACCOUNT_CLIENT_ID=your_client_id
 `NEXT_PUBLIC_SITE_URL` (or `SITE_URL`) sets the OAuth `redirect_uri` when Next runs behind a reverse proxy that would otherwise report `localhost`. Locally you can omit it and the app uses `http://localhost:3000`.
 
 Restart `npm run dev`. The login page shows **Continue with Shopify**.
+
+## Auto-sync brands (Collections + metaobjects)
+
+When a product is created or updated with a **Vendor** (brand), the site webhook ensures:
+
+1. A Shopify **Collection** with that brand name/handle exists (powers `/brands` logos when an image is set)
+2. A **`brand` metaobject** with field `name` exists (optional `logo`, `description`)
+
+### One-time Admin setup
+
+1. **Metaobject definition** → Create type `brand` with fields:
+   - `name` — single line text (required)
+   - `logo` — file or URL (optional)
+   - `description` — multi-line text (optional)
+2. **Custom app** (Develop apps) client credentials scopes:
+   - `read_products`, `write_products`
+   - `read_metaobjects`, `write_metaobjects`, `read_metaobject_definitions`
+3. Env (production / `.env.local`):
+
+```
+SHOPIFY_CLIENT_ID=your_client_id
+SHOPIFY_CLIENT_SECRET=your_client_secret
+SHOPIFY_WEBHOOK_SECRET=your_webhook_secret
+```
+
+`SHOPIFY_WEBHOOK_SECRET` can match the app client secret if you use that for HMAC.
+
+4. **Webhooks** → Subscribe:
+   - `products/create` → `https://YOUR_DOMAIN/api/webhooks/shopify`
+   - `products/update` → `https://YOUR_DOMAIN/api/webhooks/shopify`
+
+Set product **Vendor** to the brand name (not “My Store”). Logos stay manual: add a collection image or a `logo` on the brand metaobject.

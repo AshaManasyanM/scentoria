@@ -3,7 +3,7 @@ import type { Product, Testimonial } from "../types";
 import { hasStorefrontToken } from "./config";
 import { storefrontFetch } from "./fetch";
 import { publishedReviewSummaries, publishedReviews } from "./reviews";
-import { mapProduct } from "./map";
+import { brandHandle as brandHandleFromMap, mapProduct } from "./map";
 import { mockProducts, mockTestimonials } from "./mock";
 import { noteTiles } from "../note-tiles";
 import { popularBrands } from "../popular-brands";
@@ -189,6 +189,12 @@ export type ShopBrand = {
 
 const hiddenCollections = new Set(["frontpage"]);
 
+function brandLogo(fields: NoteField[]) {
+  const imageKeys = new Set(["logo", "image", "photo", "picture"]);
+  const field = fields.find((item) => imageKeys.has(item.key.toLowerCase()));
+  return field?.reference?.image?.url || field?.reference?.url || (field?.value?.startsWith("http") ? field.value : "");
+}
+
 export async function getBrands(): Promise<ShopBrand[]> {
   const localLogos = new Map<string, string>(popularBrands.map((brand) => [brand.handle, brand.logo]));
   const fallback = popularBrands.map((brand) => ({
@@ -200,21 +206,45 @@ export async function getBrands(): Promise<ShopBrand[]> {
 
   if (!hasStorefrontToken()) return fallback;
 
-  const data = await storefrontFetch<{
-    collections: {
-      nodes: { handle: string; title: string; description: string; image?: { url: string } | null }[];
-    };
-  }>(COLLECTIONS_QUERY, { first: 50 });
+  const [collectionsData, metaData] = await Promise.all([
+    storefrontFetch<{
+      collections: {
+        nodes: { handle: string; title: string; description: string; image?: { url: string } | null }[];
+      };
+    }>(COLLECTIONS_QUERY, { first: 100 }),
+    storefrontFetch<{
+      metaobjects: { nodes: { handle: string; fields: NoteField[] }[] };
+    }>(NOTES_QUERY, { type: "brand", first: 100 }),
+  ]);
 
-  const brands = (data?.collections?.nodes ?? [])
-    .filter((collection) => collection.title.trim() && !hiddenCollections.has(collection.handle))
-    .map((collection) => ({
+  const byHandle = new Map<string, ShopBrand>();
+
+  for (const collection of collectionsData?.collections?.nodes ?? []) {
+    if (!collection.title.trim() || hiddenCollections.has(collection.handle)) continue;
+    byHandle.set(collection.handle, {
       name: collection.title.trim(),
       handle: collection.handle,
       logo: collection.image?.url || localLogos.get(collection.handle),
       description: collection.description.trim(),
-    }));
+    });
+  }
 
+  for (const entry of metaData?.metaobjects?.nodes ?? []) {
+    const name = metaValue(entry.fields, ["name", "title", "label"]) || entry.handle;
+    if (!name.trim()) continue;
+    const handle = entry.handle || brandHandle(name);
+    const existing = byHandle.get(handle);
+    const logo = brandLogo(entry.fields) || existing?.logo || localLogos.get(handle);
+    const description = metaValue(entry.fields, ["description", "body", "text"]) || existing?.description || "";
+    byHandle.set(handle, {
+      name: name.trim(),
+      handle,
+      logo,
+      description,
+    });
+  }
+
+  const brands = [...byHandle.values()].sort((a, b) => a.name.localeCompare(b.name));
   return brands.length ? brands : fallback;
 }
 
@@ -875,6 +905,4 @@ export function exactSearchFacet(
   return null;
 }
 
-export function brandHandle(brand: string) {
-  return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
-}
+export const brandHandle = brandHandleFromMap;

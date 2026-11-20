@@ -12,6 +12,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 
+function productDisplayName(brand: string | undefined, title: string) {
+  const name = title.trim();
+  const label = (brand || "").trim();
+  if (!label) return name;
+  if (!name) return label;
+  if (name.toLowerCase().startsWith(label.toLowerCase())) return name;
+  return `${label} ${name}`;
+}
+
 export function ProductCard({
   product,
   locale,
@@ -33,6 +42,7 @@ export function ProductCard({
   const catalog = variant === "catalog";
   const inStock = product.variants.some((item) => item.available);
   const priceLabel = inStock ? formatPriceRange(product.minPrice, product.maxPrice, locale) : t.outOfStock;
+  const displayName = productDisplayName(product.brand, product.title);
 
   function onHeartClick(event: React.MouseEvent<HTMLButtonElement>) {
     event.preventDefault();
@@ -119,7 +129,7 @@ export function ProductCard({
         </Link>
         <div className="flex flex-1 flex-col px-3 pb-3 pt-3">
           <h3 className="line-clamp-2 font-serif text-base font-medium leading-5">
-            {[product.brand, product.title].filter(Boolean).join(" ")}
+            {displayName}
           </h3>
           <div className="mt-auto pt-3">
             <p className="text-xs tracking-[0.08em] text-[#c5a059]">
@@ -178,7 +188,7 @@ export function ProductCard({
         </Link>
         <div className="flex flex-1 flex-col bg-[#284747] px-3 pb-4 pt-3 md:px-4 md:pb-5 md:pt-4">
           <h3 className="font-serif text-lg font-medium leading-6 md:min-h-14 md:text-[22px] md:leading-7">
-            {[product.brand, product.title].filter(Boolean).join(" ")}
+            {displayName}
           </h3>
           <div className="mt-3 flex items-center justify-between gap-3">
             <div>
@@ -242,7 +252,7 @@ export function ProductCard({
         </span>
         <div className="flex flex-1 flex-col p-4">
           <h3 className="font-serif text-xl font-medium leading-7">
-            {[product.brand, product.title].filter(Boolean).join(" ")}
+            {displayName}
           </h3>
           <p className="mt-1.5 text-sm tracking-[0.12em] text-[#c5a059]">
             ★★★★★ <span className="tracking-normal text-[#f7f2ea]/70">({product.reviewCount})</span>

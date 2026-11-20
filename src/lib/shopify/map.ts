@@ -42,6 +42,10 @@ export function brandFromVendor(vendor: string) {
   return name;
 }
 
+export function brandHandle(brand: string) {
+  return brand.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
+}
+
 function genderFromTags(tags: string[]): Product["gender"] {
   const lower = tags.map((t) => t.toLowerCase());
   if (lower.includes("men") || lower.includes("male")) return "men";
