@@ -12,3 +12,20 @@ export const shopAccountUrl = `https://${shopDomain}/account`;
 export function hasStorefrontToken() {
   return storefrontToken.length > 0;
 }
+
+/**
+ * Shopify may return checkout URLs on the brand domain (scentoriaprive.com).
+ * That host serves this Next app, so /cart/c/... 404s after locale middleware.
+ * Always send checkout to the myshopify.com shop host.
+ */
+export function shopifyCheckoutUrl(url: string | null | undefined): string | null {
+  if (!url) return null;
+  try {
+    const next = new URL(url, `https://${shopDomain}`);
+    next.protocol = "https:";
+    next.host = shopDomain;
+    return next.toString();
+  } catch {
+    return url;
+  }
+}

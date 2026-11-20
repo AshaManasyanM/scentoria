@@ -68,10 +68,16 @@ function sizeLabel(title: string) {
 }
 
 function withCheckoutDiscount(url: string | null | undefined, code: string) {
-  if (!url || !code.trim()) return url || null;
+  if (!url) return null;
+  const shopHost =
+    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
+    process.env.SHOPIFY_STORE_DOMAIN ||
+    "gfc5xh-m1.myshopify.com";
   try {
-    const next = new URL(url);
-    next.searchParams.set("discount", code.trim());
+    const next = new URL(url, `https://${shopHost}`);
+    next.protocol = "https:";
+    next.host = shopHost;
+    if (code.trim()) next.searchParams.set("discount", code.trim());
     return next.toString();
   } catch {
     return url;

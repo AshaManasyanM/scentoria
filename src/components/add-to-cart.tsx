@@ -34,14 +34,22 @@ function stockText(variant: ProductVariant, t: ReturnType<typeof getDict>) {
 }
 
 function withCheckoutDiscount(url: string, code: string) {
-  if (!code.trim()) return url;
+  // Shopify may hand back the brand domain; checkout must use the shop host.
+  const shopHost =
+    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN ||
+    process.env.SHOPIFY_STORE_DOMAIN ||
+    "gfc5xh-m1.myshopify.com";
+  let normalized = url;
   try {
-    const next = new URL(url);
-    next.searchParams.set("discount", code.trim());
-    return next.toString();
+    const next = new URL(url, `https://${shopHost}`);
+    next.protocol = "https:";
+    next.host = shopHost;
+    if (code.trim()) next.searchParams.set("discount", code.trim());
+    normalized = next.toString();
   } catch {
-    return url;
+    if (!code.trim()) return url;
   }
+  return normalized;
 }
 
 function savedPromoCode(cartCodes?: { code: string; applicable: boolean }[]) {

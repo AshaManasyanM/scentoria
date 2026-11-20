@@ -4,6 +4,7 @@ import { isCountryCode } from "@/lib/countries";
 import { customerShippingChoices, type ShippingChoice, type ShippingSelection } from "@/lib/shipping-choices";
 import { isUsState } from "@/lib/us-states";
 import { calculateSalesTax } from "./tax";
+import { shopifyCheckoutUrl } from "./config";
 import { storefrontFetch, storefrontFetchDeferred } from "./fetch";
 
 const CART_COOKIE = "scentoria_cart_id";
@@ -299,7 +300,7 @@ export async function saveDelivery(input: DeliveryDraft, preferred: ShippingSele
   if (!quoted.length) {
     return {
       ok: true as const,
-      checkoutUrl: next.checkoutUrl,
+      checkoutUrl: shopifyCheckoutUrl(next.checkoutUrl) || next.checkoutUrl,
       options: [],
       selection: [] as ShippingSelection[],
       selectionMissing: false,
@@ -330,14 +331,21 @@ export async function saveDelivery(input: DeliveryDraft, preferred: ShippingSele
     picks.push({ groupId, handle: cheapest.handle });
   }
   if (selectionMissing) {
-    return { ok: true as const, checkoutUrl: next.checkoutUrl, options: quoted, selection: picks, selectionMissing: true, cost: null };
+    return {
+      ok: true as const,
+      checkoutUrl: shopifyCheckoutUrl(next.checkoutUrl) || next.checkoutUrl,
+      options: quoted,
+      selection: picks,
+      selectionMissing: true,
+      cost: null,
+    };
   }
 
   const applied = await applyDeliveryOptions(picks);
   if (!applied.ok) return { ok: false as const, error: "shipping" as const };
   return {
     ok: true as const,
-    checkoutUrl: applied.checkoutUrl,
+    checkoutUrl: shopifyCheckoutUrl(applied.checkoutUrl) || applied.checkoutUrl,
     options: withConfirmedAmounts(quoted, applied.confirmed),
     selection: picks,
     selectionMissing: false,
@@ -350,7 +358,12 @@ export async function selectShipping(selected: ShippingSelection[]) {
   if (!picks.length) return { ok: false as const, error: "shipping" as const };
   const applied = await applyDeliveryOptions(picks);
   if (!applied.ok) return applied;
-  return { ok: true as const, checkoutUrl: applied.checkoutUrl, confirmed: applied.confirmed, cost: applied.cost };
+  return {
+    ok: true as const,
+    checkoutUrl: shopifyCheckoutUrl(applied.checkoutUrl) || applied.checkoutUrl,
+    confirmed: applied.confirmed,
+    cost: applied.cost,
+  };
 }
 
 function withConfirmedAmounts(
@@ -452,7 +465,12 @@ async function applyDeliveryOptions(picks: ShippingSelection[]) {
       currencyCode: selected.estimatedCost.currencyCode,
     });
   }
-  return { ok: true as const, checkoutUrl: payload.cart.checkoutUrl, confirmed, cost: await costWithSalesTax(cartCost(payload.cart.cost), confirmed) };
+  return {
+    ok: true as const,
+    checkoutUrl: shopifyCheckoutUrl(payload.cart.checkoutUrl) || payload.cart.checkoutUrl,
+    confirmed,
+    cost: await costWithSalesTax(cartCost(payload.cart.cost), confirmed),
+  };
 }
 
 async function costWithSalesTax(cost: CartCostQuote | null, confirmed: ConfirmedRate[]) {

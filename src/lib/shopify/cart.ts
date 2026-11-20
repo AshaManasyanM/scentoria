@@ -1,7 +1,7 @@
 import { browserCookieOptions } from "@/lib/security";
 import { cookies } from "next/headers";
 import type { Cart, CartLine, Money } from "../types";
-import { hasStorefrontToken } from "./config";
+import { hasStorefrontToken, shopifyCheckoutUrl } from "./config";
 import { storefrontFetch } from "./fetch";
 import {
   CART_CREATE,
@@ -196,7 +196,7 @@ export async function getCart(): Promise<Cart> {
   const desired = await readDesired();
   const mapped: Cart = {
     id: data.cart.id,
-    checkoutUrl: data.cart.checkoutUrl,
+    checkoutUrl: shopifyCheckoutUrl(data.cart.checkoutUrl),
     discountCodes: data.cart.discountCodes ?? [],
     subtotal: data.cart.cost?.subtotalAmount ?? null,
     total: data.cart.cost?.totalAmount ?? null,
