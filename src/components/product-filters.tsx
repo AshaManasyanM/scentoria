@@ -457,6 +457,32 @@ export function ProductFilters({
 
         {groups.map((group) => {
           const values = activeSelected[group.id] ?? [];
+          const items = (
+            <>
+              {group.items.map((item) => (
+                <CheckboxRow
+                  key={item.value}
+                  label={item.label}
+                  checked={values.includes(item.value)}
+                  onChange={(checked) => {
+                    const nextSelected = {
+                      ...activeSelected,
+                      [group.id]: toggle(values, item.value, checked),
+                    };
+                    if (mode === "draft") {
+                      setDraft((current) =>
+                        current
+                          ? { ...current, selected: nextSelected }
+                          : { selected: nextSelected, priceMin, priceMax },
+                      );
+                      return;
+                    }
+                    navigate({ selected: nextSelected });
+                  }}
+                />
+              ))}
+            </>
+          );
           return (
             <Group
               key={group.id}
@@ -464,30 +490,13 @@ export function ProductFilters({
               open={open[group.id] !== false}
               onToggle={() => setOpen((current) => ({ ...current, [group.id]: current[group.id] === false }))}
             >
-              <div>
-                {group.items.map((item) => (
-                  <CheckboxRow
-                    key={item.value}
-                    label={item.label}
-                    checked={values.includes(item.value)}
-                    onChange={(checked) => {
-                      const nextSelected = {
-                        ...activeSelected,
-                        [group.id]: toggle(values, item.value, checked),
-                      };
-                      if (mode === "draft") {
-                        setDraft((current) =>
-                          current
-                            ? { ...current, selected: nextSelected }
-                            : { selected: nextSelected, priceMin, priceMax },
-                        );
-                        return;
-                      }
-                      navigate({ selected: nextSelected });
-                    }}
-                  />
-                ))}
-              </div>
+              {group.id === "brand" ? (
+                <div className="max-h-[350px] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:#C9BEB0_transparent]">
+                  {items}
+                </div>
+              ) : (
+                <div>{items}</div>
+              )}
             </Group>
           );
         })}
