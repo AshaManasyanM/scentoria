@@ -369,10 +369,14 @@ async function sectionEntries(type: string, fresh = false) {
 }
 
 function sectionFlag(entry: { fields: { key: string; value?: string | boolean | number | null }[] }) {
-  const value = metaValue(entry.fields, ["section", "visible", "show", "enabled"]).toLowerCase();
-  if (!value) return null;
-  if (["false", "no", "0", "off", "hide"].includes(value)) return false;
-  if (["true", "yes", "1", "on", "show"].includes(value)) return true;
+  // Prefer real toggles; `section` is last for legacy entries that store the boolean there.
+  // Skip non-boolean labels (e.g. section = "section") so visible=false is not ignored.
+  for (const key of ["visible", "show", "enabled", "section"] as const) {
+    const value = metaValue(entry.fields, [key]).toLowerCase();
+    if (!value) continue;
+    if (["false", "no", "0", "off", "hide"].includes(value)) return false;
+    if (["true", "yes", "1", "on", "show"].includes(value)) return true;
+  }
   return null;
 }
 
