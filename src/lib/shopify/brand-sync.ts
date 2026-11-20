@@ -3,10 +3,14 @@ import { brandFromVendor, brandHandle } from "./map";
 
 type CollectionNode = { id: string; handle: string; title: string };
 type MetaobjectNode = { id: string; handle: string };
+type PublicationNode = { id: string; name: string };
 
-const HEADLESS_PUBLICATION_NAMES = ["scentoria headless", "headless"];
+type RequiredChannel = "onlineStore" | "headless";
 
-let cachedHeadlessPublicationId: string | null | undefined;
+const REQUIRED_CHANNEL_KEYS: RequiredChannel[] = ["onlineStore", "headless"];
+
+/** Only successful publication ID lookups are cached — failed lookups are retried. */
+const publicationIdCache = new Map<RequiredChannel, string>();
 
 function logBrandSync(message: string, detail?: unknown) {
   if (detail === undefined) {
@@ -105,7 +109,6 @@ async function createBrandMetaobject(name: string, handle: string): Promise<Meta
     logBrandSync("metaobjectCreate (publishable) userErrors", result.userErrors);
   }
 
-  // Retry without publishable capability if the definition is not publishable.
   const fallback = await adminFetch<{
     metaobjectCreate: {
       metaobject: MetaobjectNode | null;
@@ -134,28 +137,37 @@ async function createBrandMetaobject(name: string, handle: string): Promise<Meta
   return created.metaobject;
 }
 
-async function addProductToCollection(collectionId: string, productId: string) {
-  const data = await adminFetch<{
-    collectionAddProducts: { userErrors: { message: string }[] } | null;
-  }>(
-    `mutation CollectionAddProducts($id: ID!, $productIds: [ID!]!) {
-      collectionAddProducts(id: $id, productIds: $productIds) {
-        userErrors { message }
-      }
-    }`,
-    { id: collectionId, productIds: [productId] },
-  );
-  const errors = data?.collectionAddProducts?.userErrors ?? [];
-  if (errors.length) {
-    logBrandSync("collectionAddProducts userErrors", errors);
+function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function addProductsToCollection(collectionId: string, productIds: string[]) {
+  const unique = [...new Set(productIds.filter(Boolean))];
+  const chunkSize = 50;
+  for (let i = 0; i < unique.length; i += chunkSize) {
+    const chunk = unique.slice(i, i + chunkSize);
+    const data = await adminFetch<{
+      collectionAddProducts: { userErrors: { message: string }[] } | null;
+    }>(
+      `mutation CollectionAddProducts($id: ID!, $productIds: [ID!]!) {
+        collectionAddProducts(id: $id, productIds: $productIds) {
+          userErrors { message }
+        }
+      }`,
+      { id: collectionId, productIds: chunk },
+    );
+    const errors = data?.collectionAddProducts?.userErrors ?? [];
+    // "already in collection" style errors are fine for idempotent reruns.
+    if (errors.length) {
+      logBrandSync("collectionAddProducts userErrors", errors);
+    }
+    if (i + chunkSize < unique.length) await sleep(250);
   }
 }
 
-async function getHeadlessPublicationId(): Promise<string | null> {
-  if (cachedHeadlessPublicationId !== undefined) return cachedHeadlessPublicationId;
-
+async function listPublications(): Promise<PublicationNode[]> {
   const data = await adminFetch<{
-    publications: { nodes: { id: string; name: string }[] };
+    publications: { nodes: PublicationNode[] };
   }>(
     `query Publications {
       publications(first: 50) {
@@ -163,30 +175,60 @@ async function getHeadlessPublicationId(): Promise<string | null> {
       }
     }`,
   );
+  return data?.publications?.nodes ?? [];
+}
 
-  const nodes = data?.publications?.nodes ?? [];
-  const match =
+function pickPublicationId(nodes: PublicationNode[], channel: RequiredChannel): string | null {
+  if (channel === "onlineStore") {
+    const online =
+      nodes.find((node) => node.name.trim().toLowerCase() === "online store") ||
+      nodes.find((node) => node.name.trim().toLowerCase() === "online store channel");
+    return online?.id ?? null;
+  }
+
+  const headless =
     nodes.find((node) => node.name.trim().toLowerCase() === "scentoria headless") ||
-    nodes.find((node) => HEADLESS_PUBLICATION_NAMES.some((name) => node.name.trim().toLowerCase().includes(name)));
+    nodes.find((node) => node.name.trim().toLowerCase().includes("scentoria headless"));
+  return headless?.id ?? null;
+}
 
-  if (!match) {
-    logBrandSync(
-      "Scentoria Headless publication not found",
-      nodes.map((node) => node.name),
-    );
-    cachedHeadlessPublicationId = null;
+async function getRequiredPublicationIds(): Promise<Record<RequiredChannel, string> | null> {
+  const missing = REQUIRED_CHANNEL_KEYS.filter((key) => !publicationIdCache.has(key));
+  if (missing.length === 0) {
+    return {
+      onlineStore: publicationIdCache.get("onlineStore")!,
+      headless: publicationIdCache.get("headless")!,
+    };
+  }
+
+  const nodes = await listPublications();
+  if (!nodes.length) {
+    logBrandSync("publications query returned no nodes");
     return null;
   }
 
-  cachedHeadlessPublicationId = match.id;
-  return match.id;
+  for (const key of REQUIRED_CHANNEL_KEYS) {
+    if (publicationIdCache.has(key)) continue;
+    const id = pickPublicationId(nodes, key);
+    if (!id) {
+      logBrandSync(`${key} publication not found`, nodes.map((node) => node.name));
+      // Do not cache failure — allow retry on next webhook.
+      return null;
+    }
+    publicationIdCache.set(key, id);
+  }
+
+  return {
+    onlineStore: publicationIdCache.get("onlineStore")!,
+    headless: publicationIdCache.get("headless")!,
+  };
 }
 
-async function isCollectionPublishedTo(collectionId: string, publicationId: string): Promise<boolean> {
+async function getPublishedPublicationIds(collectionId: string): Promise<Set<string> | null> {
   const data = await adminFetch<{
     collection: {
       resourcePublicationsV2: {
-        nodes: { isPublished: boolean; publication: { id: string } | null }[];
+        nodes: { isPublished: boolean; publication: { id: string; name: string } | null }[];
       };
     } | null;
   }>(
@@ -195,7 +237,7 @@ async function isCollectionPublishedTo(collectionId: string, publicationId: stri
         resourcePublicationsV2(first: 20) {
           nodes {
             isPublished
-            publication { id }
+            publication { id name }
           }
         }
       }
@@ -203,21 +245,20 @@ async function isCollectionPublishedTo(collectionId: string, publicationId: stri
     { id: collectionId },
   );
 
-  return Boolean(
-    data?.collection?.resourcePublicationsV2?.nodes?.some(
-      (node) => node.isPublished && node.publication?.id === publicationId,
-    ),
-  );
+  if (!data?.collection) {
+    logBrandSync("collection publications query failed", { collectionId });
+    return null;
+  }
+
+  const published = new Set<string>();
+  for (const node of data.collection.resourcePublicationsV2.nodes) {
+    if (node.isPublished && node.publication?.id) published.add(node.publication.id);
+  }
+  return published;
 }
 
-/** Publish collection to Scentoria Headless only (idempotent). */
-async function publishCollectionToHeadless(collectionId: string): Promise<boolean> {
-  const publicationId = await getHeadlessPublicationId();
-  if (!publicationId) return false;
-
-  if (await isCollectionPublishedTo(collectionId, publicationId)) {
-    return true;
-  }
+async function publishablePublish(collectionId: string, publicationIds: string[]): Promise<boolean> {
+  if (!publicationIds.length) return true;
 
   const data = await adminFetch<{
     publishablePublish: {
@@ -231,21 +272,70 @@ async function publishCollectionToHeadless(collectionId: string): Promise<boolea
     }`,
     {
       id: collectionId,
-      input: [{ publicationId }],
+      input: publicationIds.map((publicationId) => ({ publicationId })),
     },
   );
 
-  const errors = data?.publishablePublish?.userErrors ?? [];
   if (!data?.publishablePublish) {
-    logBrandSync("publishablePublish returned no data", { collectionId, publicationId });
+    logBrandSync("publishablePublish returned no data", { collectionId, publicationIds });
     return false;
   }
-  if (errors.length) {
-    logBrandSync("publishablePublish userErrors", errors);
+  if (data.publishablePublish.userErrors.length) {
+    logBrandSync("publishablePublish userErrors", data.publishablePublish.userErrors);
     return false;
+  }
+  return true;
+}
+
+/**
+ * Ensure collection is published to Online Store + Scentoria Headless only.
+ * Idempotent: skips channels already published; does not enable Shop/POS/etc.
+ */
+async function publishCollectionToRequiredChannels(collectionId: string): Promise<{
+  onlineStore: boolean;
+  headless: boolean;
+}> {
+  const publications = await getRequiredPublicationIds();
+  if (!publications) {
+    return { onlineStore: false, headless: false };
   }
 
-  return true;
+  const published = await getPublishedPublicationIds(collectionId);
+  if (!published) {
+    return { onlineStore: false, headless: false };
+  }
+
+  const missing = (Object.entries(publications) as [RequiredChannel, string][])
+    .filter(([, id]) => !published.has(id))
+    .map(([, id]) => id);
+
+  if (missing.length) {
+    const ok = await publishablePublish(collectionId, missing);
+    if (!ok) {
+      return {
+        onlineStore: published.has(publications.onlineStore),
+        headless: published.has(publications.headless),
+      };
+    }
+  }
+
+  const after = await getPublishedPublicationIds(collectionId);
+  if (!after) {
+    return { onlineStore: false, headless: false };
+  }
+
+  const onlineStore = after.has(publications.onlineStore);
+  const headless = after.has(publications.headless);
+  if (!onlineStore || !headless) {
+    logBrandSync("collection not fully published after publishablePublish", {
+      collectionId,
+      onlineStore,
+      headless,
+      publishedIds: [...after],
+    });
+  }
+
+  return { onlineStore, headless };
 }
 
 export type BrandSyncResult = {
@@ -255,13 +345,14 @@ export type BrandSyncResult = {
   metaobjectId?: string;
   createdCollection: boolean;
   createdMetaobject: boolean;
+  publishedToOnlineStore: boolean;
   publishedToHeadless: boolean;
 };
 
 /** Ensure vendor brand exists as a Collection and a `brand` metaobject. */
 export async function ensureBrandFromVendor(
   vendor: string,
-  productGid?: string,
+  productGid?: string | string[],
 ): Promise<BrandSyncResult | null> {
   const brand = brandFromVendor(vendor);
   if (!brand) return null;
@@ -280,10 +371,11 @@ export async function ensureBrandFromVendor(
     throw new Error(`[brand-sync] failed to ensure collection for brand "${brand}" (${handle})`);
   }
 
-  const publishedToHeadless = await publishCollectionToHeadless(collection.id);
-  if (!publishedToHeadless) {
+  const channels = await publishCollectionToRequiredChannels(collection.id);
+  if (!channels.onlineStore || !channels.headless) {
     throw new Error(
-      `[brand-sync] failed to publish collection "${handle}" (${collection.id}) to Scentoria Headless`,
+      `[brand-sync] collection "${handle}" (${collection.id}) not published to required channels ` +
+        `(onlineStore=${channels.onlineStore}, headless=${channels.headless})`,
     );
   }
 
@@ -297,8 +389,9 @@ export async function ensureBrandFromVendor(
     }
   }
 
-  if (productGid) {
-    await addProductToCollection(collection.id, productGid);
+  const productIds = (Array.isArray(productGid) ? productGid : productGid ? [productGid] : []).filter(Boolean);
+  if (productIds.length) {
+    await addProductsToCollection(collection.id, productIds);
   }
 
   return {
@@ -308,6 +401,121 @@ export async function ensureBrandFromVendor(
     metaobjectId: metaobject?.id,
     createdCollection,
     createdMetaobject,
-    publishedToHeadless,
+    publishedToOnlineStore: channels.onlineStore,
+    publishedToHeadless: channels.headless,
   };
+}
+
+export type BrandCatalogSyncSummary = {
+  productsScanned: number;
+  brandsFound: number;
+  brandsSynced: number;
+  brandsFailed: number;
+  failures: { brand: string; error: string }[];
+};
+
+type ProductVendorNode = { id: string; vendor: string | null };
+
+/** Paginate Admin products and group by normalized vendor brand. */
+async function fetchProductsByBrand(): Promise<{
+  productsScanned: number;
+  byBrand: Map<string, { brand: string; productIds: string[] }>;
+}> {
+  const byBrand = new Map<string, { brand: string; productIds: string[] }>();
+  let productsScanned = 0;
+  let cursor: string | null = null;
+  let page = 0;
+
+  type ProductsPage = {
+    products: {
+      pageInfo: { hasNextPage: boolean; endCursor: string | null };
+      nodes: ProductVendorNode[];
+    };
+  };
+
+  for (;;) {
+    page += 1;
+    const after: string | null = cursor;
+    const data: ProductsPage | null = await adminFetch<ProductsPage>(
+      `query ProductsPage($first: Int!, $after: String) {
+        products(first: $first, after: $after) {
+          pageInfo { hasNextPage endCursor }
+          nodes { id vendor }
+        }
+      }`,
+      { first: 50, after },
+    );
+
+    if (!data?.products) {
+      throw new Error("[brand-sync] failed to fetch products page for catalog sync");
+    }
+
+    for (const node of data.products.nodes) {
+      productsScanned += 1;
+      const brand = brandFromVendor(node.vendor ?? "");
+      if (!brand) continue;
+      const key = brand.toLowerCase();
+      const existing = byBrand.get(key);
+      if (existing) {
+        existing.productIds.push(node.id);
+      } else {
+        byBrand.set(key, { brand, productIds: [node.id] });
+      }
+    }
+
+    console.info(
+      `[brand-sync] scanned products page ${page} (total ${productsScanned}, brands ${byBrand.size})`,
+    );
+
+    if (!data.products.pageInfo.hasNextPage) break;
+    cursor = data.products.pageInfo.endCursor;
+    await sleep(400);
+  }
+
+  return { productsScanned, byBrand };
+}
+
+/**
+ * One-time / manual full sync: all vendors → collections + metaobjects + product links + both channels.
+ * Idempotent and safe to re-run. Does not change prices, inventory, or vendor names.
+ */
+export async function syncAllExistingBrands(): Promise<BrandCatalogSyncSummary> {
+  const { productsScanned, byBrand } = await fetchProductsByBrand();
+  const failures: { brand: string; error: string }[] = [];
+  let brandsSynced = 0;
+
+  const brands = [...byBrand.values()].sort((a, b) => a.brand.localeCompare(b.brand));
+  console.info(`[brand-sync] syncing ${brands.length} unique brands from ${productsScanned} products`);
+
+  for (let i = 0; i < brands.length; i += 1) {
+    const entry = brands[i];
+    try {
+      const result = await ensureBrandFromVendor(entry.brand, entry.productIds);
+      if (!result) {
+        failures.push({ brand: entry.brand, error: "skipped (empty after normalize)" });
+        continue;
+      }
+      brandsSynced += 1;
+      console.info(
+        `[brand-sync] (${i + 1}/${brands.length}) ok "${result.brand}" ` +
+          `collection=${result.collectionId} products=${entry.productIds.length} ` +
+          `createdCollection=${result.createdCollection} createdMetaobject=${result.createdMetaobject}`,
+      );
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      failures.push({ brand: entry.brand, error: message });
+      logBrandSync(`brand sync failed for "${entry.brand}"`, message);
+    }
+    await sleep(350);
+  }
+
+  const summary: BrandCatalogSyncSummary = {
+    productsScanned,
+    brandsFound: brands.length,
+    brandsSynced,
+    brandsFailed: failures.length,
+    failures,
+  };
+  console.info("[brand-sync] catalog sync complete", summary);
+  return summary;
 }

@@ -57,7 +57,7 @@ When a product is created or updated with a **Vendor** (brand), the site webhook
    - `description` — multi-line text (optional)
 2. **Custom app** (Develop apps) client credentials scopes:
    - `read_products`, `write_products`
-   - `read_publications`, `write_publications` (publish brand collections to **Scentoria Headless**)
+   - `read_publications`, `write_publications` (publish brand collections to **Online Store** + **Scentoria Headless**)
    - `read_metaobjects`, `write_metaobjects`, `read_metaobject_definitions`
 3. Env (production / `.env.local`):
 
@@ -74,3 +74,21 @@ SHOPIFY_WEBHOOK_SECRET=your_webhook_secret
    - `products/update` → `https://YOUR_DOMAIN/api/webhooks/shopify`
 
 Set product **Vendor** to the brand name (not “My Store”). Logos stay manual: add a collection image or a `logo` on the brand metaobject.
+
+Brand collections are published to **Online Store** + **Scentoria Headless** only (not Shop / POS).
+
+### One-time sync of existing vendors
+
+After deploy, run once on the production server (idempotent, safe to re-run):
+
+```bash
+BRAND_SYNC_CONFIRM=YES npm run sync:brands
+```
+
+If `BRAND_SYNC_SECRET` is set in env:
+
+```bash
+BRAND_SYNC_CONFIRM=YES BRAND_SYNC_TOKEN="$BRAND_SYNC_SECRET" npm run sync:brands
+```
+
+This paginates all Admin products, groups by Vendor, ensures Collection + `brand` metaobject, links products, and publishes both sales channels. It does **not** change prices, inventory, or vendor names.
