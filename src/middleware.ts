@@ -3,28 +3,13 @@ import type { NextRequest } from "next/server";
 
 const LOCALES = ["en", "hy", "es"] as const;
 
-function shopifyCheckoutHost() {
-  const candidates = [
-    process.env.NEXT_PUBLIC_SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.SHOPIFY_CHECKOUT_DOMAIN,
-    process.env.NEXT_PUBLIC_SHOPIFY_STORE_DOMAIN,
-    process.env.SHOPIFY_STORE_DOMAIN,
-  ];
-  for (const candidate of candidates) {
-    if (!candidate) continue;
-    const host = candidate.replace(/^https?:\/\//i, "").split("/")[0].toLowerCase();
-    if (host.endsWith(".myshopify.com")) return host;
-  }
-  return "8j5skn-jn.myshopify.com";
-}
-
 export function middleware(request: NextRequest) {
-  const { pathname, search } = request.nextUrl;
+  const { pathname } = request.nextUrl;
 
-  // Brand domain hosts Next.js; Shopify checkout lives on *.myshopify.com.
+  // Do not locale-prefix Shopify checkout paths (and do not bounce them —
+  // Shopify may redirect back to the brand domain and that caused a loop).
   if (pathname.startsWith("/cart/c/") || pathname.startsWith("/checkouts/")) {
-    const url = new URL(`${pathname}${search}`, `https://${shopifyCheckoutHost()}`);
-    return NextResponse.redirect(url);
+    return NextResponse.next();
   }
 
   const matched = LOCALES.find(
