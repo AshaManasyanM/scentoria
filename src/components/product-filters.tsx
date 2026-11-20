@@ -254,7 +254,10 @@ function PriceRangeField({
   );
 }
 
-const filterKeys = ["brand", "occasion", "season", "gender", "size"] as const;
+const filterKeys = ["gender", "brand", "season", "occasion", "size"] as const;
+
+/** Sidebar order: Gender → Brand → Season → Occasion → Price → Size */
+const filterRenderOrder = ["gender", "brand", "season", "occasion", "price", "size"] as const;
 
 type Draft = {
   selected: Record<string, string[]>;
@@ -432,30 +435,39 @@ export function ProductFilters({
   const activePriceMax = draft?.priceMax ?? priceMax;
 
   function renderGroups(mode: "live" | "draft") {
+    const groupsById = new Map(groups.map((group) => [group.id, group]));
+
     return (
       <>
-        {hasPriceSlider ? (
-          <PriceRangeField
-            label={t.filterPrice}
-            locale={locale}
-            bounds={priceBounds}
-            valueMin={Math.min(activePriceMin, activePriceMax)}
-            valueMax={Math.max(activePriceMin, activePriceMax)}
-            onCommit={(min, max) => {
-              if (mode === "draft") {
-                setDraft((current) =>
-                  current
-                    ? { ...current, priceMin: min, priceMax: max }
-                    : { selected, priceMin: min, priceMax: max },
-                );
-                return;
-              }
-              navigate({ priceMin: min, priceMax: max });
-            }}
-          />
-        ) : null}
+        {filterRenderOrder.map((slot) => {
+          if (slot === "price") {
+            if (!hasPriceSlider) return null;
+            return (
+              <PriceRangeField
+                key="price"
+                label={t.filterPrice}
+                locale={locale}
+                bounds={priceBounds}
+                valueMin={Math.min(activePriceMin, activePriceMax)}
+                valueMax={Math.max(activePriceMin, activePriceMax)}
+                onCommit={(min, max) => {
+                  if (mode === "draft") {
+                    setDraft((current) =>
+                      current
+                        ? { ...current, priceMin: min, priceMax: max }
+                        : { selected, priceMin: min, priceMax: max },
+                    );
+                    return;
+                  }
+                  navigate({ priceMin: min, priceMax: max });
+                }}
+              />
+            );
+          }
 
-        {groups.map((group) => {
+          const group = groupsById.get(slot);
+          if (!group) return null;
+
           const values = activeSelected[group.id] ?? [];
           const items = (
             <>
@@ -483,6 +495,7 @@ export function ProductFilters({
               ))}
             </>
           );
+
           return (
             <Group
               key={group.id}

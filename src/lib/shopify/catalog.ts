@@ -583,7 +583,7 @@ export async function getPageBanner(page: PageBannerKey): Promise<PageBanner> {
   return banners[page];
 }
 
-const filterGroupIds = ["brand", "occasion", "season", "gender", "size"] as const;
+const filterGroupIds = ["gender", "brand", "season", "occasion", "size"] as const;
 export type FilterGroupId = (typeof filterGroupIds)[number];
 export type FilterChoice = { value: string; label: string };
 export type CatalogFilterGroup = { id: FilterGroupId; title: string; items: FilterChoice[] };
