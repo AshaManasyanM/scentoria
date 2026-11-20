@@ -491,7 +491,7 @@ export function ProductFilters({
               onToggle={() => setOpen((current) => ({ ...current, [group.id]: current[group.id] === false }))}
             >
               {group.id === "brand" ? (
-                <div className="max-h-[350px] overflow-y-auto overscroll-contain pr-1 [-webkit-overflow-scrolling:touch] [scrollbar-width:thin] [scrollbar-color:#C9BEB0_transparent]">
+                <div className="brand-filter-scroll max-h-[350px] overflow-y-auto overscroll-contain pr-0.5 [-webkit-overflow-scrolling:touch]">
                   {items}
                 </div>
               ) : (

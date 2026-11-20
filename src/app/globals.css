@@ -440,3 +440,32 @@ button:disabled {
     transform: translateX(-50%);
   }
 }
+
+/* Brand filter options — thin scrollbar (Chrome/Edge/Safari + Firefox) */
+.brand-filter-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(8, 53, 52, 0.35) transparent;
+}
+
+.brand-filter-scroll::-webkit-scrollbar {
+  width: 6px;
+}
+
+.brand-filter-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.brand-filter-scroll::-webkit-scrollbar-thumb {
+  background-color: rgba(8, 53, 52, 0.35);
+  border-radius: 9999px;
+  border: 1px solid transparent;
+  background-clip: padding-box;
+}
+
+.brand-filter-scroll::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(8, 53, 52, 0.55);
+}
+
+.brand-filter-scroll::-webkit-scrollbar-corner {
+  background: transparent;
+}
