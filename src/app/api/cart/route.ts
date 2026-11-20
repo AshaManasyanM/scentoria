@@ -49,6 +49,10 @@ export async function POST(request: Request) {
   }
   if (body.merchandiseId) {
     const cart = await addLine(body.merchandiseId, body.quantity ?? 1, body.bottleColor);
+    const added = cart.lines.some((line) => line.merchandiseId === body.merchandiseId && line.quantity > 0);
+    if (!added) {
+      return NextResponse.json(cart, { status: 409 });
+    }
     return NextResponse.json(cart);
   }
   return NextResponse.json({ error: "Invalid cart payload" }, { status: 400 });

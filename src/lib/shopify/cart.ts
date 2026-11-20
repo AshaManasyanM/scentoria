@@ -157,11 +157,16 @@ async function localCart(): Promise<Cart> {
   return withLocalPromo({ id: "local", checkoutUrl: null, lines }, promo);
 }
 
-export async function getCart(): Promise<Cart> {
+type CartMutationResult = {
+  cart: { id: string; checkoutUrl?: string | null } | null;
+  userErrors: { message: string }[];
+};
+
+export async function getCart(cartIdOverride?: string): Promise<Cart> {
   if (!hasStorefrontToken()) return localCart();
 
   const jar = await cookies();
-  const id = jar.get(CART_COOKIE)?.value;
+  const id = cartIdOverride || jar.get(CART_COOKIE)?.value;
   if (!id) return { id: null, checkoutUrl: null, lines: [] };
 
   const data = await storefrontFetch<{
@@ -191,7 +196,13 @@ export async function getCart(): Promise<Cart> {
     } | null;
   }>(CART_QUERY, { id }, { fresh: true });
 
-  if (!data?.cart) return { id: null, checkoutUrl: null, lines: [] };
+  if (!data?.cart) {
+    // Drop stale cart ids so the next add can create a fresh cart.
+    if (!cartIdOverride && jar.get(CART_COOKIE)?.value === id) {
+      jar.delete(CART_COOKIE);
+    }
+    return { id: null, checkoutUrl: null, lines: [] };
+  }
 
   const desired = await readDesired();
   const mapped: Cart = {
@@ -242,20 +253,39 @@ export async function addLine(merchandiseId: string, quantity: number, bottleCol
   await writeDesired(desired);
 
   const jar = await cookies();
-  let cartId = jar.get(CART_COOKIE)?.value;
   const attributes = lineAttributes(color);
   const lines = [{ merchandiseId, quantity, ...(attributes.length ? { attributes } : {}) }];
 
-  if (!cartId) {
-    const created = await storefrontFetch<{
-      cartCreate: { cart: { id: string } | null };
-    }>(CART_CREATE, { lines }, { fresh: true });
-    cartId = created?.cartCreate.cart?.id;
-    if (cartId) jar.set(CART_COOKIE, cartId, browserCookieOptions(true));
-  } else {
-    await storefrontFetch(CART_LINES_ADD, { cartId, lines }, { fresh: true });
+  async function createCart() {
+    const created = await storefrontFetch<{ cartCreate: CartMutationResult }>(CART_CREATE, { lines }, { fresh: true });
+    const payload = created?.cartCreate;
+    const id = payload?.cart?.id;
+    if (!id || payload?.userErrors?.length) return null;
+    jar.set(CART_COOKIE, id, browserCookieOptions(true));
+    return id;
   }
-  return getCart();
+
+  let cartId = jar.get(CART_COOKIE)?.value;
+  if (!cartId) {
+    cartId = (await createCart()) || undefined;
+    // Pass id explicitly — cookies().get may not see a cookie set earlier in this request.
+    return cartId ? getCart(cartId) : { id: null, checkoutUrl: null, lines: [] };
+  }
+
+  const added = await storefrontFetch<{ cartLinesAdd: CartMutationResult }>(
+    CART_LINES_ADD,
+    { cartId, lines },
+    { fresh: true },
+  );
+  const payload = added?.cartLinesAdd;
+  if (payload?.cart?.id && !payload.userErrors?.length) {
+    return getCart(payload.cart.id);
+  }
+
+  // Stale or invalid cart id — recreate.
+  jar.delete(CART_COOKIE);
+  cartId = (await createCart()) || undefined;
+  return cartId ? getCart(cartId) : { id: null, checkoutUrl: null, lines: [] };
 }
 
 export async function setLineQuantity(lineId: string, quantity: number): Promise<Cart> {

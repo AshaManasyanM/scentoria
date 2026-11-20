@@ -42,8 +42,10 @@ export function CartProvider({ children }: { children: React.ReactNode }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ merchandiseId, quantity, bottleColor }),
       });
-      if (!res.ok) return null;
-      const next = (await res.json()) as Cart;
+      const next = (await res.json().catch(() => null)) as Cart | null;
+      if (!res.ok || !next) return null;
+      const added = next.lines.some((line) => line.merchandiseId === merchandiseId && line.quantity > 0);
+      if (!added) return null;
       setCart(next);
       return next;
     },

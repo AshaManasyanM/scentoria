@@ -197,6 +197,7 @@ export function AddToCart({
               const added = await addItem(selected.id, 1, resolveBottleColor());
               setBusy(null);
               if (added) showCartNotice(t.addedToCart);
+              else showCartNotice(t.cartAddFailed);
             }}
             className="btn-green w-full disabled:opacity-60"
           >
@@ -211,13 +212,17 @@ export function AddToCart({
         <button
           type="button"
           disabled={!selected.available || busy !== null}
-          onClick={async () => {
+            onClick={async () => {
             if (!selected.available || busy) return;
             if (!ensureColorChoice()) return;
             setBusy("buy");
             const next = await addItem(selected.id, 1, resolveBottleColor());
             setBusy(null);
-            if (!next?.checkoutUrl) {
+            if (!next) {
+              showCartNotice(t.cartAddFailed);
+              return;
+            }
+            if (!next.checkoutUrl) {
               showCartNotice(t.buyNowUnavailable);
               return;
             }
