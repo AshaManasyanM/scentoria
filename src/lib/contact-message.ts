@@ -1,5 +1,6 @@
 "use server";
 
+import { contactInbox, sendFormMail } from "@/lib/form-mail";
 import { clientKey, consumeLimit } from "@/lib/rate-limit";
 import { contactFieldsValid } from "@/lib/security";
 import { headers } from "next/headers";
@@ -17,35 +18,22 @@ export async function sendContactMessage(_prev: { ok: boolean } | null, formData
 
   if (!contactFieldsValid({ fullName, email, subject, phone, details })) return { ok: false };
 
-  // Always deliver contact form mail to the support inbox (ignore Shopify metaobject overrides).
-  const to = "support@scentoriaprive.com";
   const origin = (await headers()).get("origin") || "http://localhost:3000";
+  const result = await sendFormMail({
+    origin,
+    payload: {
+      name: fullName,
+      email,
+      subject,
+      phone: phone || "—",
+      message: details,
+      _replyto: email,
+      _subject: `Scentoria Prive: ${subject}`,
+      _template: "table",
+      // Helps operators see the public inbox this copy was meant for.
+      support_inbox: contactInbox,
+    },
+  });
 
-  try {
-    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Origin: origin,
-        Referer: `${origin}/`,
-      },
-      body: JSON.stringify({
-        name: fullName,
-        email,
-        subject,
-        phone: phone || "—",
-        message: details,
-        _replyto: email,
-        _subject: `Scentoria Prive: ${subject}`,
-        _template: "table",
-        _captcha: "false",
-      }),
-    });
-    const data = (await res.json()) as { success?: string | boolean; message?: string };
-    const success = data.success === true || data.success === "true";
-    return { ok: res.ok && success };
-  } catch {
-    return { ok: false };
-  }
+  return { ok: result.ok };
 }

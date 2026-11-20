@@ -1,4 +1,5 @@
 import { parseLocale } from "@/lib/i18n";
+import { sendFormMail } from "@/lib/form-mail";
 import { clientKey, consumeLimit } from "@/lib/rate-limit";
 import { mkdir, readFile, writeFile } from "fs/promises";
 import path from "path";
@@ -56,39 +57,22 @@ export async function POST(request: Request) {
   let emailed = false;
   let activateRequired = false;
 
-  try {
-    const to = "support@scentoriaprive.com";
-    const res = await fetch(`https://formsubmit.co/ajax/${encodeURIComponent(to)}`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        Accept: "application/json",
-        Origin: origin,
-        Referer: `${origin}/`,
-      },
-      body: JSON.stringify({
-        name: "Scentoria subscriber",
-        email,
-        _replyto: email,
-        _subject: `Scentoria Prive: your discount code ${DISCOUNT_CODE}`,
-        message: `${isNew ? "New" : "Repeat"} subscriber: ${email}\nCode: ${DISCOUNT_CODE}\nLink: ${shopLink}`,
-        discount_code: DISCOUNT_CODE,
-        shop_link: shopLink,
-        _autoresponse: autoReply,
-        _template: "table",
-        _captcha: "false",
-      }),
-    });
-    const data = (await res.json().catch(() => null)) as {
-      success?: string | boolean;
-      message?: string;
-    } | null;
-    const success = data?.success === true || data?.success === "true";
-    emailed = Boolean(res.ok && success);
-    activateRequired = Boolean(data?.message?.toLowerCase().includes("activation"));
-  } catch {
-    emailed = false;
-  }
+  const mail = await sendFormMail({
+    origin,
+    payload: {
+      name: "Scentoria subscriber",
+      email,
+      _replyto: email,
+      _subject: `Scentoria Prive: your discount code ${DISCOUNT_CODE}`,
+      message: `${isNew ? "New" : "Repeat"} subscriber: ${email}\nCode: ${DISCOUNT_CODE}\nLink: ${shopLink}`,
+      discount_code: DISCOUNT_CODE,
+      shop_link: shopLink,
+      _autoresponse: autoReply,
+      _template: "table",
+    },
+  });
+  emailed = mail.ok;
+  activateRequired = mail.activateRequired;
 
   // Always succeed after saving the subscriber. If FormSubmit is not activated yet,
   // the widget shows the code on-screen as a fallback.
