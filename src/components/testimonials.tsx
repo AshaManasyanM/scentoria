@@ -18,7 +18,7 @@ export function Testimonials({
   const [desktop, setDesktop] = useState(false);
   const dragStart = useRef(0);
   const count = items.length;
-  const perView = desktop ? (count >= 4 ? 3 : Math.max(count, 1)) : 1;
+  const perView = desktop ? Math.min(3, Math.max(count, 1)) : 1;
   const gap = perView > 1 ? 20 : 0;
   const maxIndex = Math.max(0, count - perView);
   const safeIndex = Math.min(index, maxIndex);
@@ -35,6 +35,14 @@ export function Testimonials({
   function shift(direction: -1 | 1) {
     setIndex((current) => Math.min(maxIndex, Math.max(0, current + direction)));
   }
+
+  const trackClass = slides
+    ? "flex items-stretch"
+    : count === 3
+      ? "grid items-stretch gap-5 md:grid-cols-3"
+      : count === 2
+        ? "grid items-stretch gap-5 md:grid-cols-2"
+        : "grid grid-cols-1";
 
   return (
     <section className={`mx-auto w-full px-[clamp(1rem,2.5vw,2rem)] py-[clamp(2rem,4vw,3.25rem)] ${width}`}>
@@ -54,7 +62,7 @@ export function Testimonials({
               aria-label="Previous"
               disabled={safeIndex === 0}
               onClick={() => shift(-1)}
-              className="absolute left-0 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#083534] text-[#f7f2ea] disabled:opacity-40"
+              className="absolute left-0 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#083534] text-[#f7f2ea] shadow-sm disabled:opacity-40"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
                 <path d="M15 5 8 12l7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -65,7 +73,7 @@ export function Testimonials({
               aria-label="Next"
               disabled={safeIndex === maxIndex}
               onClick={() => shift(1)}
-              className="absolute right-0 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#083534] text-[#f7f2ea] disabled:opacity-40"
+              className="absolute right-0 top-1/2 z-10 flex h-11 w-11 -translate-y-1/2 items-center justify-center rounded-full bg-[#083534] text-[#f7f2ea] shadow-sm disabled:opacity-40"
             >
               <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" strokeWidth="1.75" aria-hidden>
                 <path d="m9 5 7 7-7 7" strokeLinecap="round" strokeLinejoin="round" />
@@ -75,13 +83,12 @@ export function Testimonials({
         ) : null}
         <div className={`overflow-hidden ${slides ? "mx-14" : ""}`}>
           <div
-            className={`transition-transform duration-300 ease-out ${
-              slides ? "flex" : count === 3 ? "grid gap-3 md:grid-cols-3 md:gap-4" : count === 2 ? "grid gap-3 md:grid-cols-2 md:gap-4" : "grid grid-cols-1"
-            }`}
+            className={`transition-transform duration-300 ease-out ${trackClass}`}
             style={
               slides
                 ? {
-                    transform: `translateX(calc(${-safeIndex} * ((100% - ${(perView - 1) * gap}px) / ${perView} + ${gap}px)))`,
+                    gap: `${gap}px`,
+                    transform: `translateX(calc(${-safeIndex} * ((100% + ${gap}px) / ${perView})))`,
                   }
                 : undefined
             }
@@ -98,13 +105,24 @@ export function Testimonials({
             {items.map((item, card) => (
               <blockquote
                 key={`${item.name}-${item.product}-${card}`}
-                className="h-full rounded-2xl border border-[#e4ddd2] bg-white px-5 py-5 text-[#083534] md:px-6 md:py-6"
-                style={slides ? { flex: `0 0 calc((100% - ${(perView - 1) * gap}px) / ${perView})` } : undefined}
+                className="m-0 flex min-h-0 flex-col rounded-2xl border border-[#e4ddd2] bg-white px-5 py-5 text-[#083534] md:px-6 md:py-6"
+                style={
+                  slides
+                    ? {
+                        flex: `0 0 calc((100% - ${(perView - 1) * gap}px) / ${perView})`,
+                        width: `calc((100% - ${(perView - 1) * gap}px) / ${perView})`,
+                      }
+                    : undefined
+                }
               >
                 {item.product ? (
                   <p className="text-[11px] font-semibold uppercase tracking-[0.1em] text-[#083534]/70">{item.product}</p>
                 ) : null}
-                <p className={`${item.product ? "mt-3" : ""} text-sm leading-6 md:text-[15px] md:leading-7`}>“{item.text}”</p>
+                <p
+                  className={`${item.product ? "mt-3" : ""} flex-1 text-sm leading-6 md:text-[15px] md:leading-7`}
+                >
+                  “{item.text}”
+                </p>
                 <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.1em] text-[#c5a059]">{item.name}</p>
               </blockquote>
             ))}
