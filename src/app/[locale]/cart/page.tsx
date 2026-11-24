@@ -364,29 +364,23 @@ export default function CartPage() {
                       {t.nextAddress} →
                     </button>
                   ) : null}
-                  {loggedIn && shopifyLinked ? (
-                    <a
-                      href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                    >
-                      {t.buyNow} →
-                    </a>
-                  ) : null}
+                  <a
+                    href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
+                    className={`flex h-12 w-full items-center justify-center rounded-xl text-sm font-medium ${
+                      loggedIn && !shopifyLinked
+                        ? "border border-white/30 bg-transparent text-white"
+                        : "bg-white text-[#083534]"
+                    }`}
+                  >
+                    {t.buyNow} →
+                  </a>
                   {!loggedIn ? (
-                    <>
-                      <a
-                        href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
-                        className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                      >
-                        {t.buyNow} →
-                      </a>
-                      <Link
-                        href={loginCheckoutHref}
-                        className="flex h-12 w-full items-center justify-center rounded-xl border border-white/30 bg-transparent text-sm font-medium text-white"
-                      >
-                        {t.signIn} →
-                      </Link>
-                    </>
+                    <Link
+                      href={loginCheckoutHref}
+                      className="flex h-12 w-full items-center justify-center rounded-xl border border-white/30 bg-transparent text-sm font-medium text-white"
+                    >
+                      {t.signIn} →
+                    </Link>
                   ) : null}
                 </div>
               ) : (
