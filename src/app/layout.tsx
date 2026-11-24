@@ -24,12 +24,12 @@ export const metadata: Metadata = {
     "Scentoria Prive — luxury and niche perfumes, authentic bottles and decants, delivered with care.",
   icons: {
     icon: [
-      { url: "/favicon.ico?v=16", sizes: "any" },
-      { url: "/favicon.png?v=16", type: "image/png", sizes: "512x512" },
-      { url: "/icon.png?v=16", type: "image/png", sizes: "512x512" },
+      { url: "/favicon.ico?v=17", sizes: "any" },
+      { url: "/favicon.png?v=17", type: "image/png", sizes: "512x512" },
+      { url: "/icon.png?v=17", type: "image/png", sizes: "512x512" },
     ],
-    apple: [{ url: "/apple-icon.png?v=16", type: "image/png", sizes: "180x180" }],
-    shortcut: ["/favicon.ico?v=16"],
+    apple: [{ url: "/apple-icon.png?v=17", type: "image/png", sizes: "180x180" }],
+    shortcut: ["/favicon.ico?v=17"],
   },
 };
 
