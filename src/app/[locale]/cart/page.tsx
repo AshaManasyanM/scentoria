@@ -6,7 +6,7 @@ import type { SavedAddress } from "@/lib/address-book";
 import { countryChoices, isCountryCode } from "@/lib/countries";
 import { isUsState, usStateChoices } from "@/lib/us-states";
 import { checkoutQuote, type CartCostQuote } from "@/lib/checkout-quote";
-import { AUTH_EVENT, isLoggedIn, refreshSession } from "@/lib/auth";
+import { AUTH_EVENT, isLoggedIn, loadProfile, refreshSession } from "@/lib/auth";
 import { discountPercent, formatExactMoney, formatMoney } from "@/lib/format";
 import { getDict, isLocale } from "@/lib/i18n";
 import {
@@ -76,6 +76,7 @@ export default function CartPage() {
   const { cart, updateQty, applyPromo } = useCart();
   const [authReady, setAuthReady] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
+  const [shopifyLinked, setShopifyLinked] = useState(false);
   const [code, setCode] = useState("");
   const [appliedCode, setAppliedCode] = useState("");
   const [codeNote, setCodeNote] = useState("");
@@ -145,6 +146,7 @@ export default function CartPage() {
     const sync = () => {
       if (!alive) return;
       setLoggedIn(isLoggedIn());
+      setShopifyLinked(Boolean(loadProfile().shopifyLinked || loadProfile().provider === "shopify"));
       setAuthReady(true);
     };
     void refreshSession().then(sync);
@@ -353,19 +355,38 @@ export default function CartPage() {
 
               {cart.checkoutUrl ? (
                 <div className="mt-5 space-y-3">
-                  <a
-                    href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
-                    className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                  >
-                    {t.buyNow} →
-                  </a>
-                  {!loggedIn ? (
-                    <Link
-                      href={loginCheckoutHref}
-                      className="flex h-12 w-full items-center justify-center rounded-xl border border-white/30 bg-transparent text-sm font-medium text-white"
+                  {loggedIn && !shopifyLinked ? (
+                    <button
+                      type="button"
+                      onClick={() => setStep(1)}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
                     >
-                      {t.signIn} →
-                    </Link>
+                      {t.nextAddress} →
+                    </button>
+                  ) : null}
+                  {loggedIn && shopifyLinked ? (
+                    <a
+                      href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
+                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                    >
+                      {t.buyNow} →
+                    </a>
+                  ) : null}
+                  {!loggedIn ? (
+                    <>
+                      <a
+                        href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
+                        className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
+                      >
+                        {t.buyNow} →
+                      </a>
+                      <Link
+                        href={loginCheckoutHref}
+                        className="flex h-12 w-full items-center justify-center rounded-xl border border-white/30 bg-transparent text-sm font-medium text-white"
+                      >
+                        {t.signIn} →
+                      </Link>
+                    </>
                   ) : null}
                 </div>
               ) : (
