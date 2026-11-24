@@ -307,8 +307,10 @@ export const en = {
   loginToCheckout: "You can also sign in with your Shopify account at checkout.",
   authenticTitle: "100% Authentic — Guaranteed",
   authenticShort: "100% authentic",
-  authenticBody:
-    "Scentoria Prive decants exclusively from genuine, sealed retail bottles sourced from authorized distributors.",
+  productDisclaimer:
+    "Scentoria Privé is an independent entity not affiliated with any fragrance brand or manufacturer. We source 100% authentic perfumes exclusively from authorized retailers and distributors and hand-decant them into our own atomizers. Brand names and bottle photos are shown for identification only.",
+  decantPriceNote:
+    "Hand-decanted sample: Supplied in a Scentoria Privé travel atomizer, not the original retail bottle shown. All decant sales are final.",
   selectSize: "Size",
   selectColor: "Bottle color",
   randomColor: "Random color",

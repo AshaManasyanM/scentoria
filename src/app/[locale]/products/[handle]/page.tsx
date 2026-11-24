@@ -96,6 +96,9 @@ export default async function ProductPage({
             <h2 className="text-sm font-semibold uppercase tracking-wide text-[#111]">{t.description}</h2>
             <p className="mt-4 text-sm leading-7 text-[#333] whitespace-pre-line">{product.description}</p>
           </div>
+          <div className="rounded-xl border border-[#e6e6e6] bg-white px-6 py-5">
+            <p className="text-sm leading-7 text-[#333]">{t.productDisclaimer}</p>
+          </div>
           <ProductReviews
             locale={locale}
             handle={product.handle}

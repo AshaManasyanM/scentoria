@@ -1,3 +1,4 @@
+import { BrandLogoGrid } from "@/components/brand-logo-grid";
 import { CatalogBanner } from "@/components/catalog-banner";
 import { HeroSlider } from "@/components/hero-slider";
 import { HomeSectionHeading } from "@/components/home-section-heading";
@@ -60,7 +61,7 @@ export default async function HomePage({
   const { products, source } = await getCatalog(locale);
   const sections = await getSectionVisibility();
   const heroSlides = sections.hero ? await getHeroSlides() : [];
-  const brands = sections.brands ? (await getBrands(locale)).slice(0, 8) : [];
+  const brands = sections.brands ? (await getBrands(locale)).slice(0, 24) : [];
   const testimonials = sections.testimonials ? await getTestimonials() : [];
   const notes = sections.notes
     ? (await getNotes()).map((note) => ({
@@ -162,34 +163,19 @@ export default async function HomePage({
       ) : null}
 
       {sections.brands ? (
-        <section className={`bg-[#f7f2ea] ${sectionShell}`}>
+        <section className={`bg-[#083534] ${sectionShell}`}>
           <div className="mx-auto max-w-[min(100%,72rem)]">
-            <HomeSectionHeading eyebrow={t.popularBrands} title={t.popularBrandsSub} />
-            <div className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 md:gap-4 lg:grid-cols-4">
-              {brands.map((brand) => (
-                <Link
-                  key={brand.handle}
-                  href={path(locale, `/products?brand=${encodeURIComponent(brand.name)}`)}
-                  className="group flex aspect-[5/3] items-center justify-center rounded-2xl border border-[#e4ddd3] bg-white px-5 transition duration-300 hover:-translate-y-0.5 hover:border-[#c5a059]/70 hover:shadow-[0_12px_28px_rgba(8,53,52,0.1)]"
-                >
-                  {brand.logo ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
-                      src={brand.logo}
-                      alt={`${brand.name} perfume brand logo`}
-                      title={`${brand.name} perfume brand`}
-                      className="max-h-[58%] w-auto max-w-[72%] object-contain transition duration-300 group-hover:scale-[1.03]"
-                    />
-                  ) : (
-                    <span className="text-center font-serif text-lg font-medium text-[#083534] md:text-xl">
-                      {brand.name}
-                    </span>
-                  )}
-                </Link>
-              ))}
-            </div>
-            <div className="text-center">
-              <Link href={path(locale, "/brands")} className={ctaDark}>
+            <HomeSectionHeading eyebrow={t.popularBrands} title={t.popularBrandsSub} light />
+            <BrandLogoGrid
+              locale={locale}
+              brands={brands}
+              previousLabel={t.previousPage}
+              nextLabel={t.nextPage}
+              pageSizeMobile={6}
+              pageSizeDesktop={8}
+            />
+            <div className="mt-6 text-center sm:mt-8">
+              <Link href={path(locale, "/brands")} className={`${ctaGold} w-full min-[420px]:w-auto`}>
                 {t.viewAllBrands}
               </Link>
             </div>

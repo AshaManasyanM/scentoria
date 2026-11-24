@@ -163,8 +163,14 @@ export function AddToCart({
         </div>
       ) : null}
 
-      {selected.available ? <ProductPrice locale={locale} /> : null}
-      {selected.available ? null : (
+      {selected.available ? (
+        <div>
+          <ProductPrice locale={locale} />
+          <p className="mt-2 w-full pr-[10px] text-[10px] leading-4 text-[#083534]/55 md:text-[11px] md:leading-4">
+            {t.decantPriceNote}
+          </p>
+        </div>
+      ) : (
         <p className="rounded-md bg-[#f3efe8] px-4 py-3 text-sm text-muted">{t.outOfStock}</p>
       )}
       <div className="space-y-3">

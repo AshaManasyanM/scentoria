@@ -24,16 +24,13 @@ export function AuthenticityBadge({ locale }: { locale: Locale }) {
 
   return (
     <div className="rounded-xl border border-[#e6e6e6] bg-gradient-to-br from-white via-white to-[#f7f2ea] px-5 py-4 shadow-[0_1px_0_rgba(8,53,52,0.04)] md:px-5 md:py-5">
-      <div className="flex items-start gap-3 md:gap-4">
+      <div className="flex items-center justify-start gap-3">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-[#083534]/[0.06] ring-1 ring-[#083534]/10">
           <ShieldIcon />
         </span>
-        <div className="min-w-0">
-          <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#083534] md:text-[13px]">
-            {t.authenticTitle}
-          </h2>
-          <p className="mt-2 text-[12px] leading-5 text-[#5c564f] md:text-[13px] md:leading-6">{t.authenticBody}</p>
-        </div>
+        <h2 className="text-xs font-semibold uppercase tracking-[0.08em] text-[#083534] md:text-[13px]">
+          {t.authenticTitle}
+        </h2>
       </div>
     </div>
   );

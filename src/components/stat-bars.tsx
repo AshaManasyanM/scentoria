@@ -84,9 +84,11 @@ export function StatBars({
               aria-label={`Vote ${item.label}`}
               disabled={voted}
               onClick={() => vote(item.label)}
-              className="flex h-7 w-7 items-center justify-center rounded-full border border-[#d8d0c4] text-lg leading-none text-[#1f7a4d] disabled:opacity-40"
+              className="inline-flex h-7 w-7 items-center justify-center rounded-full border border-[#d8d0c4] text-[#1f7a4d] disabled:opacity-40"
             >
-              +
+              <svg viewBox="0 0 16 16" width="12" height="12" fill="none" aria-hidden>
+                <path d="M8 3v10M3 8h10" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" />
+              </svg>
             </button>
           </div>
         ))}

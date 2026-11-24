@@ -321,8 +321,10 @@ export const es: EnDictionary = {
   loginToCheckout: "También puedes iniciar sesión con tu cuenta de Shopify al pagar.",
   authenticTitle: "100% auténtico — Garantizado",
   authenticShort: "100% auténtico",
-  authenticBody:
-    "Scentoria Prive elabora decants exclusivamente a partir de frascos originales sellados, procedentes de distribuidores autorizados.",
+  productDisclaimer:
+    "Scentoria Privé es una entidad independiente no afiliada con ninguna marca o fabricante de fragancias. Obtenemos perfumes 100% auténticos exclusivamente de minoristas y distribuidores autorizados y los decantamos a mano en nuestros propios atomizadores. Los nombres de marca y las fotos de los frascos se muestran solo con fines de identificación.",
+  decantPriceNote:
+    "Muestra decantada a mano: se entrega en un atomizador de viaje Scentoria Privé, no en el frasco original de venta mostrado. Todas las ventas de decants son finales.",
   selectSize: "Tamaño",
   selectColor: "Color del frasco",
   randomColor: "Color aleatorio",
