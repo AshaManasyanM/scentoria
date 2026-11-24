@@ -362,7 +362,7 @@ export const es: EnDictionary = {
   coreValuesSub:
     "Nuestros valores guían todo lo que hacemos. Definen nuestro compromiso con fragancias excepcionales y una experiencia excelente.",
   storyBody:
-    "Creamos esta tienda para que todos encuentren su aroma distintivo: el que habla por ti. No solo vendemos frascos; seleccionamos, comparamos y contamos historias a través de la fragancia.",
+    "Scentoria Privé nació de una pasión personal por la perfumería: conocer los aromas sin prisas antes de comprometerse con un frasco completo, disfrutando a la vez la comodidad de un tamaño de viaje.\n\nUn decant compacto cabe fácilmente en un bolso, viaja contigo o se queda en el coche, y te da tiempo para sentir cómo una fragancia se comporta realmente en tu piel, para invertir en un frasco completo solo cuando un aroma resuene de verdad contigo.\n\nEsa combinación de practicidad, portabilidad y estética es la esencia de Scentoria Privé: decantar a mano fragancias auténticas en nuestros propios atomizadores de viaje para que el descubrimiento cotidiano sea sencillo y refinado.",
   perfumesHero: "Perfumes",
   perfumesSub:
     "Explora nuestra colección de fragancias, seleccionadas para cada gusto y ocasión.",

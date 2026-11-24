@@ -347,7 +347,7 @@ export const en = {
   coreValuesSub:
     "Our core values guide everything we do. They shape our commitment to exceptional fragrances and outstanding customer experiences.",
   storyBody:
-    "We created this store to help everyone find a signature scent — the one that speaks for you. We don’t just sell bottles; we curate, compare, and tell stories through fragrance.",
+    "Scentoria Privé grew out of a personal passion for perfumery: getting to know scents at an unhurried pace before committing to a full bottle, while enjoying the convenience of a travel size.\n\nA compact decant is easy to slip into a bag, bring on a trip, or keep in your car, giving you time to experience how a fragrance truly wears on you—so you only invest in a full bottle when a scent genuinely resonates.\n\nThat combination of practicality, portability, and aesthetics is the essence of Scentoria Privé—hand-decanting authentic fragrances into our own travel atomizers to make everyday discovery effortless and refined.",
   perfumesHero: "Perfumes",
   perfumesSub:
     "Explore our collection of fragrances, selected to suit every taste and occasion.",

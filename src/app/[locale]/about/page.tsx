@@ -36,7 +36,15 @@ export default async function AboutPage({
             </h2>
           </div>
           <div className="md:pt-9">
-            <p className="max-w-2xl text-[15px] leading-7 text-[#083534]">{t.storyBody}</p>
+            <div className="max-w-2xl space-y-4 text-[15px] leading-7 text-[#083534]">
+              {t.storyBody
+                .split(/\n\s*\n/)
+                .map((paragraph) => paragraph.trim())
+                .filter(Boolean)
+                .map((paragraph) => (
+                  <p key={paragraph.slice(0, 48)}>{paragraph}</p>
+                ))}
+            </div>
             <Link
               href={path(locale, "/products")}
               className="mt-8 inline-flex rounded-[2px] bg-[#c5a059] px-8 py-[14px] text-xs font-semibold uppercase tracking-[0.12em] text-[#083534]"
