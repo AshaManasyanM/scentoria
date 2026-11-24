@@ -353,28 +353,20 @@ export default function CartPage() {
 
               {cart.checkoutUrl ? (
                 <div className="mt-5 space-y-3">
-                  {loggedIn ? (
-                    <button
-                      type="button"
-                      onClick={() => setStep(1)}
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                    >
-                      {t.nextAddress} →
-                    </button>
-                  ) : (
-                    <Link
-                      href={loginCheckoutHref}
-                      className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
-                    >
-                      {t.signIn} →
-                    </Link>
-                  )}
                   <a
                     href={withCheckoutDiscount(cart.checkoutUrl, appliedCode) || cart.checkoutUrl}
                     className="flex h-12 w-full items-center justify-center rounded-xl bg-white text-sm font-medium text-[#083534]"
                   >
                     {t.buyNow} →
                   </a>
+                  {!loggedIn ? (
+                    <Link
+                      href={loginCheckoutHref}
+                      className="flex h-12 w-full items-center justify-center rounded-xl border border-white/30 bg-transparent text-sm font-medium text-white"
+                    >
+                      {t.signIn} →
+                    </Link>
+                  ) : null}
                 </div>
               ) : (
                 <p className="mt-5 text-center text-sm leading-6 text-white/70">

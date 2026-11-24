@@ -25,6 +25,7 @@ export async function POST(request: Request) {
       image: linked.image || undefined,
       provider: linked.provider,
       googleLinked: Boolean(linked.googleSub),
+      shopifyLinked: Boolean(linked.shopifySub),
     },
   });
 }

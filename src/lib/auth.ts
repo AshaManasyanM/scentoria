@@ -8,6 +8,7 @@ export type Profile = {
   image?: string;
   provider: AuthProvider;
   googleLinked?: boolean;
+  shopifyLinked?: boolean;
 };
 
 let current: Profile = { name: "", email: "", provider: "email" };

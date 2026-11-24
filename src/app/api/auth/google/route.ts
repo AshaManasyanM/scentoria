@@ -13,6 +13,7 @@ function publicUser(user: {
   image: string | null;
   provider: "email" | "google" | "shopify";
   googleSub: string | null;
+  shopifySub: string | null;
 }) {
   return {
     name: user.name,
@@ -20,6 +21,7 @@ function publicUser(user: {
     image: user.image || undefined,
     provider: user.provider,
     googleLinked: Boolean(user.googleSub),
+    shopifyLinked: Boolean(user.shopifySub),
   };
 }
 
